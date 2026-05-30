@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Leakage Calculator | Blue Data Labs</title>
+<meta name="description" content="Find out exactly how much revenue your business is losing every month. Free 2-minute assessment.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;--bl:#3B82F6;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',-apple-system,sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+
+/* Header */
+.hdr{text-align:center;padding:48px 20px 0;}
+.logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:28px;}
+.logo-dot{width:10px;height:10px;background:var(--or);border-radius:50%;}
+.logo-txt{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--or);}
+.hdr h1{font-family:'Syne',sans-serif;font-size:clamp(28px,6vw,50px);font-weight:800;line-height:1.1;letter-spacing:-1.5px;margin-bottom:16px;}
+.hdr h1 span{color:var(--or);}
+.hdr p{color:var(--mu);font-size:15px;max-width:500px;margin:0 auto 16px;}
+.trust{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:36px;}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mu);}
+.trust-item span:first-child{color:var(--gn);}
+
+/* Progress */
+.prog-wrap{max-width:620px;margin:0 auto 28px;padding:0 20px;}
+.prog-steps{display:flex;align-items:flex-start;}
+.ps{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
+.ps::after{content:'';position:absolute;top:14px;left:50%;width:100%;height:1.5px;background:var(--border);z-index:0;}
+.ps:last-child::after{display:none;}
+.pdot{width:28px;height:28px;border-radius:50%;background:var(--card2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--mu);z-index:1;transition:all .3s;}
+.ps.active .pdot{background:var(--or);border-color:var(--or);color:#fff;box-shadow:0 0 0 4px rgba(249,115,22,.2);}
+.ps.done .pdot{background:var(--ord);border-color:var(--ord);color:#fff;}
+.plabel{font-size:10px;color:var(--mu);text-align:center;line-height:1.3;}
+.ps.active .plabel{color:var(--or);}
+
+/* Main */
+.main{max-width:620px;margin:0 auto;padding:0 20px 80px;}
+.step{display:none;}
+.step.active{display:block;}
+
+/* Section headers */
+.sh{margin-bottom:24px;}
+.sh h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.sh p{font-size:13px;color:var(--mu);line-height:1.5;}
+
+/* Niche grid */
+.ng{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+@media(max-width:420px){.ng{grid-template-columns:repeat(2,1fr);}}
+.nc{border:1.5px solid var(--border);border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;background:var(--card);}
+.nc:hover{border-color:var(--or);background:rgba(249,115,22,.05);}
+.nc.sel{border-color:var(--or);background:rgba(249,115,22,.1);}
+.nc .ic{font-size:30px;margin-bottom:8px;}
+.nc .lb{font-size:12px;font-weight:500;}
+.nc .sl{font-size:10px;color:var(--mu);margin-top:2px;}
+
+/* Card sections */
+.cs{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;}
+.ct{font-size:10px;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;display:flex;align-items:center;gap:6px;}
+
+/* Fields */
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--tx);margin-bottom:6px;}
+.field .hint{font-size:11px;color:var(--mu);margin-bottom:6px;line-height:1.4;}
+.field input,.field select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;transition:border-color .15s;-webkit-appearance:none;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--or);}
+.field input::placeholder{color:var(--mu);}
+.field select option{background:#1a1c26;}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:400px){.fr{grid-template-columns:1fr;}}
+
+/* Toggle buttons */
+.tg{display:flex;gap:8px;flex-wrap:wrap;}
+.tb{flex:1;min-width:80px;padding:10px 8px;border:1.5px solid var(--border);border-radius:10px;background:var(--card2);color:var(--mu);font-size:13px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;text-align:center;}
+.tb:hover{border-color:var(--or);}
+.tb.on{border-color:var(--or);color:var(--or);background:rgba(249,115,22,.1);font-weight:500;}
+
+/* Star ratings */
+.sr{display:flex;gap:6px;flex-wrap:wrap;}
+.star{padding:7px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;cursor:pointer;transition:all .15s;background:var(--card2);color:var(--tx);}
+.star:hover,.star.on{border-color:var(--or);background:rgba(249,115,22,.1);color:var(--or);}
+
+/* Platform checkboxes */
+.pl{display:flex;flex-direction:column;gap:8px;}
+.pc{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--card2);}
+.pc:hover{border-color:var(--or);}
+.pc.on{border-color:var(--or);background:rgba(249,115,22,.08);}
+.pc .pi{font-size:18px;}
+.pc .pn{font-size:13px;font-weight:500;flex:1;}
+.pc .pf{font-size:11px;color:var(--mu);}
+.pc .cb{width:18px;height:18px;border:1.5px solid var(--border);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;}
+.pc.on .cb{background:var(--or);border-color:var(--or);color:#fff;}
+
+/* Nav buttons */
+.nb{display:flex;gap:10px;margin-top:24px;}
+.bn{flex:1;background:var(--or);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.bn:hover{opacity:.9;}
+.bn:disabled{opacity:.5;cursor:not-allowed;}
+.bb{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 20px;font-size:14px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.bb:hover{border-color:var(--mu);color:var(--tx);}
+
+/* Info box */
+.ib{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--mu);margin-bottom:14px;line-height:1.5;}
+.ib strong{color:var(--bl);}
+.wb{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--mu);margin-bottom:14px;line-height:1.5;}
+.wb strong{color:var(--or);}
+
+/* Google Sign-in step */
+.gsi-wrap{text-align:center;padding:32px 20px;}
+.gsi-icon{font-size:48px;margin-bottom:16px;}
+.gsi-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;}
+.gsi-sub{font-size:13px;color:var(--mu);margin-bottom:28px;line-height:1.6;}
+.gsi-btn{display:inline-flex;align-items:center;gap:12px;background:#fff;color:#1f1f1f;border:none;border-radius:12px;padding:14px 24px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;width:100%;max-width:320px;justify-content:center;}
+.gsi-btn:hover{opacity:.92;}
+.gsi-btn img{width:22px;height:22px;}
+.gsi-privacy{font-size:11px;color:var(--mu);margin-top:16px;line-height:1.5;}
+
+/* User info bar */
+.ubar{display:flex;align-items:center;gap:10px;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:20px;}
+.uavatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--or);}
+.uname{font-size:13px;font-weight:500;}
+.uemail{font-size:11px;color:var(--mu);}
+.uverified{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gn);font-weight:500;}
+
+/* Calculating animation */
+.ca{text-align:center;padding:60px 20px;display:none;}
+.cring{width:52px;height:52px;border:3px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cmsg{font-size:14px;color:var(--mu);}
+.cprog{max-width:300px;margin:20px auto 0;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.cpfill{height:100%;background:linear-gradient(90deg,var(--ord),var(--or));border-radius:2px;transition:width .8s ease;width:0%;}
+
+/* Results */
+.results{display:none;}
+.res-head{text-align:center;padding:36px 20px;background:var(--card);border:1.5px solid var(--border);border-radius:14px;margin-bottom:14px;position:relative;overflow:hidden;}
+.res-head::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:250px;height:250px;background:radial-gradient(circle,rgba(239,68,68,.15) 0%,transparent 70%);pointer-events:none;}
+.res-label{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;}
+.res-total{font-family:'Syne',sans-serif;font-size:clamp(44px,12vw,72px);font-weight:800;color:var(--rd);letter-spacing:-2px;line-height:1;margin-bottom:10px;}
+.res-annual{font-size:14px;color:var(--mu);}
+.res-annual strong{color:var(--tx);}
+.res-biz{font-size:12px;color:var(--mu);margin-top:8px;}
+
+/* Free item */
+.free-item{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
+.fi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;}
+.fi-name{font-size:14px;font-weight:500;}
+.fi-val{font-size:16px;font-weight:700;color:var(--rd);font-family:'Syne',sans-serif;white-space:nowrap;}
+.fi-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.fi-fill{height:100%;background:linear-gradient(90deg,var(--ord),var(--or));border-radius:3px;transition:width 1.4s ease;width:0%;}
+.fi-why{font-size:12px;color:var(--mu);line-height:1.4;}
+
+/* Locked items */
+.locked-wrap{position:relative;margin-bottom:10px;}
+.locked-item{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:16px;filter:blur(4px);user-select:none;pointer-events:none;}
+.lock-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-radius:12px;}
+.lock-icon{font-size:20px;}
+.lock-txt{font-size:12px;color:var(--mu);}
+
+/* Unlock CTA */
+.unlock-cta{background:linear-gradient(135deg,rgba(249,115,22,.12),rgba(234,88,12,.06));border:1.5px solid rgba(249,115,22,.4);border-radius:14px;padding:28px 20px;text-align:center;margin-top:16px;}
+.uc-badge{display:inline-block;background:var(--or);color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;letter-spacing:.04em;margin-bottom:16px;}
+.uc-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;}
+.uc-sub{font-size:13px;color:var(--mu);margin-bottom:20px;line-height:1.6;}
+.uc-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;text-align:left;}
+.uc-item{display:flex;align-items:center;gap:8px;font-size:13px;}
+.uc-item span:first-child{color:var(--gn);}
+.price-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;}
+.price-old{font-size:16px;color:var(--mu);text-decoration:line-through;}
+.price-new{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--or);}
+.price-per{font-size:13px;color:var(--mu);}
+.pay-btn{display:block;width:100%;background:var(--or);color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;margin-bottom:10px;}
+.pay-btn:hover{opacity:.9;}
+.pay-note{font-size:11px;color:var(--mu);}
+
+/* Success */
+.success-box{text-align:center;padding:48px 20px;background:var(--card);border:1.5px solid var(--gn);border-radius:14px;display:none;}
+.success-box h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--gn);margin-bottom:10px;}
+.success-box p{font-size:13px;color:var(--mu);line-height:1.7;}
+
+/* Error */
+.err{color:var(--rd);font-size:12px;margin-top:6px;display:none;}
+
+/* Niche error */
+.nerr{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--rd);margin-bottom:14px;display:none;}
+
+footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);border-top:1px solid var(--border);}
+footer a{color:var(--or);text-decoration:none;}
+
+/* Responsive */
+@media(max-width:480px){
+  .hdr{padding:32px 16px 0;}
+  .main{padding:0 16px 60px;}
+  .unlock-cta{padding:20px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <div class="logo-txt">Blue Data Labs</div>
+  </div>
+  <h1>Is Your Business<br><span>Bleeding Revenue?</span></h1>
+  <p>Answer a few simple questions. We'll show you exactly where your business is losing money every month — free.</p>
+  <div class="trust">
+    <div class="trust-item"><span>✓</span><span>Takes 2 minutes</span></div>
+    <div class="trust-item"><span>✓</span><span>100% free preview</span></div>
+    <div class="trust-item"><span>✓</span><span>No credit card needed</span></div>
+    <div class="trust-item"><span>✓</span><span>Used by 500+ businesses</span></div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div class="prog-wrap">
+  <div class="prog-steps">
+    <div class="ps active" id="ps1"><div class="pdot">1</div><div class="plabel">Business<br>Type</div></div>
+    <div class="ps" id="ps2"><div class="pdot">2</div><div class="plabel">Reputation<br>Check</div></div>
+    <div class="ps" id="ps3"><div class="pdot">3</div><div class="plabel">Your<br>Numbers</div></div>
+    <div class="ps" id="ps4"><div class="pdot">4</div><div class="plabel">Verify<br>&amp; See</div></div>
+    <div class="ps" id="ps5"><div class="pdot">5</div><div class="plabel">Your<br>Results</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 1: Niche + Basic Info -->
+  <div class="step active" id="step1">
+    <div class="sh">
+      <h2>What type of business do you run?</h2>
+      <p>Pick the option that best describes your business — we'll ask questions specific to your industry</p>
+    </div>
+    <div class="ng">
+      <div class="nc" data-n="dental" onclick="pickNiche(this)"><div class="ic">🦷</div><div class="lb">Dental Practice</div><div class="sl">Clinics & practices</div></div>
+      <div class="nc" data-n="realestate" onclick="pickNiche(this)"><div class="ic">🏠</div><div class="lb">Real Estate</div><div class="sl">Agents & agencies</div></div>
+      <div class="nc" data-n="healthcare" onclick="pickNiche(this)"><div class="ic">🏥</div><div class="lb">Healthcare</div><div class="sl">Clinics & practices</div></div>
+      <div class="nc" data-n="legal" onclick="pickNiche(this)"><div class="ic">⚖️</div><div class="lb">Legal / Law</div><div class="sl">Firms & attorneys</div></div>
+      <div class="nc" data-n="saas" onclick="pickNiche(this)"><div class="ic">💻</div><div class="lb">SaaS / Tech</div><div class="sl">Software companies</div></div>
+      <div class="nc" data-n="restaurant" onclick="pickNiche(this)"><div class="ic">🍽️</div><div class="lb">Restaurant</div><div class="sl">Independent dining</div></div>
+    </div>
+    <div class="nerr" id="niche-err">⚠ Please select your business type above to continue</div>
+    <div class="cs">
+      <div class="ct">📍 Tell us about your business</div>
+      <div class="field">
+        <label>What is your business name?</label>
+        <input type="text" id="biz_name" placeholder="e.g. Bright Smile Dental">
+      </div>
+      <div class="fr">
+        <div class="field">
+          <label>Which city are you in?</label>
+          <input type="text" id="biz_city" placeholder="e.g. Austin">
+        </div>
+        <div class="field">
+          <label>State</label>
+          <select id="biz_state">
+            <option value="">Select state</option>
+            <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>What is your full business address?</label>
+        <input type="text" id="biz_address" placeholder="e.g. 123 Main Street, Austin, TX 78701">
+      </div>
+      <div class="fr">
+        <div class="field">
+          <label>Roughly how much does your business make per month?</label>
+          <div class="hint">Your best estimate is fine — this helps us calculate your leakage accurately</div>
+          <input type="number" id="monthly_revenue" placeholder="e.g. 50000" min="0">
+        </div>
+        <div class="field">
+          <label>How many people work at your business?</label>
+          <input type="number" id="num_employees" placeholder="e.g. 10" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>What is your business phone number?</label>
+        <input type="tel" id="biz_phone" placeholder="e.g. +1 512 555 0100">
+      </div>
+      <div class="field">
+        <label>Business website (if you have one)</label>
+        <input type="url" id="biz_website" placeholder="e.g. https://brightsmile.com">
+      </div>
+    </div>
+    <div class="nb"><button class="bn" onclick="goStep2()">Continue →</button></div>
+  </div>
+
+  <!-- STEP 2: Reputation -->
+  <div class="step" id="step2">
+    <div class="sh">
+      <h2>How does your business look online?</h2>
+      <p>Your online reputation directly affects how many customers choose you — we'll calculate exactly how much it's costing you</p>
+    </div>
+    <div class="ib">💡 <strong>Did you know?</strong> Businesses with a Google rating below 4.0 stars lose up to <strong>40% of potential customers</strong> before they ever make contact.</div>
+    <div class="cs">
+      <div class="ct">⭐ Google Business</div>
+      <div class="field">
+        <label>What is your Google star rating?</label>
+        <div class="hint">Check your Google Business profile — or search your business name on Google Maps</div>
+        <div class="sr" id="gstars">
+          <div class="star" data-v="1" onclick="setRating('g',1)">1 ★</div>
+          <div class="star" data-v="2" onclick="setRating('g',2)">2 ★</div>
+          <div class="star" data-v="3" onclick="setRating('g',3)">3 ★</div>
+          <div class="star" data-v="4" onclick="setRating('g',4)">4 ★</div>
+          <div class="star" data-v="5" onclick="setRating('g',5)">5 ★</div>
+          <div class="star" data-v="0" onclick="setRating('g',0)" style="font-size:11px;padding:7px 8px;">Not listed</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>How many Google reviews do you have?</label>
+        <input type="number" id="google_reviews" placeholder="e.g. 24" min="0">
+      </div>
+      <div class="field">
+        <label>When customers leave a review, do you reply?</label>
+        <div class="tg">
+          <button class="tb" onclick="setTog('respond','always',this)">Yes, always</button>
+          <button class="tb" onclick="setTog('respond','sometimes',this)">Sometimes</button>
+          <button class="tb" onclick="setTog('respond','never',this)">Rarely / Never</button>
+        </div>
+      </div>
+    </div>
+    <div class="cs">
+      <div class="ct">📱 Social Media</div>
+      <div class="field">
+        <label>How active is your business on social media?</label>
+        <div class="tg">
+          <button class="tb" onclick="setTog('social','active',this)">Post regularly</button>
+          <button class="tb" onclick="setTog('social','sometimes',this)">Occasionally</button>
+          <button class="tb" onclick="setTog('social','inactive',this)">Rarely / Never</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Yelp rating (if applicable)</label>
+        <div class="sr" id="ystars">
+          <div class="star" data-v="1" onclick="setRating('y',1)">1 ★</div>
+          <div class="star" data-v="2" onclick="setRating('y',2)">2 ★</div>
+          <div class="star" data-v="3" onclick="setRating('y',3)">3 ★</div>
+          <div class="star" data-v="4" onclick="setRating('y',4)">4 ★</div>
+          <div class="star" data-v="5" onclick="setRating('y',5)">5 ★</div>
+          <div class="star" data-v="0" onclick="setRating('y',0)" style="font-size:11px;padding:7px 8px;">Not on Yelp</div>
+        </div>
+      </div>
+    </div>
+    <div class="nb">
+      <button class="bb" onclick="gStep(1)">← Back</button>
+      <button class="bn" onclick="goStep3()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Niche Fields -->
+  <div class="step" id="step3">
+    <div class="sh">
+      <h2 id="s3title">Your Business Numbers</h2>
+      <p>Use your best estimates — round numbers are perfectly fine. We'll calculate from there.</p>
+    </div>
+    <div id="nf"></div>
+    <div class="nb">
+      <button class="bb" onclick="gStep(2)">← Back</button>
+      <button class="bn" onclick="goStep4()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Google Sign-in -->
+  <div class="step" id="step4">
+    <div class="sh">
+      <h2>One last step — verify your identity</h2>
+      <p>Sign in with Google to confirm you're a real business owner. This keeps our data accurate and your report secure.</p>
+    </div>
+    <div class="wb">🔒 <strong>Why we ask:</strong> We only show results to verified business owners — this ensures the data we collect is genuine and protects everyone using this tool.</div>
+    <div class="cs">
+      <div class="ct">🔐 Secure Verification</div>
+      <div class="gsi-wrap">
+        <div class="gsi-icon">🔐</div>
+        <div class="gsi-title">Verify with Google</div>
+        <div class="gsi-sub">One click — no password needed.<br>We only access your name and email address.</div>
+        <button class="gsi-btn" onclick="handleGoogleSignIn()">
+          <img src="https://www.google.com/favicon.ico" alt="Google">
+          Continue with Google
+        </button>
+        <div class="gsi-privacy">By continuing, you agree to receive your free report by email.<br>We never share your personal details without consent.</div>
+      </div>
+    </div>
+    <div id="user-bar" style="display:none;">
+      <div class="ubar">
+        <img class="uavatar" id="u-avatar" src="" alt="">
+        <div>
+          <div class="uname" id="u-name"></div>
+          <div class="uemail" id="u-email"></div>
+        </div>
+        <div class="uverified">✓ Verified</div>
+      </div>
+      <div class="nb">
+        <button class="bn" onclick="runCalc()">Calculate My Leakage →</button>
+      </div>
+    </div>
+    <div class="nb" id="back-btn4">
+      <button class="bb" onclick="gStep(3)">← Back</button>
+    </div>
+  </div>
+
+  <!-- Calculating -->
+  <div class="ca" id="ca">
+    <div class="cring"></div>
+    <div class="cmsg" id="cmsg">Analyzing your business data...</div>
+    <div class="cprog"><div class="cpfill" id="cpfill"></div></div>
+  </div>
+
+  <!-- STEP 5: Results -->
+  <div class="step" id="step5">
+    <div class="sh">
+      <h2>Your Revenue Leakage Report</h2>
+      <p id="rbiz-sub"></p>
+    </div>
+
+    <!-- Total leakage hero -->
+    <div class="res-head">
+      <div class="res-label">ESTIMATED MONTHLY REVENUE LEAKAGE</div>
+      <div class="res-total" id="rtotal">$0</div>
+      <div class="res-annual" id="rannual">That's <strong>$0/year</strong> leaving your business</div>
+      <div class="res-biz" id="rbiz"></div>
+    </div>
+
+    <!-- Free item - show 1 -->
+    <div style="margin-bottom:6px;font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">
+      📊 Leakage Breakdown
+    </div>
+    <div id="free-item"></div>
+
+    <!-- Locked items -->
+    <div id="locked-items"></div>
+
+    <!-- Unlock CTA -->
+    <div class="unlock-cta">
+      <div class="uc-badge">🔒 FULL REPORT — $47</div>
+      <div class="uc-title">Unlock Your Complete Leakage Report</div>
+      <div class="uc-sub">You're seeing just 1 of your leakage areas. The full report shows every leak, the exact cause, and step-by-step fixes.</div>
+      <div class="uc-list">
+        <div class="uc-item"><span>✓</span><span>Complete breakdown of all leakage areas</span></div>
+        <div class="uc-item"><span>✓</span><span>Platform & third-party drain analysis</span></div>
+        <div class="uc-item"><span>✓</span><span>Step-by-step fix for each leak</span></div>
+        <div class="uc-item"><span>✓</span><span>Estimated savings if each leak is fixed</span></div>
+        <div class="uc-item"><span>✓</span><span>Downloadable PDF report</span></div>
+        <div class="uc-item"><span>✓</span><span>30-min strategy call with BDL specialist</span></div>
+      </div>
+      <div class="price-row">
+        <div class="price-old">$97</div>
+        <div class="price-new">$47</div>
+        <div class="price-per">one-time</div>
+      </div>
+      <button class="pay-btn" onclick="requestReport()">Get My Full Report — $47 →</button>
+      <div class="pay-note">💳 Secure payment · Instant delivery to your email</div>
+    </div>
+
+    <!-- Success box -->
+    <div class="success-box" id="sbox">
+      <div style="font-size:40px;margin-bottom:16px;">✅</div>
+      <h3>Request Received!</h3>
+      <p>Thank you — a BDL specialist will contact you within 24 hours to confirm your payment and send your full report.<br><br>
+      We'll reach out to: <strong id="s-email"></strong></p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2026 <a href="#">Blue Data Labs</a> · Revenue Intelligence for Growing Businesses · <a href="mailto:hello@bluedatalabs.com">hello@bluedatalabs.com</a></p>
+</footer>
+
+<script>
+// ── State ─────────────────────────────────────────────────
+var S={
+  niche:'',gr:-1,yr:-1,
+  respond:'',social:'',
+  user:{name:'',email:'',photo:''},
+  res:{total:0,items:[]}
+};
+
+// ── Niche definitions (plain english) ────────────────────
+var NF={
+  dental:{
+    title:'Your Dental Practice Numbers',
+    secs:[
+      {t:'📅 Your Appointment Schedule',f:[
+        {id:'slots',l:'How many appointment slots do you have each day?',h:'Count all chairs × hours. e.g. 2 chairs × 8 hours = 16 slots',p:'10'},
+        {id:'nshow',l:'Out of every 10 appointments, how many patients don\'t show up?',h:'Enter a number — e.g. if 2 out of 10 don\'t show, enter 20',p:'15',pct:true},
+        {id:'aval',l:'What is the average value of one appointment? ($)',h:'Include all services — fillings, cleanings, consultations etc.',p:'180'},
+        {id:'recalls',l:'How many patients are overdue for a recall/checkup but haven\'t rebooked this month?',h:'These are patients you haven\'t called back yet',p:'20'},
+      ]},
+      {t:'📞 New Patient Inquiries',f:[
+        {id:'leads',l:'How many new patient calls or form inquiries do you get per month?',h:'Count phone calls, website forms, walk-ins',p:'30'},
+        {id:'fup',l:'Out of those, what percentage does your team actually follow up with?',h:'Be honest — most practices follow up less than they think',p:'40',pct:true},
+        {id:'tval',l:'What is the average value of a new patient treatment? ($)',h:'Average first treatment or procedure value',p:'500'},
+      ]},
+      {t:'👥 Your Team',f:[
+        {id:'staff',l:'How many paid staff do you have? (not including yourself)',p:'5'},
+        {id:'srate',l:'What is the average hourly pay for your staff? ($)',p:'20'},
+        {id:'idle',l:'Roughly how many hours per week is your team waiting around with nothing to do?',h:'Between appointments, admin gaps etc.',p:'8'},
+      ]},
+      {t:'💻 Software & Subscriptions',f:[
+        {id:'tspend',l:'How much do you pay per month for all software and tools combined? ($)',h:'Practice management software, booking tools, marketing etc.',p:'500'},
+        {id:'tused',l:'What percentage of those tools does your team actually use regularly?',p:'60',pct:true},
+      ]}
+    ],
+    platforms:[
+      {id:'zocdoc',n:'Zocdoc',i:'🔵',f:'25% of booking fee per patient'},
+      {id:'healthgrades',n:'Healthgrades',i:'🟢',f:'$300-500/month listing fee'},
+      {id:'insurance',n:'Insurance Middlemen',i:'🏦',f:'15-30% per claim processed'},
+    ]
+  },
+  realestate:{
+    title:'Your Real Estate Business Numbers',
+    secs:[
+      {t:'🏠 Your Leads & Deals',f:[
+        {id:'leads',l:'How many new buyer or seller leads do you receive each month?',h:'From all sources — referrals, portals, social, walk-ins',p:'100'},
+        {id:'fup',l:'Out of every 10 leads, how many does your team actually follow up with properly?',h:'Enter as percentage — e.g. if 5 out of 10, enter 50',p:'50',pct:true},
+        {id:'comm',l:'What is your average commission on a deal? ($)',p:'8000'},
+        {id:'crate',l:'Out of every 10 leads, how many eventually become a closed deal?',p:'10',pct:true},
+      ]},
+      {t:'🌐 Portal & Listing Costs',f:[
+        {id:'pfees',l:'How much do you spend per month on Zillow, Realtor.com or similar portals? ($)',p:'2000'},
+        {id:'pdeals',l:'How many deals did you actually close last month that came directly from those portals?',p:'1'},
+      ]},
+      {t:'👥 Your Agents & Admin',f:[
+        {id:'agents',l:'How many agents work at your agency?',p:'10'},
+        {id:'ahrs',l:'How many hours per week does each agent spend on paperwork and admin instead of selling?',p:'8'},
+        {id:'arate',l:'What is the average hourly value of an agent\'s time? ($)',h:'Think about their commission earnings divided by hours worked',p:'75'},
+      ]},
+      {t:'🏡 Open Houses',f:[
+        {id:'oh',l:'How many open houses do you hold per month?',p:'4'},
+        {id:'ohv',l:'How many people typically attend each open house?',p:'20'},
+        {id:'ohc',l:'Out of every 10 open house visitors, how many eventually buy or list with you?',p:'2',pct:true},
+      ]}
+    ],
+    platforms:[
+      {id:'zillow',n:'Zillow Premier Agent',i:'🔵',f:'$20-60 per lead, thousands/month'},
+      {id:'realtorcom',n:'Realtor.com',i:'🟠',f:'$200-1000/month subscription'},
+      {id:'trulia',n:'Trulia',i:'🟢',f:'Pay-per-click lead fees'},
+    ]
+  },
+  healthcare:{
+    title:'Your Healthcare Practice Numbers',
+    secs:[
+      {t:'📅 Your Appointments',f:[
+        {id:'appts',l:'How many patient appointments do you see in a typical day?',p:'20'},
+        {id:'nshow',l:'Out of every 10 appointments, how many patients don\'t show up?',p:'12',pct:true},
+        {id:'aval',l:'What is the average value of one appointment? ($)',p:'150'},
+      ]},
+      {t:'📋 Insurance & Billing',f:[
+        {id:'claims',l:'How many insurance claims does your practice submit per month?',p:'150'},
+        {id:'reject',l:'Out of every 10 claims submitted, how many get rejected or denied?',p:'8',pct:true},
+        {id:'cval',l:'What is the average value of one insurance claim? ($)',p:'200'},
+      ]},
+      {t:'🤝 Patient Referrals',f:[
+        {id:'refs',l:'How many new patient referrals do you receive each month?',h:'From doctors, existing patients, or online',p:'40'},
+        {id:'rconv',l:'Out of every 10 referrals, how many actually book and come in?',p:'65',pct:true},
+        {id:'pval',l:'What is the average lifetime value of one patient to your practice? ($)',p:'500'},
+      ]},
+      {t:'👥 Your Staff',f:[
+        {id:'staff',l:'How many staff members do you have?',p:'6'},
+        {id:'ot',l:'How many overtime hours per week does your team work on average?',h:'Hours worked beyond their regular schedule',p:'4'},
+        {id:'srate',l:'What is the average hourly rate you pay your staff? ($)',p:'25'},
+      ]}
+    ],
+    platforms:[
+      {id:'zocdoc',n:'Zocdoc',i:'🔵',f:'$35 per booked appointment'},
+      {id:'healthgrades',n:'Healthgrades Premium',i:'🟢',f:'$300-600/month'},
+      {id:'insurance_mgmt',n:'Insurance Management Platforms',i:'🏦',f:'2-5% of claims processed'},
+    ]
+  },
+  legal:{
+    title:'Your Law Firm Numbers',
+    secs:[
+      {t:'⏰ Your Billable Time',f:[
+        {id:'att',l:'How many attorneys or lawyers work at your firm?',p:'5'},
+        {id:'brate',l:'What is your average billable rate per hour? ($)',h:'What you charge clients per hour of attorney time',p:'300'},
+        {id:'unbill',l:'How many hours per week does each attorney work but NOT bill to clients?',h:'Research, admin, internal meetings that don\'t get invoiced',p:'6'},
+        {id:'admin',l:'How many hours per week does each attorney spend on pure admin tasks?',h:'Emails, filing, scheduling — not billable work',p:'10'},
+      ]},
+      {t:'📋 Your Consultations',f:[
+        {id:'cons',l:'How many initial consultations do you hold per month?',p:'20'},
+        {id:'cconv',l:'Out of every 10 consultations, how many become paying clients?',p:'60',pct:true},
+        {id:'casev',l:'What is the average value of a new case or matter? ($)',p:'5000'},
+      ]},
+      {t:'📁 Case Delays',f:[
+        {id:'delayed',l:'How many cases per month experience significant delays?',h:'Cases where work slows down due to missing info, scheduling, etc.',p:'3'},
+        {id:'dwks',l:'How many weeks on average does a delayed case get pushed back?',p:'2'},
+        {id:'wval',l:'How much do you bill per week on a typical case? ($)',p:'2000'},
+      ]}
+    ],
+    platforms:[
+      {id:'legalzoom',n:'LegalZoom / Avvo',i:'🔵',f:'$40-100 per lead referral fee'},
+      {id:'findlaw',n:'FindLaw / Martindale',i:'🟢',f:'$500-2000/month directory fee'},
+      {id:'clio',n:'Clio / Practice Management',i:'⚫',f:'$49-129/month per user'},
+    ]
+  },
+  saas:{
+    title:'Your SaaS Business Numbers',
+    secs:[
+      {t:'💰 Your Revenue & Subscribers',f:[
+        {id:'mrr',l:'What is your Monthly Recurring Revenue right now? ($)',h:'Total monthly subscription revenue from all active customers',p:'50000'},
+        {id:'churn',l:'Out of every 100 customers, how many cancel their subscription each month?',h:'This is your churn rate — even 3-5% is very significant',p:'5',pct:true},
+        {id:'subs',l:'How many total active subscribers do you have right now?',p:'500'},
+        {id:'fpay',l:'Out of every 100 payment attempts, how many fail?',h:'Failed cards, expired subscriptions, payment declines',p:'3',pct:true},
+        {id:'sval',l:'What is the average monthly subscription value per customer? ($)',p:'99'},
+      ]},
+      {t:'🚀 Free Trials',f:[
+        {id:'trials',l:'How many people sign up for a free trial each month?',p:'200'},
+        {id:'tconv',l:'Out of every 10 trial users, how many upgrade to a paid plan?',p:'15',pct:true},
+        {id:'dval',l:'What is the average deal value when a trial converts? ($)',p:'99'},
+      ]},
+      {t:'🎧 Customer Support',f:[
+        {id:'tickets',l:'How many support tickets does your team handle per month?',p:'500'},
+        {id:'tcost',l:'What does it cost your team to resolve one support ticket? ($)',h:'Include staff time — divide monthly support cost by number of tickets',p:'15'},
+        {id:'avoid',l:'Out of every 10 support tickets, how many could have been avoided with better onboarding or documentation?',p:'60',pct:true},
+      ]},
+      {t:'👥 Your Team Efficiency',f:[
+        {id:'staff',l:'How many people work at your company?',p:'8'},
+        {id:'mhrs',l:'How many hours per week does each team member spend on manual, repetitive tasks?',h:'Data entry, manual reporting, copy-paste work that could be automated',p:'10'},
+        {id:'srate',l:'What is the average hourly cost of a team member? ($)',h:'Salary + benefits divided by working hours',p:'40'},
+      ]}
+    ],
+    platforms:[
+      {id:'aws',n:'AWS / Cloud Costs',i:'☁️',f:'Over-provisioned infrastructure'},
+      {id:'stripe',n:'Stripe / Payment Processor',i:'💳',f:'2.9% + $0.30 per transaction'},
+      {id:'intercom',n:'Intercom / Support Tools',i:'🟦',f:'$74-374/month, scales with users'},
+    ]
+  },
+  restaurant:{
+    title:'Your Restaurant Numbers',
+    secs:[
+      {t:'🍽️ Food & Waste',f:[
+        {id:'fcost',l:'How much do you spend on food and ingredients per month? ($)',h:'Your total monthly food purchasing cost',p:'15000'},
+        {id:'waste',l:'Out of every 10 dollars of food you buy, how much gets thrown away or wasted?',h:'Industry average is 25-30% — be honest',p:'25',pct:true},
+      ]},
+      {t:'📅 Reservations & No-Shows',f:[
+        {id:'res',l:'How many reservations or bookings do you take per day?',p:'20'},
+        {id:'nshow',l:'Out of every 10 reservations, how many don\'t show up or cancel last minute?',p:'15',pct:true},
+        {id:'covers',l:'On average, how many people are in each reservation party?',h:'e.g. if most tables are couples = 2',p:'2'},
+        {id:'spend',l:'What does the average customer spend per visit? ($)',h:'Food + drinks + tax average',p:'45'},
+      ]},
+      {t:'👥 Staffing',f:[
+        {id:'ohrs',l:'How many hours per week is your restaurant over-staffed during slow periods?',h:'Hours when you have too many staff on shift with nothing to do',p:'15'},
+        {id:'srate',l:'What is the average hourly wage you pay your staff? ($)',p:'15'},
+        {id:'dstaff',l:'How many staff members are typically on shift during those slow periods?',p:'3'},
+      ]}
+    ],
+    platforms:[
+      {id:'ubereats',n:'Uber Eats',i:'🟢',f:'30% commission per order'},
+      {id:'doordash',n:'DoorDash',i:'🔴',f:'25-30% commission per order'},
+      {id:'grubhub',n:'Grubhub',i:'🟠',f:'20-30% commission per order'},
+      {id:'opentable',n:'OpenTable',i:'🟣',f:'$1-$7.50 per seated diner'},
+    ]
+  }
+};
+
+// ── Obfuscated calculation engine ────────────────────────
+function _a(a,b,c,d){return +a*(+b/100)*(+c)*(+d)||0;}
+function _b(a,b,c){return +a*(1-(+b/100))*(+c)||0;}
+function _c(a,b,c){return +a*(+b)*(+c)*4||0;}
+function _d(a,b){return +a*(+b/100)||0;}
+function _e(a,b,c){return +a*(+b)*(+c)*1.5*4||0;}
+function _g(id){return parseFloat((document.getElementById('nf_'+id)||{}).value)||0;}
+
+function _calcFinancial(n){
+  var r=[];
+  if(n==='dental'){
+    r=[
+      {l:'Appointment No-Show Loss',v:_a(_g('slots'),_g('nshow'),_g('aval'),22),w:'Revenue from appointment slots that go empty every single day'},
+      {l:'Unscheduled Recall Patients',v:_g('recalls')*_g('aval'),w:'Patients who are overdue for checkups but were never called back to rebook'},
+      {l:'New Patient Follow-Up Gap',v:_b(_g('leads'),_g('fup'),_g('tval')),w:'Inquiries received but never properly followed up — these patients chose a competitor'},
+      {l:'Staff Downtime Cost',v:_c(_g('staff'),_g('idle'),_g('srate')),w:'Wages paid to staff during idle time between appointments'},
+      {l:'Unused Software Waste',v:_g('tspend')*(1-_g('tused')/100),w:'Monthly subscriptions you pay for but your team barely uses'},
+    ];
+  } else if(n==='realestate'){
+    r=[
+      {l:'Lead Follow-Up Revenue Loss',v:_b(_g('leads'),_g('fup'),_g('comm'))*(_g('crate')/100),w:'Leads that went cold because your team didn\'t follow up enough times'},
+      {l:'Portal Fee vs Return Gap',v:Math.max(0,_g('pfees')-_g('pdeals')*_g('comm')),w:'Money paid to portals that isn\'t generating proportional commission returns'},
+      {l:'Agent Admin Time Cost',v:_c(_g('agents'),_g('ahrs'),_g('arate')),w:'Your agents spending valuable selling time on paperwork instead of deals'},
+      {l:'Open House No-Convert Loss',v:_g('oh')*_g('ohv')*(1-_g('ohc')/100)*_g('comm'),w:'Open house visitors who attended but were never properly followed up afterward'},
+    ];
+  } else if(n==='healthcare'){
+    r=[
+      {l:'Appointment No-Show Loss',v:_a(_g('appts'),_g('nshow'),_g('aval'),22),w:'Empty appointment slots that couldn\'t be filled on short notice'},
+      {l:'Insurance Claim Rejection Loss',v:_g('claims')*(_g('reject')/100)*_g('cval'),w:'Claims denied by insurance — revenue earned but never collected'},
+      {l:'Referral No-Conversion Gap',v:_b(_g('refs'),_g('rconv'),_g('pval')),w:'Warm referrals received that never actually booked a first appointment'},
+      {l:'Staff Overtime Premium',v:_e(_g('staff'),_g('ot'),_g('srate')),w:'Overtime hours paid at 1.5x rate — better scheduling would eliminate this'},
+    ];
+  } else if(n==='legal'){
+    r=[
+      {l:'Unbilled Hours Revenue Loss',v:_c(_g('att'),_g('unbill'),_g('brate')),w:'Attorney time spent working but never invoiced to any client'},
+      {l:'Consultation No-Convert Loss',v:_b(_g('cons'),_g('cconv'),_g('casev')),w:'Free consultations that used attorney time but didn\'t turn into paying cases'},
+      {l:'Attorney Admin Time Cost',v:_c(_g('att'),_g('admin'),_g('brate')),w:'Billable attorneys doing non-billable administrative work every week'},
+      {l:'Case Delay Cash Flow Loss',v:_g('delayed')*_g('dwks')*_g('wval'),w:'Delayed cases mean delayed invoicing — a serious cash flow problem'},
+    ];
+  } else if(n==='saas'){
+    r=[
+      {l:'Monthly Churn Revenue Loss',v:_d(_g('mrr'),_g('churn')),w:'Recurring revenue permanently lost every single month to cancellations'},
+      {l:'Trial No-Convert Loss',v:_b(_g('trials'),_g('tconv'),_g('dval')),w:'Users who tried your product but never became paying customers'},
+      {l:'Preventable Support Cost',v:_g('tickets')*_g('tcost')*(_g('avoid')/100),w:'Support tickets that better onboarding and docs would have prevented completely'},
+      {l:'Manual Work Opportunity Cost',v:_c(_g('staff'),_g('mhrs'),_g('srate')),w:'Your team doing repetitive manual work instead of building and growing'},
+      {l:'Failed Payment Revenue Loss',v:_g('subs')*(_g('fpay')/100)*_g('sval'),w:'Subscriptions quietly lapsing because failed payments weren\'t retried'},
+    ];
+  } else if(n==='restaurant'){
+    r=[
+      {l:'Food Waste Loss',v:_d(_g('fcost'),_g('waste')),w:'Food purchased but thrown away — the single biggest profit killer in restaurants'},
+      {l:'No-Show & Cancellation Loss',v:_g('res')*(_g('nshow')/100)*_g('covers')*_g('spend')*30,w:'Reserved tables sitting completely empty with zero revenue coming in'},
+      {l:'Over-Staffing Payroll Waste',v:_g('ohrs')*_g('srate')*_g('dstaff')*4,w:'Wages paid to staff scheduled during slow periods with little to do'},
+    ];
+  }
+  return r;
+}
+
+function _calcPlatform(n){
+  var r=[],items=NF[n].platforms;
+  items.forEach(function(p){
+    var cb=document.getElementById('plt_'+p.id);
+    if(!cb||!cb.closest('.pc').classList.contains('on'))return;
+    var amt=parseFloat((document.getElementById('pltamt_'+p.id)||{}).value)||0;
+    if(amt>0){
+      r.push({l:p.n+' Commission & Fees',v:amt,w:'Monthly cost of using '+p.n+' — money going to a third party instead of your pocket'});
+    }
+  });
+  return r;
+}
+
+function _calcReputation(rev){
+  var r=[],v=parseFloat(rev)||0,gr=S.gr;
+  if(gr>=0){
+    var loss=0;
+    if(gr===0)loss=v*.20;
+    else if(gr<3.0)loss=v*.45;
+    else if(gr<3.5)loss=v*.30;
+    else if(gr<4.0)loss=v*.18;
+    else if(gr<4.3)loss=v*.08;
+    if(loss>0)r.push({l:'Google Rating — Customer Loss',v:loss,w:'Customers researching your business see your rating and choose a competitor instead'});
+  }
+  var rc=parseInt((document.getElementById('google_reviews')||{}).value)||0;
+  if(rc<50&&rc>0)r.push({l:'Insufficient Reviews — Trust Gap',v:v*.12,w:'Less than 50 reviews means not enough social proof — potential customers aren\'t confident enough to call'});
+  if(S.respond==='never')r.push({l:'Ignoring Customer Reviews',v:v*.10,w:'Not responding to reviews signals poor customer service to everyone reading them'});
+  else if(S.respond==='sometimes')r.push({l:'Inconsistent Review Responses',v:v*.05,w:'Sporadic replies make your business look unreliable to potential customers'});
+  if(S.social==='inactive')r.push({l:'No Social Media Presence',v:v*.08,w:'Many local customers discover and evaluate businesses through social before calling'});
+  return r;
+}
+
+// ── UI helpers ───────────────────────────────────────────
+function pickNiche(el){
+  document.querySelectorAll('.nc').forEach(function(c){c.classList.remove('sel');});
+  el.classList.add('sel');
+  S.niche=el.dataset.n;
+  document.getElementById('niche-err').style.display='none';
+}
+
+function setRating(t,v){
+  S[t+'r']=v;
+  var id=t==='g'?'gstars':'ystars';
+  document.querySelectorAll('#'+id+' .star').forEach(function(s){
+    s.classList.toggle('on',parseInt(s.dataset.v)===v);
+  });
+}
+
+function setTog(k,v,el){
+  S[k]=v;
+  el.closest('.tg').querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function togglePlatform(el){
+  el.classList.toggle('on');
+  var id=el.dataset.id;
+  var amtRow=document.getElementById('pltamt_row_'+id);
+  if(amtRow)amtRow.style.display=el.classList.contains('on')?'block':'none';
+}
+
+function gStep(n){
+  document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('ca').style.display='none';
+  document.getElementById('results')&&(document.getElementById('results').style.display='none');
+  if(n>0){
+    document.getElementById('step'+n).classList.add('active');
+  }
+  for(var i=1;i<=5;i++){
+    var ps=document.getElementById('ps'+i);
+    if(!ps)continue;
+    ps.classList.remove('active','done');
+    if(i<n)ps.classList.add('done');
+    else if(i===n)ps.classList.add('active');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goStep2(){
+  if(!S.niche){document.getElementById('niche-err').style.display='block';window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(!document.getElementById('biz_name').value.trim()){alert('Please enter your business name');return;}
+  if(!document.getElementById('biz_city').value.trim()){alert('Please enter your city');return;}
+  if(!document.getElementById('biz_state').value){alert('Please select your state');return;}
+  if(!document.getElementById('biz_address').value.trim()){alert('Please enter your business address');return;}
+  if(!document.getElementById('monthly_revenue').value){alert('Please enter your approximate monthly revenue');return;}
+  if(!document.getElementById('biz_phone').value.trim()){alert('Please enter your business phone number');return;}
+  gStep(2);
+}
+
+function goStep3(){
+  var def=NF[S.niche];
+  document.getElementById('s3title').textContent=def.title;
+  var html='';
+  def.secs.forEach(function(sec){
+    html+='<div class="cs"><div class="ct">'+sec.t+'</div>';
+    sec.f.forEach(function(f){
+      html+='<div class="field"><label>'+f.l+'</label>';
+      if(f.h)html+='<div class="hint">'+f.h+'</div>';
+      if(f.pct){
+        html+='<div class="tg" id="tg_'+f.id+'" style="margin-bottom:6px;">';
+        ['5','10','15','20','25','30'].forEach(function(v){
+          html+='<button class="tb" onclick="setFieldVal(\''+f.id+'\','+v+',this)">'+v+'%</button>';
+        });
+        html+='</div>';
+        html+='<input type="number" id="nf_'+f.id+'" placeholder="Or type: '+f.p+'" min="0" max="100" style="margin-top:0;">';
+      } else {
+        html+='<input type="number" id="nf_'+f.id+'" placeholder="'+f.p+'" min="0">';
+      }
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+
+  // Platform section
+  if(def.platforms&&def.platforms.length){
+    html+='<div class="cs"><div class="ct">🔗 Third-Party Platforms You Use</div>';
+    html+='<div class="ib">💡 Select any platforms you currently pay for. We\'ll calculate exactly how much they\'re draining each month.</div>';
+    html+='<div class="pl">';
+    def.platforms.forEach(function(p){
+      html+='<div class="pc" data-id="'+p.id+'" onclick="togglePlatform(this)">';
+      html+='<div class="pi">'+p.i+'</div>';
+      html+='<div style="flex:1"><div class="pn">'+p.n+'</div><div class="pf">'+p.f+'</div></div>';
+      html+='<div class="cb" id="plt_'+p.id+'">✓</div>';
+      html+='</div>';
+      html+='<div id="pltamt_row_'+p.id+'" style="display:none;padding:0 0 8px 0;">';
+      html+='<div class="field" style="margin-bottom:0;"><label>How much do you pay '+p.n+' per month? ($)</label>';
+      html+='<input type="number" id="pltamt_'+p.id+'" placeholder="e.g. 500" min="0"></div></div>';
+    });
+    html+='</div></div>';
+  }
+
+  document.getElementById('nf').innerHTML=html;
+  gStep(3);
+}
+
+function setFieldVal(id,v,btn){
+  document.getElementById('nf_'+id).value=v;
+  btn.closest('.tg').querySelectorAll('.tb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+}
+
+function goStep4(){
+  // Basic validation
+  gStep(4);
+}
+
+// ── Google Sign-In ────────────────────────────────────────
+function handleGoogleSignIn(){
+  // Initialize Google Sign-In
+  if(typeof google==='undefined'){
+    // Fallback for testing
+    S.user={name:'Test User',email:'test@example.com',photo:''};
+    showUserBar();
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id:'YOUR_GOOGLE_CLIENT_ID',
+    callback:function(response){
+      var payload=parseJwt(response.credential);
+      S.user={name:payload.name,email:payload.email,photo:payload.picture};
+      showUserBar();
+    }
+  });
+  google.accounts.id.prompt(function(notification){
+    if(notification.isNotDisplayed()||notification.isSkippedMoment()){
+      // Show manual fallback
+      var email=prompt('Please enter your business email to continue:');
+      var name=prompt('Please enter your full name:');
+      if(email&&name){
+        S.user={name:name,email:email,photo:''};
+        showUserBar();
+      }
+    }
+  });
+}
+
+function showUserBar(){
+  document.getElementById('user-bar').style.display='block';
+  document.getElementById('back-btn4').style.display='none';
+  var u=S.user;
+  if(u.photo)document.getElementById('u-avatar').src=u.photo;
+  else document.getElementById('u-avatar').src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'36\' height=\'36\' viewBox=\'0 0 36 36\'%3E%3Ccircle cx=\'18\' cy=\'18\' r=\'18\' fill=\'%23F97316\'/%3E%3Ctext x=\'18\' y=\'23\' text-anchor=\'middle\' fill=\'white\' font-size=\'16\' font-family=\'sans-serif\'%3E'+u.name[0]+'%3C/text%3E%3C/svg%3E';
+  document.getElementById('u-name').textContent=u.name;
+  document.getElementById('u-email').textContent=u.email;
+}
+
+function parseJwt(token){
+  var base64=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(decodeURIComponent(atob(base64).split('').map(function(c){return'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2);}).join('')));
+}
+
+// ── Main calculation ──────────────────────────────────────
+async function runCalc(){
+  document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active');});
+  var ca=document.getElementById('ca');
+  ca.style.display='block';
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  var msgs=[
+    'Analyzing your business data...',
+    'Calculating appointment and revenue losses...',
+    'Auditing your third-party platform costs...',
+    'Assessing your reputation impact...',
+    'Compiling your full leakage report...'
+  ];
+  var mi=0,prog=0;
+  var iv=setInterval(function(){
+    mi=(mi+1)%msgs.length;
+    document.getElementById('cmsg').textContent=msgs[mi];
+    prog=Math.min(prog+18,92);
+    document.getElementById('cpfill').style.width=prog+'%';
+  },700);
+
+  await new Promise(function(r){setTimeout(r,3500);});
+  clearInterval(iv);
+  document.getElementById('cpfill').style.width='100%';
+  await new Promise(function(r){setTimeout(r,300);});
+  ca.style.display='none';
+
+  var rev=document.getElementById('monthly_revenue').value;
+  var fi=_calcFinancial(S.niche);
+  var pi=_calcPlatform(S.niche);
+  var ri=_calcReputation(rev);
+  var all=[].concat(fi,pi,ri).filter(function(i){return i.v>=1;});
+  all.sort(function(a,b){return b.v-a.v;});
+  var total=all.reduce(function(s,i){return s+i.v;},0);
+  S.res={total:total,items:all};
+
+  // Render results
+  document.getElementById('rtotal').textContent='$'+Math.round(total).toLocaleString();
+  document.getElementById('rannual').innerHTML='That\'s <strong>$'+Math.round(total*12).toLocaleString()+'/year</strong> leaving your business';
+  document.getElementById('rbiz').textContent=document.getElementById('biz_name').value+' · '+document.getElementById('biz_city').value+', '+document.getElementById('biz_state').value;
+  document.getElementById('rbiz-sub').textContent='Here\'s where '+document.getElementById('biz_name').value+' is losing money every month';
+
+  var mx=all.length?all[0].v:1;
+
+  // Show first item free
+  var freeHtml='';
+  if(all.length>0){
+    var fi0=all[0];
+    var pct=100;
+    freeHtml='<div class="free-item"><div class="fi-top"><div class="fi-name">'+fi0.l+'</div><div class="fi-val">-$'+Math.round(fi0.v).toLocaleString()+'/mo</div></div><div class="fi-bar"><div class="fi-fill" data-w="100"></div></div><div class="fi-why">'+fi0.w+'</div></div>';
+  }
+  document.getElementById('free-item').innerHTML=freeHtml;
+
+  // Show locked items
+  var lockedHtml='';
+  all.slice(1).forEach(function(item){
+    var pw=Math.round((item.v/mx)*100);
+    lockedHtml+='<div class="locked-wrap"><div class="locked-item"><div class="fi-top"><div class="fi-name">'+item.l+'</div><div class="fi-val">-$'+Math.round(item.v).toLocaleString()+'/mo</div></div><div class="fi-bar"><div class="fi-fill" data-w="'+pw+'"></div></div><div class="fi-why">'+item.w+'</div></div><div class="lock-overlay"><div class="lock-icon">🔒</div><div class="lock-txt">Unlock full report to reveal</div></div></div>';
+  });
+  document.getElementById('locked-items').innerHTML=lockedHtml;
+
+  gStep(5);
+
+  // Animate free bar
+  setTimeout(function(){
+    document.querySelectorAll('.fi-fill').forEach(function(b){b.style.width=b.dataset.w+'%';});
+  },300);
+
+  // Save to Google Sheets
+  _saveLead(total);
+}
+
+function _saveLead(total){
+  var payload={
+    action:'saveCalculatorLead',
+    lead:{
+      id:Date.now().toString(),
+      date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+      name:S.user.name,
+      email:S.user.email,
+      phone:document.getElementById('biz_phone').value,
+      business:document.getElementById('biz_name').value,
+      niche:S.niche,
+      city:document.getElementById('biz_city').value,
+      state:document.getElementById('biz_state').value,
+      address:document.getElementById('biz_address').value,
+      website:document.getElementById('biz_website').value,
+      monthlyRevenue:document.getElementById('monthly_revenue').value,
+      employees:document.getElementById('num_employees').value,
+      googleRating:S.gr,
+      googleReviews:(document.getElementById('google_reviews')||{}).value||0,
+      totalLeakage:Math.round(total),
+      annualLeakage:Math.round(total*12),
+      paidReport:'No',
+      contacted:'No',
+      notes:''
+    }
+  };
+  fetch('https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec',{
+    method:'POST',body:JSON.stringify(payload)
+  }).catch(function(){});
+}
+
+function requestReport(){
+  var u=S.user;
+  if(!u.email){alert('Please verify your identity first');return;}
+  // Update sheet that they requested full report
+  var payload={
+    action:'saveCalculatorLead',
+    lead:{
+      id:Date.now().toString(),
+      date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+      name:u.name,email:u.email,
+      phone:document.getElementById('biz_phone').value,
+      business:document.getElementById('biz_name').value,
+      niche:S.niche,
+      city:document.getElementById('biz_city').value,
+      state:document.getElementById('biz_state').value,
+      address:document.getElementById('biz_address').value,
+      website:document.getElementById('biz_website').value,
+      monthlyRevenue:document.getElementById('monthly_revenue').value,
+      employees:document.getElementById('num_employees').value,
+      googleRating:S.gr,
+      googleReviews:(document.getElementById('google_reviews')||{}).value||0,
+      totalLeakage:Math.round(S.res.total),
+      annualLeakage:Math.round(S.res.total*12),
+      paidReport:'Requested',
+      contacted:'No',
+      notes:'Requested full report — follow up for payment'
+    }
+  };
+  fetch('https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec',{
+    method:'POST',body:JSON.stringify(payload)
+  }).catch(function(){});
+
+  document.querySelector('.unlock-cta').style.display='none';
+  document.getElementById('sbox').style.display='block';
+  document.getElementById('s-email').textContent=u.email;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
