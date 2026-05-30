@@ -870,7 +870,7 @@ function handleGoogleSignIn(){
     return;
   }
   google.accounts.id.initialize({
-    client_id:'YOUR_GOOGLE_CLIENT_ID',
+    client_id:'375278855341-458o47t4u1ebub42hq3sknn661t7vdq3.apps.googleusercontent.com',
     callback:function(response){
       var payload=parseJwt(response.credential);
       S.user={name:payload.name,email:payload.email,photo:payload.picture};
