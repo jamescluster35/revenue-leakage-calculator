@@ -911,7 +911,7 @@ function handleGoogleSignIn(){
     return;
   }
   google.accounts.id.initialize({
-    client_id:'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec',
+    client_id:'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/execcd',
     callback:function(res){
       var p=_pj(res.credential);
       S.user={name:p.name,email:p.email,photo:p.picture};
@@ -1165,6 +1165,25 @@ function generateFullReport(){
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(function(){document.querySelectorAll('.leak-fill').forEach(function(b){b.style.width=b.dataset.w+'%';});},400);
 }
+</script>
+
+<script>
+  // 1. Detect if the user has returned from payment
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPaid = urlParams.get('paid'); // This detects '?paid=true' in the URL
+
+  if (isPaid === 'true') {
+    // 2. Unlock the report automatically
+    console.log("Payment verified. Unlocking report...");
+    unlockFullReport(); 
+  }
+
+  function unlockFullReport() {
+    // Show the full results div
+    document.getElementById('full-report-section').style.display = 'block';
+    // Hide the 'Pay to unlock' button
+    document.getElementById('payment-button-container').style.display = 'none';
+  }
 </script>
 </body>
 </html>
