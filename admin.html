@@ -422,6 +422,22 @@ var TEMPLATES = {
     ]
   }
 };
+// 1. CONFIGURATION
+  var SHEET_URL = 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec';
+  var _leads = [];
+  var _current = null;
+
+  // 2. SECURITY HELPER (Place it here)
+  function secureRequest(action, data = {}) {
+    return {
+      method: 'POST',
+      body: JSON.stringify({
+        action: action,
+        password: document.getElementById('admin-pass').value,
+        ...data
+      })
+    };
+  }
 
 // ── Auth: Secure Server-Side Login ──────────────────────
 async function doLogin() {
