@@ -730,24 +730,27 @@ async function sendReport(){
   btn.innerHTML = '<div class="spin" style="width:16px;height:16px;border-width:2px;"></div> Sending...';
   btn.disabled = true;
   try{
-    var res  = await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
-      action:'generateAndSendReport',
-      lead:_current,
-      email:email,
-      note:note
-    })});
+    // Use the secureRequest helper to attach the password automatically
+    var res = await fetch(SHEET_URL, secureRequest('generateAndSendReport', {
+      lead: _current,
+      email: email,
+      note: note
+    }));
+    
     var data = await res.json();
+    
     if(data.success){
       showToast('✅ Report sent to '+email);
       closeModal('view-modal');
       loadLeads();
     } else {
-      showToast('Error: '+(data.error||'Check Apps Script'),true);
+      // This will now correctly show 'Unauthorized' if the password is wrong
+      showToast('Error: '+(data.error||'Check Apps Script'), true);
     }
-  } catch(e){ showToast('Failed — check Apps Script URL',true); }
-  btn.innerHTML = '📧 Generate & Send Report';
-  btn.disabled = false;
-}
+  } catch(e){ 
+    console.error(e); // Added for easier debugging in the F12 Console
+    showToast('Failed — check password or connection', true); 
+  }
 
 // ── Templates Tab ─────────────────────────────────────────
 function renderTemplates(){
