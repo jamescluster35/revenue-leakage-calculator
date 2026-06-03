@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDL Admin — Report Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:360px;text-align:center;}
+.login-icon{font-size:40px;margin-bottom:16px;}
+.login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--mu);margin-bottom:24px;}
+.login-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.login-input:focus{outline:none;border-color:var(--or);}
+.login-btn{width:100%;background:var(--or);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.login-btn:hover{opacity:.9;}
+.login-err{color:var(--rd);font-size:12px;margin-top:8px;display:none;}
+
+/* Admin UI */
+.admin{display:none;min-height:100vh;}
+.topbar{background:var(--card);border-bottom:1.5px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-logo{display:flex;align-items:center;gap:8px;}
+.topbar-dot{width:8px;height:8px;background:var(--or);border-radius:50%;}
+.topbar-txt{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--or);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.refresh-btn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
+.refresh-btn:hover{color:var(--tx);}
+.logout-btn{background:transparent;border:none;font-size:12px;color:var(--mu);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.logout-btn:hover{color:var(--rd);}
+
+.content{max-width:1000px;margin:0 auto;padding:24px 20px;}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;}
+.stat-label{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+@media(max-width:600px){.stats-bar{grid-template-columns:1fr 1fr;}}
+
+/* Leads table */
+.section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.leads-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+.leads-table{width:100%;border-collapse:collapse;}
+.leads-table th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;background:var(--card2);border-bottom:1.5px solid var(--border);}
+.leads-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.leads-table tr:last-child td{border-bottom:none;}
+.leads-table tr:hover td{background:rgba(249,115,22,.03);}
+.status-badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.s-new{background:rgba(59,130,246,.12);color:#3B82F6;}
+.s-requested{background:rgba(249,115,22,.12);color:var(--or);}
+.s-paid{background:rgba(16,185,129,.12);color:var(--gn);}
+.s-delivered{background:rgba(107,114,128,.12);color:var(--mu);}
+.leakage-val{font-family:'Syne',sans-serif;font-weight:700;color:var(--rd);}
+
+/* Action buttons */
+.action-btn{border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.action-btn:hover{opacity:.85;}
+.btn-generate{background:var(--or);color:#fff;}
+.btn-view{background:var(--card2);border:1px solid var(--border);color:var(--tx);}
+.btn-paid{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--gn);}
+.btn-sm{padding:4px 8px;font-size:10px;}
+
+/* Report preview modal */
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);}
+.modal.open{display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;}
+.modal-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;width:100%;max-width:560px;margin:auto;}
+.modal-head{padding:18px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);}
+.modal-body{padding:20px;}
+.modal-foot{padding:14px 20px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+/* Form fields in modal */
+.mfield{margin-bottom:14px;}
+.mfield label{display:block;font-size:11px;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.mfield input,.mfield textarea,.mfield select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+.mfield input:focus,.mfield textarea:focus{outline:none;border-color:var(--or);}
+.mfield textarea{resize:vertical;min-height:80px;}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.info-row:last-child{border-bottom:none;}
+.info-label{color:var(--mu);}
+.info-val{font-weight:500;text-align:right;}
+
+/* Buttons */
+.btn-primary{background:var(--or);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-secondary{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
+.btn-success{background:var(--gn);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gn);color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;z-index:200;display:none;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.toast.error{background:var(--rd);}
+
+/* Loading */
+.loading-row td{text-align:center;padding:40px;color:var(--mu);}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty-state{text-align:center;padding:48px 20px;color:var(--mu);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-wrap" id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">BDL Admin</div>
+    <div class="login-sub">Report Generator — Private Access</div>
+    <input type="password" class="login-input" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-err" id="login-err">Incorrect password</div>
+  </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div class="admin" id="admin-screen">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-dot"></div>
+      <div class="topbar-txt">BDL Admin</div>
+    </div>
+    <div class="topbar-right">
+      <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-label">Total Leads</div><div class="stat-val" id="st-total" style="color:var(--tx)">—</div></div>
+      <div class="stat"><div class="stat-label">Audit Requested</div><div class="stat-val" id="st-requested" style="color:var(--or)">—</div></div>
+      <div class="stat"><div class="stat-label">Paid</div><div class="stat-val" id="st-paid" style="color:var(--gn)">—</div></div>
+      <div class="stat"><div class="stat-label">Delivered</div><div class="stat-val" id="st-delivered" style="color:var(--mu)">—</div></div>
+    </div>
+
+    <!-- Audit Requests -->
+    <div class="section-title">📋 Audit Requests <span style="font-size:11px;color:var(--mu);font-weight:400;margin-left:4px;">— People who requested a paid audit</span></div>
+    <div class="leads-wrap">
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Contact</th>
+            <th>Niche</th>
+            <th>Est. Leakage</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="leads-body">
+          <tr class="loading-row"><td colspan="7"><div class="spinner"></div>Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- All Leads -->
+    <div class="section-title">👥 All Calculator Leads <span style="font-size:11px;color:var(--mu);font-weight:400;margin-left:4px;">— Everyone who used the calculator</span></div>
+    <div class="leads-wrap">
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>Niche</th>
+            <th>City</th>
+            <th>Est. Leakage</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="all-body">
+          <tr class="loading-row"><td colspan="7"><div class="spinner"></div>Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Generate Report Modal -->
+<div class="modal" id="gen-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">📊 Generate & Send Report</div>
+      <button class="modal-close" onclick="closeModal('gen-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="lead-info"></div>
+      <div style="margin:16px 0;border-top:1px solid var(--border);"></div>
+      <div class="mfield">
+        <label>Send report to email</label>
+        <input type="email" id="send-email" placeholder="client@email.com">
+      </div>
+      <div class="mfield">
+        <label>Add personal note (optional)</label>
+        <textarea id="send-note" placeholder="e.g. Hi Sarah, here is your personalised audit report as discussed..."></textarea>
+      </div>
+      <div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--mu);margin-top:4px;">
+        💡 This will generate a personalised report from their calculator data and email it directly. Make sure you have confirmed payment before sending.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('gen-modal')">Cancel</button>
+      <button class="btn-primary" id="gen-btn" onclick="generateAndSend()">Generate & Send Report →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mark Paid Modal -->
+<div class="modal" id="paid-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">✅ Mark as Paid</div>
+      <button class="modal-close" onclick="closeModal('paid-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--mu);margin-bottom:16px;">Confirm you have received payment for this audit before marking as paid.</p>
+      <div id="paid-info"></div>
+      <div class="mfield" style="margin-top:16px;">
+        <label>Payment reference / note</label>
+        <input type="text" id="paid-ref" placeholder="e.g. Wise payment received 01 Jun 2026">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal('paid-modal')">Cancel</button>
+      <button class="btn-success" onclick="confirmPaid()">Confirm Payment ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────
+var ADMIN_PASS = 'bdl2024admin';
+var SHEET_URL  = 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec';
+var _currentLead = null;
+var _allLeads    = [];
+
+// ── Auth ──────────────────────────────────────────────────
+function doLogin(){
+  var pass = document.getElementById('admin-pass').value;
+  if(pass === ADMIN_PASS){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    loadLeads();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+function doLogout(){
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('admin-pass').value = '';
+}
+
+// ── Load leads from sheet ─────────────────────────────────
+async function loadLeads(){
+  try{
+    var res  = await fetch(SHEET_URL+'?action=getCalculatorLeads');
+    var data = await res.json();
+    _allLeads = data.leads || [];
+    renderLeads();
+    renderStats();
+  } catch(e){
+    // Fallback — show empty state
+    _allLeads = [];
+    renderLeads();
+    renderStats();
+    showToast('Could not load leads — check Apps Script URL', true);
+  }
+}
+
+function renderStats(){
+  var total     = _allLeads.length;
+  var requested = _allLeads.filter(function(l){return l.paidReport==='Requested';}).length;
+  var paid      = _allLeads.filter(function(l){return l.paidReport==='Paid';}).length;
+  var delivered = _allLeads.filter(function(l){return l.contacted==='Yes';}).length;
+  document.getElementById('st-total').textContent     = total;
+  document.getElementById('st-requested').textContent = requested;
+  document.getElementById('st-paid').textContent      = paid;
+  document.getElementById('st-delivered').textContent = delivered;
+}
+
+function statusClass(s){
+  if(s==='Requested')return 's-requested';
+  if(s==='Paid')return 's-paid';
+  if(s==='Delivered'||s==='Yes')return 's-delivered';
+  return 's-new';
+}
+function statusLabel(l){
+  if(l.contacted==='Yes')return 'Delivered';
+  if(l.paidReport==='Paid')return 'Paid';
+  if(l.paidReport==='Requested')return 'Audit Requested';
+  return 'New';
+}
+
+function renderLeads(){
+  // Audit requests table
+  var requests = _allLeads.filter(function(l){
+    return l.paidReport==='Requested'||l.paidReport==='Paid';
+  });
+  var tbody = document.getElementById('leads-body');
+  if(requests.length===0){
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><p>No audit requests yet</p></div></td></tr>';
+  } else {
+    tbody.innerHTML = requests.map(function(l,i){
+      var sl = statusLabel(l);
+      return '<tr>'+
+        '<td><strong>'+esc(l.business||'—')+'</strong><br><span style="color:var(--mu);font-size:11px;">'+esc(l.city||'')+', '+esc(l.state||'')+'</span></td>'+
+        '<td>'+esc(l.name||'—')+'<br><span style="color:var(--mu);font-size:11px;">'+esc(l.email||'')+'</span></td>'+
+        '<td>'+esc(l.niche||'—')+'</td>'+
+        '<td class="leakage-val">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</td>'+
+        '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
+        '<td><span class="status-badge '+statusClass(l.paidReport)+'">'+sl+'</span></td>'+
+        '<td style="display:flex;gap:6px;flex-wrap:wrap;">'+
+          (l.paidReport==='Requested'?'<button class="action-btn btn-paid btn-sm" onclick="openPaidModal('+i+')">✓ Mark Paid</button>':'')+
+          (l.paidReport==='Paid'?'<button class="action-btn btn-generate btn-sm" onclick="openGenModal('+i+')">📧 Send Report</button>':'')+
+          '<button class="action-btn btn-view btn-sm" onclick="openGenModal('+i+')">View</button>'+
+        '</td>'+
+      '</tr>';
+    }).join('');
+    // Store index mapping
+    window._reqLeads = requests;
+  }
+
+  // All leads table
+  var tbody2 = document.getElementById('all-body');
+  if(_allLeads.length===0){
+    tbody2.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📊</div><p>No calculator leads yet — share your calculator link to get started</p></div></td></tr>';
+  } else {
+    tbody2.innerHTML = _allLeads.map(function(l,i){
+      var sl = statusLabel(l);
+      return '<tr>'+
+        '<td><strong>'+esc(l.business||'—')+'</strong></td>'+
+        '<td>'+esc(l.niche||'—')+'</td>'+
+        '<td style="color:var(--mu);font-size:12px;">'+esc((l.city||'')+(l.state?', '+l.state:''))+'</td>'+
+        '<td class="leakage-val">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</td>'+
+        '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
+        '<td><span class="status-badge '+statusClass(l.paidReport)+'">'+sl+'</span></td>'+
+        '<td><button class="action-btn btn-view btn-sm" onclick="openGenModal('+i+',true)">View</button></td>'+
+      '</tr>';
+    }).join('');
+  }
+}
+
+function esc(s){return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Modals ────────────────────────────────────────────────
+function openGenModal(i, allLeadsMode){
+  var lead = allLeadsMode ? _allLeads[i] : (window._reqLeads||_allLeads)[i];
+  _currentLead = lead;
+  document.getElementById('send-email').value = lead.email||'';
+  document.getElementById('send-note').value  = '';
+  document.getElementById('lead-info').innerHTML =
+    '<div style="background:var(--card2);border-radius:10px;padding:14px;">' +
+    [
+      ['Business',    lead.business||'—'],
+      ['Contact',     (lead.name||'—')+' · '+(lead.email||'')],
+      ['Niche',       lead.niche||'—'],
+      ['Location',    (lead.city||'')+(lead.state?', '+lead.state:'')],
+      ['Monthly Rev', '$'+Number(lead.monthlyRevenue||0).toLocaleString()],
+      ['Est. Leakage','$'+Number(lead.totalLeakage||0).toLocaleString()+'/mo · $'+Number(lead.annualLeakage||0).toLocaleString()+'/yr'],
+      ['Top Areas',   lead.leakageBreakdown||'—'],
+      ['Platforms',   lead.platforms||'None selected'],
+      ['Status',      lead.paidReport||'New'],
+    ].map(function(r){
+      return '<div class="info-row"><span class="info-label">'+r[0]+'</span><span class="info-val">'+esc(r[1])+'</span></div>';
+    }).join('') + '</div>';
+  document.getElementById('gen-modal').classList.add('open');
+}
+
+function openPaidModal(i){
+  var lead = (window._reqLeads||_allLeads)[i];
+  _currentLead = lead;
+  document.getElementById('paid-info').innerHTML =
+    '<div style="background:var(--card2);border-radius:10px;padding:14px;">'+
+    '<div class="info-row"><span class="info-label">Business</span><span class="info-val">'+esc(lead.business||'—')+'</span></div>'+
+    '<div class="info-row"><span class="info-label">Email</span><span class="info-val">'+esc(lead.email||'—')+'</span></div>'+
+    '<div class="info-row"><span class="info-label">Leakage</span><span class="info-val" style="color:var(--rd);">$'+Number(lead.totalLeakage||0).toLocaleString()+'/mo</span></div>'+
+    '</div>';
+  document.getElementById('paid-modal').classList.add('open');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── Mark as paid ──────────────────────────────────────────
+async function confirmPaid(){
+  if(!_currentLead)return;
+  var ref = document.getElementById('paid-ref').value.trim();
+  try{
+    await fetch(SHEET_URL, {
+      method:'POST',
+      body:JSON.stringify({
+        action:'updateCalculatorLead',
+        email:_currentLead.email,
+        changes:{paidReport:'Paid', notes:ref||'Payment confirmed'}
+      })
+    });
+    showToast('✅ Marked as paid');
+    closeModal('paid-modal');
+    loadLeads();
+  } catch(e){
+    showToast('Error updating record', true);
+  }
+}
+
+// ── Generate & Send Report ────────────────────────────────
+async function generateAndSend(){
+  var email = document.getElementById('send-email').value.trim();
+  var note  = document.getElementById('send-note').value.trim();
+  if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}
+  if(!_currentLead){showToast('No lead selected',true);return;}
+
+  var btn = document.getElementById('gen-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try{
+    var res  = await fetch(SHEET_URL, {
+      method:'POST',
+      body:JSON.stringify({
+        action:'generateAndSendReport',
+        lead: _currentLead,
+        email: email,
+        note: note
+      })
+    });
+    var data = await res.json();
+    if(data.success){
+      showToast('✅ Report sent to '+email);
+      closeModal('gen-modal');
+      loadLeads();
+    } else {
+      showToast('Error: '+(data.error||'Unknown error'), true);
+    }
+  } catch(e){
+    showToast('Failed to send — check Apps Script', true);
+  }
+
+  btn.textContent = 'Generate & Send Report →';
+  btn.disabled = false;
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, isError){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast'+(isError?' error':'');
+  t.style.display = 'block';
+  setTimeout(function(){t.style.display='none';},3500);
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.getElementById('admin-pass').addEventListener('keydown', function(e){
+  if(e.key==='Enter') doLogin();
+});
+</script>
+</body>
+</html>
