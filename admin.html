@@ -428,18 +428,21 @@ async function doLogin() {
   const pass = document.getElementById('admin-pass').value;
   const loginErr = document.getElementById('login-err');
 
-  // We call 'getAll' to test if the password is correct
+  // Send the password to the server to check if it's valid
   const res = await fetch(SHEET_URL, {
     method: 'POST',
     body: JSON.stringify({ action: 'getAll', password: pass })
   });
-
+  
   const data = await res.json();
 
-  // If the server says 'Unauthorized', the password is wrong
+  // If the server returns Unauthorized, the password is wrong
   if (data.error === 'Unauthorized: Access Denied') {
     loginErr.style.display = 'block';
     loginErr.textContent = 'Incorrect password.';
+  } else if (data.error) {
+    loginErr.style.display = 'block';
+    loginErr.textContent = 'Error: ' + data.error;
   } else {
     // Correct password - Login successful
     loginErr.style.display = 'none';
@@ -452,7 +455,6 @@ async function doLogin() {
     renderReportPreview();
   }
 }
-
 function doLogout() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('admin-screen').style.display = 'none';
