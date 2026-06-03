@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Revenue Leakage Audit | BDL</title>
-<meta name="description" content="Find out where your business is losing money. Free 2-minute assessment — personalised audit delivered within 24 hours. Serving USA &amp; Canada.">
+<meta name="description" content="Find out where your business is losing money. Free 2-minute assessment — personalised audit delivered within 24 hours.">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;--bl:#3B82F6;--yl:#F59E0B;}
@@ -170,35 +170,18 @@ footer a{color:var(--or);text-decoration:none;}
     <div class="nerr" id="niche-err">⚠ Please select your business type above</div>
     <div class="cs">
       <div class="ct">📍 About Your Business</div>
-      <div class="field"><label>Business name</label><input type="text" id="biz_name" placeholder="Your business name"></div>
+      <div class="field"><label>Business name</label><input type="text" id="biz_name" placeholder="e.g. Bright Smile Dental"></div>
       <div class="fr">
-        <div class="field"><label>City</label><input type="text" id="biz_city" placeholder="Your city"></div>
-        <div class="field"><label>State / Province</label>
-          <select id="biz_state"><option value="">State / Province</option>
-          <optgroup label="🇺🇸 USA — States">
+        <div class="field"><label>City</label><input type="text" id="biz_city" placeholder="e.g. Austin"></div>
+        <div class="field"><label>State</label>
+          <select id="biz_state"><option value="">State</option>
           <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
-          </optgroup>
-          <optgroup label="🇨🇦 Canada — Provinces">
-          <option>AB — Alberta</option><option>BC — British Columbia</option><option>MB — Manitoba</option><option>NB — New Brunswick</option><option>NL — Newfoundland</option><option>NS — Nova Scotia</option><option>NT — Northwest Territories</option><option>NU — Nunavut</option><option>ON — Ontario</option><option>PE — Prince Edward Island</option><option>QC — Quebec</option><option>SK — Saskatchewan</option><option>YT — Yukon</option>
-          </optgroup>
           </select>
         </div>
       </div>
-      <div class="field">
-        <label>Country</label>
-        <div class="choices" id="country-choices">
-          <div class="choice on" onclick="setCountry(this,'USA')" data-c="USA">🇺🇸 United States</div>
-          <div class="choice" onclick="setCountry(this,'Canada')" data-c="Canada">🇨🇦 Canada</div>
-        </div>
-      </div>
       <div class="fr">
-        <div class="field"><label>Approximate monthly revenue</label>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span id="curr-symbol" style="color:var(--mu);font-size:14px;white-space:nowrap;">USD $</span>
-            <input type="number" id="monthly_revenue" placeholder="Monthly revenue" min="0" style="flex:1;">
-          </div>
-        </div>
-        <div class="field"><label>Number of employees</label><input type="number" id="num_employees" placeholder="No. of employees" min="1"></div>
+        <div class="field"><label>Approximate monthly revenue ($)</label><input type="number" id="monthly_revenue" placeholder="e.g. 50000" min="0"></div>
+        <div class="field"><label>Number of employees</label><input type="number" id="num_employees" placeholder="e.g. 10" min="1"></div>
       </div>
     </div>
     <div class="nb"><button class="bn" onclick="goStep2()">Continue →</button></div>
@@ -220,7 +203,7 @@ footer a{color:var(--or);text-decoration:none;}
           <div class="star" data-v="0" onclick="setRating('g',0)" style="font-size:11px;padding:8px;">Not listed</div>
         </div>
       </div>
-      <div class="field"><label>Number of Google reviews</label><input type="number" id="google_reviews" placeholder="Number of reviews" min="0"></div>
+      <div class="field"><label>Number of Google reviews</label><input type="number" id="google_reviews" placeholder="e.g. 24" min="0"></div>
       <div class="field"><label>Do you reply to reviews?</label>
         <div class="choices">
           <div class="choice" onclick="setChoice('respond','always',this)">Yes, always</div>
@@ -298,10 +281,10 @@ footer a{color:var(--or);text-decoration:none;}
     <div class="audit-form" id="audit-form">
       <h3>Almost there — tell us where to send it</h3>
       <p>Fill in your details and we'll reach out within a few hours to confirm your audit and payment.</p>
-      <div class="field"><label>Your full name</label><input type="text" id="lead_name" placeholder="Your full name"></div>
-      <div class="field"><label>Business email</label><input type="email" id="lead_email" placeholder="Your business email"></div>
-      <div class="field"><label>Phone number</label><input type="tel" id="lead_phone" placeholder="Your phone number"></div>
-      <div class="field"><label>Business website (optional)</label><input type="url" id="lead_website" placeholder="Your website (optional)"></div>
+      <div class="field"><label>Your full name</label><input type="text" id="lead_name" placeholder="e.g. Dr. Sarah Collins"></div>
+      <div class="field"><label>Business email</label><input type="email" id="lead_email" placeholder="e.g. sarah@brightsmile.com"></div>
+      <div class="field"><label>Phone number</label><input type="tel" id="lead_phone" placeholder="e.g. 512-555-0100"></div>
+      <div class="field"><label>Business website (optional)</label><input type="url" id="lead_website" placeholder="e.g. https://brightsmile.com"></div>
       <button class="submit-btn" id="submit-btn" onclick="submitAuditRequest()">Submit Audit Request →</button>
       <div class="disclaimer" style="margin-top:12px;">We will contact you within a few hours to confirm details and send payment instructions. No automated charges — you approve before paying.</div>
     </div>
@@ -318,18 +301,9 @@ footer a{color:var(--or);text-decoration:none;}
 
 </div>
 
-<footer><p id="footer-txt">© 2026 BDL · Revenue Audit Service · USA &amp; Canada</p></footer>
+<footer><p id="footer-txt">© 2026 BDL · Revenue Audit Service for Growing Businesses</p></footer>
 
 <script>
-// ── Country & Currency ───────────────────────────────────
-var _country = 'USA';
-function setCountry(el, val){
-  _country = val;
-  document.querySelectorAll('#country-choices .choice').forEach(function(b){b.classList.remove('on');});
-  el.classList.add('on');
-  document.getElementById('curr-symbol').textContent = val==='Canada' ? 'CAD $' : 'USD $';
-}
-
 // ── Email (obfuscated) ────────────────────────────────────
 var _em=(function(){
   var a=['j','a','m','e','s','c','l','u','s','t','e','r','3','5'];
@@ -617,7 +591,7 @@ function goStep3(){
     html+='<div class="pl">';
     plats.forEach(function(p){
       html+='<div class="pc" data-pid="'+p.id+'" onclick="togglePlatform(this)"><div class="pi">'+p.i+'</div><div class="pinfo"><div class="pn">'+p.n+'</div><div class="pf">'+p.f+'</div></div><div class="cb">✓</div></div>';
-      html+='<div id="prow_'+p.id+'" style="display:none;padding:4px 0 8px;"><div class="field" style="margin:0;"><label>Monthly cost? ($)</label><input type="number" id="pltamt_'+p.id+'" placeholder="Monthly cost" min="0"></div></div>';
+      html+='<div id="prow_'+p.id+'" style="display:none;padding:4px 0 8px;"><div class="field" style="margin:0;"><label>Monthly cost? ($)</label><input type="number" id="pltamt_'+p.id+'" placeholder="e.g. 400" min="0"></div></div>';
     });
     html+='</div></div>';
   }
@@ -723,7 +697,6 @@ function _saveLead(status,name,email,phone,website){
         niche:S.niche,
         city:document.getElementById('biz_city').value,
         state:document.getElementById('biz_state').value,
-        country:_country,
         website:website||document.getElementById('lead_website')&&document.getElementById('lead_website').value||'',
         monthlyRevenue:document.getElementById('monthly_revenue').value,
         employees:document.getElementById('num_employees').value||'',
