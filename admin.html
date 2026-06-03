@@ -6,7 +6,7 @@
 <title>BDL Admin — Report Generator</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;}
+:root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;--bl:#3B82F6;--yl:#F59E0B;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
 
@@ -16,458 +16,758 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 .login-icon{font-size:40px;margin-bottom:16px;}
 .login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
 .login-sub{font-size:13px;color:var(--mu);margin-bottom:24px;}
-.login-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
-.login-input:focus{outline:none;border-color:var(--or);}
+.field-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.field-input:focus{outline:none;border-color:var(--or);}
 .login-btn{width:100%;background:var(--or);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
-.login-btn:hover{opacity:.9;}
 .login-err{color:var(--rd);font-size:12px;margin-top:8px;display:none;}
 
-/* Admin UI */
-.admin{display:none;min-height:100vh;}
-.topbar{background:var(--card);border-bottom:1.5px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+/* Admin */
+.admin{display:none;}
+.topbar{background:var(--card);border-bottom:1.5px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
 .topbar-logo{display:flex;align-items:center;gap:8px;}
 .topbar-dot{width:8px;height:8px;background:var(--or);border-radius:50%;}
-.topbar-txt{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--or);}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.refresh-btn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
-.refresh-btn:hover{color:var(--tx);}
-.logout-btn{background:transparent;border:none;font-size:12px;color:var(--mu);cursor:pointer;font-family:'DM Sans',sans-serif;}
-.logout-btn:hover{color:var(--rd);}
+.topbar-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--or);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.tbtn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
+.tbtn:hover{color:var(--tx);}
+.tbtn-out{background:transparent;border:none;font-size:12px;color:var(--mu);cursor:pointer;}
+.tbtn-out:hover{color:var(--rd);}
 
-.content{max-width:1000px;margin:0 auto;padding:24px 20px;}
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1.5px solid var(--border);padding:0 24px;background:var(--card);}
+.tab{padding:12px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--mu);border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s;}
+.tab.active{color:var(--or);border-bottom-color:var(--or);}
+.tab:hover{color:var(--tx);}
+.tab-badge{display:inline-block;background:var(--or);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:5px;}
 
-/* Stats bar */
-.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
-.stat{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px;}
-.stat-label{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
-.stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
-@media(max-width:600px){.stats-bar{grid-template-columns:1fr 1fr;}}
+/* Content */
+.content{max-width:1100px;margin:0 auto;padding:24px 20px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
 
-/* Leads table */
-.section-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.leads-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
-.leads-table{width:100%;border-collapse:collapse;}
-.leads-table th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;background:var(--card2);border-bottom:1.5px solid var(--border);}
-.leads-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
-.leads-table tr:last-child td{border-bottom:none;}
-.leads-table tr:hover td{background:rgba(249,115,22,.03);}
-.status-badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;}
-.s-new{background:rgba(59,130,246,.12);color:#3B82F6;}
-.s-requested{background:rgba(249,115,22,.12);color:var(--or);}
-.s-paid{background:rgba(16,185,129,.12);color:var(--gn);}
-.s-delivered{background:rgba(107,114,128,.12);color:var(--mu);}
-.leakage-val{font-family:'Syne',sans-serif;font-weight:700;color:var(--rd);}
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;}
+.stat-label{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1;}
+.stat-sub{font-size:10px;color:var(--mu);margin-top:3px;}
+
+/* Search & filter bar */
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.search-input{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;width:240px;}
+.search-input:focus{outline:none;border-color:var(--or);}
+.filter-select{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+
+/* Table */
+.table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;min-width:700px;}
+.tbl th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;background:var(--card2);border-bottom:1.5px solid var(--border);white-space:nowrap;}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(249,115,22,.02);}
+.tbl-empty{text-align:center;padding:48px;color:var(--mu);}
+.tbl-loading{text-align:center;padding:32px;color:var(--mu);}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
+.b-new{background:rgba(59,130,246,.12);color:var(--bl);}
+.b-requested{background:rgba(249,115,22,.12);color:var(--or);}
+.b-paid{background:rgba(16,185,129,.12);color:var(--gn);}
+.b-delivered{background:rgba(107,114,128,.15);color:var(--mu);}
+.b-niche{background:rgba(249,115,22,.08);color:var(--orl);font-size:10px;padding:2px 7px;border-radius:4px;}
 
 /* Action buttons */
-.action-btn{border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
-.action-btn:hover{opacity:.85;}
-.btn-generate{background:var(--or);color:#fff;}
-.btn-view{background:var(--card2);border:1px solid var(--border);color:var(--tx);}
-.btn-paid{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:var(--gn);}
-.btn-sm{padding:4px 8px;font-size:10px;}
+.ab{border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.ab:hover{opacity:.85;}
+.ab-orange{background:var(--or);color:#fff;}
+.ab-green{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--gn);}
+.ab-blue{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.2);color:var(--bl);}
+.ab-red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--rd);}
+.ab-gray{background:var(--card2);border:1px solid var(--border);color:var(--mu);}
+.ab-gap{display:flex;gap:5px;flex-wrap:wrap;}
 
-/* Report preview modal */
-.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);}
-.modal.open{display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;}
-.modal-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;width:100%;max-width:560px;margin:auto;}
-.modal-head{padding:18px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
-.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);}
-.modal-body{padding:20px;}
-.modal-foot{padding:14px 20px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+/* Leakage amount */
+.leak-amt{font-family:'Syne',sans-serif;font-weight:700;color:var(--rd);}
 
-/* Form fields in modal */
-.mfield{margin-bottom:14px;}
-.mfield label{display:block;font-size:11px;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
-.mfield input,.mfield textarea,.mfield select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
-.mfield input:focus,.mfield textarea:focus{outline:none;border-color:var(--or);}
-.mfield textarea{resize:vertical;min-height:80px;}
-.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
-.info-row:last-child{border-bottom:none;}
-.info-label{color:var(--mu);}
-.info-val{font-weight:500;text-align:right;}
+/* Modal */
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);overflow-y:auto;padding:20px;}
+.modal.open{display:flex;align-items:flex-start;justify-content:center;}
+.mc{background:var(--card);border:1.5px solid var(--border);border-radius:16px;width:100%;margin:auto;}
+.mc-sm{max-width:480px;}
+.mc-lg{max-width:720px;}
+.mc-head{padding:18px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.mc-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);line-height:1;}
+.mc-body{padding:20px;}
+.mc-foot{padding:14px 20px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+/* Form in modal */
+.mf{margin-bottom:14px;}
+.mf:last-child{margin-bottom:0;}
+.mf label{display:block;font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.mf input,.mf textarea,.mf select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+.mf input:focus,.mf textarea:focus,.mf select:focus{outline:none;border-color:var(--or);}
+.mf textarea{resize:vertical;min-height:90px;line-height:1.5;}
+
+/* Info rows */
+.irow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);gap:12px;}
+.irow:last-child{border-bottom:none;}
+.irow-label{font-size:12px;color:var(--mu);flex-shrink:0;}
+.irow-val{font-size:12px;font-weight:500;text-align:right;}
+
+/* Report preview */
+.rpt-preview{background:var(--bg);border-radius:10px;padding:20px;max-height:400px;overflow-y:auto;}
+.rpt-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+.rpt-section-title{font-size:10px;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.rpt-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.rpt-item:last-child{border-bottom:none;}
+.rpt-item-val{font-weight:700;color:var(--rd);}
 
 /* Buttons */
 .btn-primary{background:var(--or);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-secondary{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
+.btn-danger{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--rd);font-family:'DM Sans',sans-serif;}
 .btn-success{background:var(--gn);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 
+/* Email template preview */
+.email-template{background:#fff;border-radius:10px;padding:20px;font-family:Arial,sans-serif;color:#1a1a1a;font-size:13px;max-height:350px;overflow-y:auto;}
+.et-header{background:#F97316;padding:16px 20px;border-radius:8px;margin-bottom:16px;text-align:center;}
+.et-logo{color:#fff;font-size:18px;font-weight:700;margin-bottom:4px;}
+.et-sub{color:rgba(255,255,255,.8);font-size:12px;}
+.et-box{background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:12px;}
+.et-leak{color:#EF4444;font-size:28px;font-weight:800;text-align:center;margin:8px 0;}
+.et-item{padding:6px 0;border-bottom:1px solid #eee;font-size:12px;display:flex;align-items:center;gap:8px;}
+.et-item:last-child{border-bottom:none;}
+
+/* Niche email templates */
+.template-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+.template-niche{font-size:11px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.template-subject{font-size:12px;font-weight:500;margin-bottom:4px;}
+.template-preview{font-size:11px;color:var(--mu);line-height:1.5;}
+
 /* Toast */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--gn);color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;z-index:200;display:none;box-shadow:0 4px 20px rgba(0,0,0,.4);}
-.toast.error{background:var(--rd);}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gn);color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;z-index:200;display:none;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:320px;}
+.toast.err{background:var(--rd);}
 
-/* Loading */
-.loading-row td{text-align:center;padding:40px;color:var(--mu);}
-.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle;}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* Spinner */
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-.empty-state{text-align:center;padding:48px 20px;color:var(--mu);}
-.empty-icon{font-size:40px;margin-bottom:12px;}
+/* Confirm delete */
+.del-confirm{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px;font-size:13px;color:var(--rd);margin-bottom:14px;}
 </style>
 </head>
 <body>
 
-<!-- Login Screen -->
+<!-- Login -->
 <div class="login-wrap" id="login-screen">
   <div class="login-card">
     <div class="login-icon">🔐</div>
     <div class="login-title">BDL Admin</div>
-    <div class="login-sub">Report Generator — Private Access</div>
-    <input type="password" class="login-input" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-sub">Private access — report generator</div>
+    <input type="password" class="field-input" id="admin-pass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">Sign In →</button>
-    <div class="login-err" id="login-err">Incorrect password</div>
+    <div class="login-err" id="login-err">⚠ Incorrect password</div>
   </div>
 </div>
 
 <!-- Admin Dashboard -->
 <div class="admin" id="admin-screen">
 
-  <!-- Top bar -->
   <div class="topbar">
     <div class="topbar-logo">
       <div class="topbar-dot"></div>
-      <div class="topbar-txt">BDL Admin</div>
+      <div class="topbar-name">BDL Admin</div>
     </div>
     <div class="topbar-right">
-      <button class="refresh-btn" onclick="loadLeads()">↻ Refresh</button>
-      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      <button class="tbtn" onclick="loadLeads()">↻ Refresh</button>
+      <button class="tbtn-out" onclick="doLogout()">Sign out</button>
     </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('requests',this)">📋 Audit Requests <span class="tab-badge" id="req-count">0</span></div>
+    <div class="tab" onclick="switchTab('all',this)">👥 All Leads <span class="tab-badge" id="all-count" style="background:var(--mu)">0</span></div>
+    <div class="tab" onclick="switchTab('templates',this)">✉️ Email Templates</div>
+    <div class="tab" onclick="switchTab('preview',this)">📄 Report Preview</div>
   </div>
 
   <div class="content">
 
     <!-- Stats -->
-    <div class="stats-bar">
+    <div class="stats-grid">
       <div class="stat"><div class="stat-label">Total Leads</div><div class="stat-val" id="st-total" style="color:var(--tx)">—</div></div>
       <div class="stat"><div class="stat-label">Audit Requested</div><div class="stat-val" id="st-requested" style="color:var(--or)">—</div></div>
       <div class="stat"><div class="stat-label">Paid</div><div class="stat-val" id="st-paid" style="color:var(--gn)">—</div></div>
       <div class="stat"><div class="stat-label">Delivered</div><div class="stat-val" id="st-delivered" style="color:var(--mu)">—</div></div>
+      <div class="stat"><div class="stat-label">Revenue</div><div class="stat-val" id="st-revenue" style="color:var(--or)">—</div></div>
     </div>
 
-    <!-- Audit Requests -->
-    <div class="section-title">📋 Audit Requests <span style="font-size:11px;color:var(--mu);font-weight:400;margin-left:4px;">— People who requested a paid audit</span></div>
-    <div class="leads-wrap">
-      <table class="leads-table">
-        <thead>
-          <tr>
-            <th>Business</th>
-            <th>Contact</th>
-            <th>Niche</th>
-            <th>Est. Leakage</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="leads-body">
-          <tr class="loading-row"><td colspan="7"><div class="spinner"></div>Loading...</td></tr>
-        </tbody>
-      </table>
+    <!-- AUDIT REQUESTS TAB -->
+    <div class="tab-panel active" id="tab-requests">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="req-search" placeholder="Search requests..." oninput="filterLeads()">
+        <select class="filter-select" id="req-niche" onchange="filterLeads()">
+          <option value="">All niches</option>
+          <option>dental</option><option>realestate</option><option>healthcare</option>
+          <option>legal</option><option>saas</option><option>restaurant</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Contact</th><th>Niche</th><th>Est. Leakage</th>
+            <th>Date</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="req-body"><tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- All Leads -->
-    <div class="section-title">👥 All Calculator Leads <span style="font-size:11px;color:var(--mu);font-weight:400;margin-left:4px;">— Everyone who used the calculator</span></div>
-    <div class="leads-wrap">
-      <table class="leads-table">
-        <thead>
-          <tr>
-            <th>Business</th>
-            <th>Niche</th>
-            <th>City</th>
-            <th>Est. Leakage</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="all-body">
-          <tr class="loading-row"><td colspan="7"><div class="spinner"></div>Loading...</td></tr>
-        </tbody>
-      </table>
+    <!-- ALL LEADS TAB -->
+    <div class="tab-panel" id="tab-all">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="all-search" placeholder="Search all leads..." oninput="filterAll()">
+        <select class="filter-select" id="all-status" onchange="filterAll()">
+          <option value="">All statuses</option>
+          <option value="New">New</option>
+          <option value="Requested">Audit Requested</option>
+          <option value="Paid">Paid</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+        <select class="filter-select" id="all-niche" onchange="filterAll()">
+          <option value="">All niches</option>
+          <option>dental</option><option>realestate</option><option>healthcare</option>
+          <option>legal</option><option>saas</option><option>restaurant</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Niche</th><th>Location</th><th>Est. Leakage</th>
+            <th>Date</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="all-body"><tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMAIL TEMPLATES TAB -->
+    <div class="tab-panel" id="tab-templates">
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Niche-Specific Email Templates</div>
+        <div style="font-size:13px;color:var(--mu);">These templates are automatically personalised with the client's name, business name, and leakage data when you send a report.</div>
+      </div>
+      <div id="templates-list"></div>
+    </div>
+
+    <!-- REPORT PREVIEW TAB -->
+    <div class="tab-panel" id="tab-preview">
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Report Preview — Sample</div>
+        <div style="font-size:13px;color:var(--mu);margin-bottom:16px;">This is how the report looks when sent to a client. Data is automatically filled from their calculator submission.</div>
+      </div>
+      <div id="report-preview-content"></div>
     </div>
 
   </div>
 </div>
 
-<!-- Generate Report Modal -->
-<div class="modal" id="gen-modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <div class="modal-title">📊 Generate & Send Report</div>
-      <button class="modal-close" onclick="closeModal('gen-modal')">✕</button>
+<!-- VIEW/GENERATE MODAL -->
+<div class="modal" id="view-modal">
+  <div class="mc mc-lg">
+    <div class="mc-head">
+      <div class="mc-title" id="view-modal-title">Lead Details</div>
+      <button class="mc-close" onclick="closeModal('view-modal')">✕</button>
     </div>
-    <div class="modal-body">
-      <div id="lead-info"></div>
-      <div style="margin:16px 0;border-top:1px solid var(--border);"></div>
-      <div class="mfield">
-        <label>Send report to email</label>
-        <input type="email" id="send-email" placeholder="client@email.com">
+    <div class="mc-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Business Info</div>
+          <div id="view-biz-info"></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Leakage Summary</div>
+          <div id="view-leak-info"></div>
+        </div>
       </div>
-      <div class="mfield">
-        <label>Add personal note (optional)</label>
-        <textarea id="send-note" placeholder="e.g. Hi Sarah, here is your personalised audit report as discussed..."></textarea>
-      </div>
-      <div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--mu);margin-top:4px;">
-        💡 This will generate a personalised report from their calculator data and email it directly. Make sure you have confirmed payment before sending.
+      <div style="border-top:1px solid var(--border);padding-top:16px;">
+        <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Send Report Email</div>
+        <div class="mf"><label>Send to email</label><input type="email" id="send-email" placeholder="Client email"></div>
+        <div class="mf"><label>Personal message (optional)</label><textarea id="send-note" placeholder="Add a personal note — it appears at the top of the email..."></textarea></div>
+        <div style="background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--mu);margin-top:8px;">
+          💡 The report will be personalised with their business name, leakage data and niche-specific recommendations. Make sure payment is confirmed before sending.
+        </div>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn-secondary" onclick="closeModal('gen-modal')">Cancel</button>
-      <button class="btn-primary" id="gen-btn" onclick="generateAndSend()">Generate & Send Report →</button>
+    <div class="mc-foot">
+      <button class="btn-secondary" onclick="closeModal('view-modal')">Close</button>
+      <button class="btn-danger" onclick="confirmDelete()">🗑 Delete Lead</button>
+      <button class="btn-success" id="send-btn" onclick="sendReport()">📧 Generate & Send Report</button>
     </div>
   </div>
 </div>
 
-<!-- Mark Paid Modal -->
+<!-- MARK PAID MODAL -->
 <div class="modal" id="paid-modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <div class="modal-title">✅ Mark as Paid</div>
-      <button class="modal-close" onclick="closeModal('paid-modal')">✕</button>
+  <div class="mc mc-sm">
+    <div class="mc-head">
+      <div class="mc-title">✅ Confirm Payment Received</div>
+      <button class="mc-close" onclick="closeModal('paid-modal')">✕</button>
     </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--mu);margin-bottom:16px;">Confirm you have received payment for this audit before marking as paid.</p>
-      <div id="paid-info"></div>
-      <div class="mfield" style="margin-top:16px;">
-        <label>Payment reference / note</label>
-        <input type="text" id="paid-ref" placeholder="e.g. Wise payment received 01 Jun 2026">
+    <div class="mc-body">
+      <div id="paid-info" style="margin-bottom:16px;"></div>
+      <div class="mf"><label>Payment reference</label><input type="text" id="paid-ref" placeholder="e.g. Wise transfer confirmed 01 Jun 2026 — $47"></div>
+      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--mu);margin-top:8px;">
+        ✅ Only confirm after you have actually received and verified the payment.
       </div>
     </div>
-    <div class="modal-foot">
+    <div class="mc-foot">
       <button class="btn-secondary" onclick="closeModal('paid-modal')">Cancel</button>
       <button class="btn-success" onclick="confirmPaid()">Confirm Payment ✓</button>
     </div>
   </div>
 </div>
 
-<!-- Toast notification -->
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal" id="del-modal">
+  <div class="mc mc-sm">
+    <div class="mc-head">
+      <div class="mc-title">🗑 Delete Lead</div>
+      <button class="mc-close" onclick="closeModal('del-modal')">✕</button>
+    </div>
+    <div class="mc-body">
+      <div class="del-confirm">⚠ This will permanently delete this lead from your Google Sheet. This cannot be undone.</div>
+      <div id="del-info"></div>
+    </div>
+    <div class="mc-foot">
+      <button class="btn-secondary" onclick="closeModal('del-modal')">Cancel</button>
+      <button class="btn-danger" onclick="doDelete()">Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Config ────────────────────────────────────────────────
 var ADMIN_PASS = 'bdl2024admin';
 var SHEET_URL  = 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec';
-var _currentLead = null;
-var _allLeads    = [];
+var _leads = [];
+var _current = null;
+
+// ── Niche email templates ─────────────────────────────────
+var TEMPLATES = {
+  dental: {
+    icon: '🦷',
+    subject: 'Your Dental Practice Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for using our revenue leakage calculator. After reviewing your dental practice data, we\'ve identified several areas where {bizName} is losing revenue that could be recovered quickly.',
+    tips: [
+      'Implement automated SMS reminders 48 hours before appointments — reduces no-shows by 50-70%',
+      'Create a recall patient outreach schedule — call all overdue patients monthly',
+      'Set up a follow-up system for new patient inquiries — aim to call back within 2 hours',
+      'Review all software subscriptions — cancel tools your team doesn\'t use regularly'
+    ]
+  },
+  realestate: {
+    icon: '🏠',
+    subject: 'Your Real Estate Agency Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for completing our revenue leakage assessment. Based on your agency\'s data, we\'ve identified key areas where {bizName} is losing potential commission revenue.',
+    tips: [
+      'Implement a minimum 5-touch follow-up system for every new lead',
+      'Track your portal ROI monthly — Zillow fees vs deals actually closed',
+      'Reduce agent admin time with templates for common documents',
+      'Create a structured open house follow-up process within 24 hours'
+    ]
+  },
+  healthcare: {
+    icon: '🏥',
+    subject: 'Your Healthcare Practice Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for using our revenue leakage calculator. We\'ve reviewed your practice data and identified key areas where {bizName} is losing billable revenue.',
+    tips: [
+      'Implement automated appointment reminders via SMS and email',
+      'Review your insurance claims process — work with a billing specialist to reduce rejections',
+      'Create a referral conversion process — follow up within 24 hours of receiving a referral',
+      'Optimise staff scheduling to reduce overtime costs'
+    ]
+  },
+  legal: {
+    icon: '⚖️',
+    subject: 'Your Law Firm Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for completing our revenue leakage assessment. Based on your firm\'s data, we\'ve identified significant areas where {bizName} is losing billable revenue.',
+    tips: [
+      'Implement time tracking software to capture all billable hours accurately',
+      'Create an admin task delegation system — attorneys should focus on billable work',
+      'Build a consultation-to-case conversion process with follow-up calls',
+      'Reduce case delays with a client intake checklist to gather all documents upfront'
+    ]
+  },
+  saas: {
+    icon: '💻',
+    subject: 'Your SaaS Business Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for using our revenue leakage calculator. We\'ve analysed your SaaS metrics and identified key areas where {bizName} is losing recurring revenue.',
+    tips: [
+      'Implement proactive churn prevention — identify at-risk customers early',
+      'Improve trial onboarding with a structured activation sequence',
+      'Build a failed payment recovery flow — automated retry and email sequence',
+      'Create documentation and video tutorials to reduce avoidable support tickets'
+    ]
+  },
+  restaurant: {
+    icon: '🍽️',
+    subject: 'Your Restaurant Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for completing our revenue leakage assessment. We\'ve reviewed your restaurant\'s data and identified key areas where {bizName} is losing profit.',
+    tips: [
+      'Implement portion control and inventory tracking to reduce food waste',
+      'Create a reservation confirmation system with reminders to reduce no-shows',
+      'Evaluate delivery platform ROI — consider direct ordering to reduce 30% commission fees',
+      'Optimise staff scheduling based on historical busy and slow periods'
+    ]
+  }
+};
 
 // ── Auth ──────────────────────────────────────────────────
 function doLogin(){
-  var pass = document.getElementById('admin-pass').value;
-  if(pass === ADMIN_PASS){
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('admin-screen').style.display = 'block';
+  if(document.getElementById('admin-pass').value===ADMIN_PASS){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin-screen').style.display='block';
     loadLeads();
+    renderTemplates();
+    renderReportPreview();
   } else {
-    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-err').style.display='block';
   }
 }
 function doLogout(){
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('admin-screen').style.display = 'none';
-  document.getElementById('admin-pass').value = '';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('admin-screen').style.display='none';
+  document.getElementById('admin-pass').value='';
+}
+document.getElementById('admin-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+// ── Tabs ──────────────────────────────────────────────────
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
 }
 
-// ── Load leads from sheet ─────────────────────────────────
+// ── Load leads ────────────────────────────────────────────
 async function loadLeads(){
   try{
     var res  = await fetch(SHEET_URL+'?action=getCalculatorLeads');
     var data = await res.json();
-    _allLeads = data.leads || [];
-    renderLeads();
-    renderStats();
+    _leads = (data.leads||[]);
   } catch(e){
-    // Fallback — show empty state
-    _allLeads = [];
-    renderLeads();
-    renderStats();
-    showToast('Could not load leads — check Apps Script URL', true);
+    _leads = [];
+    showToast('Could not connect to sheet — check Apps Script URL', true);
   }
+  renderStats();
+  filterLeads();
+  filterAll();
+  document.getElementById('req-count').textContent = _leads.filter(function(l){return l.paidReport==='Requested'||l.paidReport==='Paid';}).length;
+  document.getElementById('all-count').textContent = _leads.length;
 }
 
 function renderStats(){
-  var total     = _allLeads.length;
-  var requested = _allLeads.filter(function(l){return l.paidReport==='Requested';}).length;
-  var paid      = _allLeads.filter(function(l){return l.paidReport==='Paid';}).length;
-  var delivered = _allLeads.filter(function(l){return l.contacted==='Yes';}).length;
+  var total     = _leads.length;
+  var requested = _leads.filter(function(l){return l.paidReport==='Requested';}).length;
+  var paid      = _leads.filter(function(l){return l.paidReport==='Paid'||l.paidReport==='Delivered';}).length;
+  var delivered = _leads.filter(function(l){return l.paidReport==='Delivered';}).length;
+  var revenue   = paid * 47;
   document.getElementById('st-total').textContent     = total;
   document.getElementById('st-requested').textContent = requested;
   document.getElementById('st-paid').textContent      = paid;
   document.getElementById('st-delivered').textContent = delivered;
+  document.getElementById('st-revenue').textContent   = '$'+revenue.toLocaleString();
 }
 
-function statusClass(s){
-  if(s==='Requested')return 's-requested';
-  if(s==='Paid')return 's-paid';
-  if(s==='Delivered'||s==='Yes')return 's-delivered';
-  return 's-new';
+// ── Filter & render ───────────────────────────────────────
+function filterLeads(){
+  var q = (document.getElementById('req-search').value||'').toLowerCase();
+  var n = document.getElementById('req-niche').value;
+  var filtered = _leads.filter(function(l){
+    var isReq = l.paidReport==='Requested'||l.paidReport==='Paid';
+    if(!isReq) return false;
+    if(n && l.niche!==n) return false;
+    if(q && !(l.business||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  renderTable('req-body', filtered, true);
 }
-function statusLabel(l){
-  if(l.contacted==='Yes')return 'Delivered';
-  if(l.paidReport==='Paid')return 'Paid';
-  if(l.paidReport==='Requested')return 'Audit Requested';
+
+function filterAll(){
+  var q  = (document.getElementById('all-search').value||'').toLowerCase();
+  var st = document.getElementById('all-status').value;
+  var n  = document.getElementById('all-niche').value;
+  var filtered = _leads.filter(function(l){
+    if(n && l.niche!==n) return false;
+    if(q && !(l.business||'').toLowerCase().includes(q) && !(l.name||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q)) return false;
+    if(st){
+      var sl = getStatusLabel(l);
+      if(sl!==st) return false;
+    }
+    return true;
+  });
+  renderTable('all-body', filtered, false);
+}
+
+function getStatusLabel(l){
+  if(l.paidReport==='Delivered') return 'Delivered';
+  if(l.paidReport==='Paid') return 'Paid';
+  if(l.paidReport==='Requested') return 'Requested';
   return 'New';
 }
+function getStatusBadge(l){
+  var s=getStatusLabel(l);
+  var c={'New':'b-new','Requested':'b-requested','Paid':'b-paid','Delivered':'b-delivered'}[s]||'b-new';
+  return '<span class="badge '+c+'">'+s+'</span>';
+}
 
-function renderLeads(){
-  // Audit requests table
-  var requests = _allLeads.filter(function(l){
-    return l.paidReport==='Requested'||l.paidReport==='Paid';
-  });
-  var tbody = document.getElementById('leads-body');
-  if(requests.length===0){
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><p>No audit requests yet</p></div></td></tr>';
-  } else {
-    tbody.innerHTML = requests.map(function(l,i){
-      var sl = statusLabel(l);
+function renderTable(tbodyId, rows, isReqs){
+  var tb = document.getElementById(tbodyId);
+  if(rows.length===0){
+    tb.innerHTML='<tr><td colspan="7" class="tbl-empty">'+
+      (isReqs ? '📭 No audit requests yet — share your calculator to get started' : '📊 No leads found')+
+      '</td></tr>';
+    return;
+  }
+  var idx = function(l){ return _leads.indexOf(l); };
+  if(isReqs){
+    tb.innerHTML = rows.map(function(l){
+      var i=idx(l);
       return '<tr>'+
-        '<td><strong>'+esc(l.business||'—')+'</strong><br><span style="color:var(--mu);font-size:11px;">'+esc(l.city||'')+', '+esc(l.state||'')+'</span></td>'+
-        '<td>'+esc(l.name||'—')+'<br><span style="color:var(--mu);font-size:11px;">'+esc(l.email||'')+'</span></td>'+
-        '<td>'+esc(l.niche||'—')+'</td>'+
-        '<td class="leakage-val">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</td>'+
+        '<td><strong>'+esc(l.business||'—')+'</strong><br><span style="color:var(--mu);font-size:11px;">'+esc((l.city||'')+(l.state?', '+l.state:''))+'</span></td>'+
+        '<td>'+esc(l.name||'—')+'<br><span style="color:var(--mu);font-size:11px;">'+esc(l.email||'')+'</span><br><span style="color:var(--mu);font-size:11px;">'+esc(l.phone||'')+'</span></td>'+
+        '<td><span class="b-niche">'+esc(l.niche||'—')+'</span></td>'+
+        '<td><span class="leak-amt">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</span></td>'+
         '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
-        '<td><span class="status-badge '+statusClass(l.paidReport)+'">'+sl+'</span></td>'+
-        '<td style="display:flex;gap:6px;flex-wrap:wrap;">'+
-          (l.paidReport==='Requested'?'<button class="action-btn btn-paid btn-sm" onclick="openPaidModal('+i+')">✓ Mark Paid</button>':'')+
-          (l.paidReport==='Paid'?'<button class="action-btn btn-generate btn-sm" onclick="openGenModal('+i+')">📧 Send Report</button>':'')+
-          '<button class="action-btn btn-view btn-sm" onclick="openGenModal('+i+')">View</button>'+
-        '</td>'+
+        '<td>'+getStatusBadge(l)+'</td>'+
+        '<td><div class="ab-gap">'+
+          (l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+
+          (l.paidReport==='Paid'?'<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>':'')+
+          '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
+          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
+        '</div></td>'+
       '</tr>';
     }).join('');
-    // Store index mapping
-    window._reqLeads = requests;
-  }
-
-  // All leads table
-  var tbody2 = document.getElementById('all-body');
-  if(_allLeads.length===0){
-    tbody2.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📊</div><p>No calculator leads yet — share your calculator link to get started</p></div></td></tr>';
   } else {
-    tbody2.innerHTML = _allLeads.map(function(l,i){
-      var sl = statusLabel(l);
+    tb.innerHTML = rows.map(function(l){
+      var i=idx(l);
       return '<tr>'+
         '<td><strong>'+esc(l.business||'—')+'</strong></td>'+
-        '<td>'+esc(l.niche||'—')+'</td>'+
+        '<td><span class="b-niche">'+esc(l.niche||'—')+'</span></td>'+
         '<td style="color:var(--mu);font-size:12px;">'+esc((l.city||'')+(l.state?', '+l.state:''))+'</td>'+
-        '<td class="leakage-val">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</td>'+
+        '<td><span class="leak-amt">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</span></td>'+
         '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
-        '<td><span class="status-badge '+statusClass(l.paidReport)+'">'+sl+'</span></td>'+
-        '<td><button class="action-btn btn-view btn-sm" onclick="openGenModal('+i+',true)">View</button></td>'+
+        '<td>'+getStatusBadge(l)+'</td>'+
+        '<td><div class="ab-gap">'+
+          '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
+          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
+        '</div></td>'+
       '</tr>';
     }).join('');
   }
 }
 
-function esc(s){return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// ── Modals ────────────────────────────────────────────────
-function openGenModal(i, allLeadsMode){
-  var lead = allLeadsMode ? _allLeads[i] : (window._reqLeads||_allLeads)[i];
-  _currentLead = lead;
-  document.getElementById('send-email').value = lead.email||'';
-  document.getElementById('send-note').value  = '';
-  document.getElementById('lead-info').innerHTML =
-    '<div style="background:var(--card2);border-radius:10px;padding:14px;">' +
-    [
-      ['Business',    lead.business||'—'],
-      ['Contact',     (lead.name||'—')+' · '+(lead.email||'')],
-      ['Niche',       lead.niche||'—'],
-      ['Location',    (lead.city||'')+(lead.state?', '+lead.state:'')],
-      ['Monthly Rev', '$'+Number(lead.monthlyRevenue||0).toLocaleString()],
-      ['Est. Leakage','$'+Number(lead.totalLeakage||0).toLocaleString()+'/mo · $'+Number(lead.annualLeakage||0).toLocaleString()+'/yr'],
-      ['Top Areas',   lead.leakageBreakdown||'—'],
-      ['Platforms',   lead.platforms||'None selected'],
-      ['Status',      lead.paidReport||'New'],
-    ].map(function(r){
-      return '<div class="info-row"><span class="info-label">'+r[0]+'</span><span class="info-val">'+esc(r[1])+'</span></div>';
-    }).join('') + '</div>';
-  document.getElementById('gen-modal').classList.add('open');
+// ── View Modal ────────────────────────────────────────────
+function openViewModal(i){
+  var l = _leads[i];
+  _current = l;
+  document.getElementById('view-modal-title').textContent = '📊 '+l.business+' — '+l.niche;
+  document.getElementById('send-email').value = l.email||'';
+  document.getElementById('send-note').value = '';
+
+  // Business info
+  document.getElementById('view-biz-info').innerHTML = [
+    ['Name',        l.name||'—'],
+    ['Email',       l.email||'—'],
+    ['Phone',       l.phone||'—'],
+    ['Business',    l.business||'—'],
+    ['Location',    (l.city||'')+(l.state?', '+l.state:'')],
+    ['Website',     l.website||'—'],
+    ['Employees',   l.employees||'—'],
+    ['Revenue',     '$'+Number(l.monthlyRevenue||0).toLocaleString()+'/mo'],
+    ['Date',        l.date||'—'],
+    ['Status',      getStatusLabel(l)],
+  ].map(function(r){
+    return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val">'+esc(r[1])+'</span></div>';
+  }).join('');
+
+  // Leakage info
+  document.getElementById('view-leak-info').innerHTML = [
+    ['Est. Monthly Leakage', '$'+Number(l.totalLeakage||0).toLocaleString()+'/mo'],
+    ['Est. Annual Leakage',  '$'+Number(l.annualLeakage||0).toLocaleString()+'/yr'],
+    ['Google Rating',        l.googleRating>0?l.googleRating+' ★':'Not listed'],
+    ['Google Reviews',       l.googleReviews||'0'],
+    ['Top Leakage Areas',    l.leakageBreakdown||'—'],
+    ['Platforms Used',       l.platforms||'None'],
+    ['Paid Report',          l.paidReport||'No'],
+  ].map(function(r){
+    var isLeak = r[0].includes('Leakage');
+    return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val"'+(isLeak?' style="color:var(--rd);"':'')+'>'+esc(r[1])+'</span></div>';
+  }).join('');
+
+  document.getElementById('view-modal').classList.add('open');
 }
 
+// ── Paid Modal ────────────────────────────────────────────
 function openPaidModal(i){
-  var lead = (window._reqLeads||_allLeads)[i];
-  _currentLead = lead;
+  var l = _leads[i];
+  _current = l;
+  document.getElementById('paid-ref').value='';
   document.getElementById('paid-info').innerHTML =
-    '<div style="background:var(--card2);border-radius:10px;padding:14px;">'+
-    '<div class="info-row"><span class="info-label">Business</span><span class="info-val">'+esc(lead.business||'—')+'</span></div>'+
-    '<div class="info-row"><span class="info-label">Email</span><span class="info-val">'+esc(lead.email||'—')+'</span></div>'+
-    '<div class="info-row"><span class="info-label">Leakage</span><span class="info-val" style="color:var(--rd);">$'+Number(lead.totalLeakage||0).toLocaleString()+'/mo</span></div>'+
+    '<div style="background:var(--card2);border-radius:8px;padding:12px;">'+
+    '<div class="irow"><span class="irow-label">Business</span><span class="irow-val">'+esc(l.business||'—')+'</span></div>'+
+    '<div class="irow"><span class="irow-label">Email</span><span class="irow-val">'+esc(l.email||'—')+'</span></div>'+
+    '<div class="irow"><span class="irow-label">Amount</span><span class="irow-val" style="color:var(--gn);">$47</span></div>'+
     '</div>';
   document.getElementById('paid-modal').classList.add('open');
 }
 
+// ── Delete Modal ──────────────────────────────────────────
+function openDeleteModal(i){
+  var l = _leads[i];
+  _current = l;
+  document.getElementById('del-info').innerHTML =
+    '<div class="irow"><span class="irow-label">Business</span><span class="irow-val">'+esc(l.business||'—')+'</span></div>'+
+    '<div class="irow"><span class="irow-label">Email</span><span class="irow-val">'+esc(l.email||'—')+'</span></div>';
+  document.getElementById('del-modal').classList.add('open');
+}
+
+function confirmDelete(){
+  closeModal('view-modal');
+  if(_current) openDeleteModal(_leads.indexOf(_current));
+}
+
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ── Mark as paid ──────────────────────────────────────────
+// ── Actions ───────────────────────────────────────────────
 async function confirmPaid(){
-  if(!_currentLead)return;
+  if(!_current) return;
   var ref = document.getElementById('paid-ref').value.trim();
   try{
-    await fetch(SHEET_URL, {
-      method:'POST',
-      body:JSON.stringify({
-        action:'updateCalculatorLead',
-        email:_currentLead.email,
-        changes:{paidReport:'Paid', notes:ref||'Payment confirmed'}
-      })
-    });
+    await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
+      action:'updateCalculatorLead',
+      email:_current.email,
+      changes:{paidReport:'Paid',notes:ref||'Payment confirmed'}
+    })});
     showToast('✅ Marked as paid');
     closeModal('paid-modal');
     loadLeads();
-  } catch(e){
-    showToast('Error updating record', true);
-  }
+  } catch(e){ showToast('Error updating record',true); }
 }
 
-// ── Generate & Send Report ────────────────────────────────
-async function generateAndSend(){
+async function doDelete(){
+  if(!_current) return;
+  try{
+    await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
+      action:'deleteCalculatorLead',
+      email:_current.email
+    })});
+    showToast('🗑 Lead deleted');
+    closeModal('del-modal');
+    loadLeads();
+  } catch(e){ showToast('Error deleting lead',true); }
+}
+
+async function sendReport(){
   var email = document.getElementById('send-email').value.trim();
   var note  = document.getElementById('send-note').value.trim();
   if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}
-  if(!_currentLead){showToast('No lead selected',true);return;}
-
-  var btn = document.getElementById('gen-btn');
-  btn.textContent = 'Sending...';
+  if(!_current){showToast('No lead selected',true);return;}
+  var btn = document.getElementById('send-btn');
+  btn.innerHTML = '<div class="spin" style="width:16px;height:16px;border-width:2px;"></div> Sending...';
   btn.disabled = true;
-
   try{
-    var res  = await fetch(SHEET_URL, {
-      method:'POST',
-      body:JSON.stringify({
-        action:'generateAndSendReport',
-        lead: _currentLead,
-        email: email,
-        note: note
-      })
-    });
+    var res  = await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
+      action:'generateAndSendReport',
+      lead:_current,
+      email:email,
+      note:note
+    })});
     var data = await res.json();
     if(data.success){
       showToast('✅ Report sent to '+email);
-      closeModal('gen-modal');
+      closeModal('view-modal');
       loadLeads();
     } else {
-      showToast('Error: '+(data.error||'Unknown error'), true);
+      showToast('Error: '+(data.error||'Check Apps Script'),true);
     }
-  } catch(e){
-    showToast('Failed to send — check Apps Script', true);
-  }
-
-  btn.textContent = 'Generate & Send Report →';
+  } catch(e){ showToast('Failed — check Apps Script URL',true); }
+  btn.innerHTML = '📧 Generate & Send Report';
   btn.disabled = false;
 }
 
-// ── Toast ─────────────────────────────────────────────────
-function showToast(msg, isError){
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className   = 'toast'+(isError?' error':'');
-  t.style.display = 'block';
-  setTimeout(function(){t.style.display='none';},3500);
+// ── Templates Tab ─────────────────────────────────────────
+function renderTemplates(){
+  var html = '';
+  Object.keys(TEMPLATES).forEach(function(niche){
+    var t = TEMPLATES[niche];
+    html += '<div class="template-box">'+
+      '<div class="template-niche">'+t.icon+' '+niche.toUpperCase()+'</div>'+
+      '<div class="template-subject">📧 Subject: '+t.subject+'</div>'+
+      '<div class="template-preview" style="margin-top:8px;margin-bottom:10px;">'+t.intro+'</div>'+
+      '<div style="font-size:10px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Niche-specific recommendations included:</div>'+
+      t.tips.map(function(tip,i){return '<div style="font-size:11px;color:var(--mu);display:flex;gap:6px;margin-bottom:4px;"><span style="color:var(--or);">'+(i+1)+'.</span><span>'+tip+'</span></div>';}).join('')+
+    '</div>';
+  });
+  document.getElementById('templates-list').innerHTML = html;
 }
 
-// ── Init ──────────────────────────────────────────────────
-document.getElementById('admin-pass').addEventListener('keydown', function(e){
-  if(e.key==='Enter') doLogin();
-});
+// ── Report Preview Tab ────────────────────────────────────
+function renderReportPreview(){
+  var sample = {
+    business:'Sample Business Inc.',name:'Sarah Johnson',
+    niche:'dental',city:'Austin',state:'TX',
+    monthlyRevenue:65000,totalLeakage:8450,annualLeakage:101400,
+    googleRating:3.4,googleReviews:28,
+    leakageBreakdown:'No-Show Appointment Loss | New Patient Follow-Up Gap | Unscheduled Recall Patients',
+    platforms:'Zocdoc'
+  };
+  var html = '<div class="rpt-preview">'+
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">📊 Business Overview</div>'+
+      '<div class="rpt-item"><span>Business</span><span class="rpt-item-val">'+sample.business+'</span></div>'+
+      '<div class="rpt-item"><span>Location</span><span class="rpt-item-val">'+sample.city+', '+sample.state+'</span></div>'+
+      '<div class="rpt-item"><span>Monthly Revenue</span><span class="rpt-item-val">$'+sample.monthlyRevenue.toLocaleString()+'</span></div>'+
+      '<div class="rpt-item"><span>Google Rating</span><span class="rpt-item-val" style="color:var(--rd);">'+sample.googleRating+' ★ ('+sample.googleReviews+' reviews)</span></div>'+
+    '</div>'+
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">📉 Leakage Summary</div>'+
+      '<div class="rpt-item"><span>Monthly Leakage</span><span class="rpt-item-val" style="color:var(--rd);">-$'+sample.totalLeakage.toLocaleString()+'/mo</span></div>'+
+      '<div class="rpt-item"><span>Annual Leakage</span><span class="rpt-item-val" style="color:var(--rd);">-$'+sample.annualLeakage.toLocaleString()+'/yr</span></div>'+
+      '<div class="rpt-item"><span>Cost Per Day</span><span class="rpt-item-val" style="color:var(--rd);">$'+Math.round(sample.totalLeakage/30)+'/day</span></div>'+
+    '</div>'+
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">🔍 Top Leakage Areas</div>'+
+      sample.leakageBreakdown.split(' | ').map(function(item,i){
+        return '<div class="rpt-item"><span>'+item+'</span><span class="rpt-item-val" style="color:var(--or);">⚠ Identified</span></div>';
+      }).join('')+
+    '</div>'+
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">🔗 Platform Drain</div>'+
+      '<div class="rpt-item"><span>'+sample.platforms+'</span><span class="rpt-item-val" style="color:var(--rd);">Fees included in report</span></div>'+
+    '</div>'+
+    '<div style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.2);border-radius:8px;padding:12px;font-size:12px;color:var(--mu);margin-top:4px;">'+
+      '📧 When sent, the email includes: full leakage breakdown, industry benchmarks, niche-specific recommendations, 90-day action plan and contact details.'+
+    '</div>'+
+  '</div>';
+  document.getElementById('report-preview-content').innerHTML = html;
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg, isErr){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(isErr?' err':'');
+  t.style.display='block';
+  setTimeout(function(){t.style.display='none';},3500);
+}
 </script>
 </body>
 </html>
