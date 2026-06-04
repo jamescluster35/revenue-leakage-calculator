@@ -827,33 +827,46 @@ async function confirmPaid(){
   if(!_current) return;
   var ref = document.getElementById('paid-ref').value.trim();
   try{
-    await fetch(SHEET_URL,{
+    var res = await fetch(SHEET_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        action:'updateCalculatorLead',
+        action:'markPaymentPaid',
         id:_current.id || null,
         email:_current.email,
         changes:{paidReport:'Paid',paymentReference:ref||'Payment confirmed',notes:ref||'Payment confirmed',paymentConfirmedDate:new Date().toLocaleDateString('en-US')}
       })
     });
+    var data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Update failed');
+    }
     showToast('✅ Marked as paid');
     closeModal('paid-modal');
     loadLeads();
-  } catch(e){ showToast('Error updating record',true); }
+  } catch(e){ showToast('Error updating record: '+e.message,true); }
 }
 
 async function doDelete(){
   if(!_current) return;
   try{
-    await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
-      action:'deleteCalculatorLead',
-      email:_current.email
-    })});
+    var res = await fetch(SHEET_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'deleteCalculatorLead',
+        id:_current.id || null,
+        email:_current.email
+      })
+    });
+    var data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Delete failed');
+    }
     showToast('🗑 Lead deleted');
     closeModal('del-modal');
     loadLeads();
-  } catch(e){ showToast('Error deleting lead',true); }
+  } catch(e){ showToast('Error deleting lead: '+e.message,true); }
 }
 
 async function sendReport(){
@@ -866,7 +879,7 @@ async function sendReport(){
   btn.disabled = true;
   try{
     var template = getTemplateForLead(_current);
-    var isPaid = _current.paidReport==='Paid' || _current.paidReport==='Delivered';
+    var isPaid = /paid|delivered/i.test(String(_current.paidReport||''));
     var subject = isPaid ? buildEmailSubject(_current, template) : 'Revenue Audit Summary — '+(_current.business||'Your Business');
     var htmlBody = isPaid ? buildReportHtml(_current, note, template) : buildReportSummaryHtml(_current, note, template);
     var res  = await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
