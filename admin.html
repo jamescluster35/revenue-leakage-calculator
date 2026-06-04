@@ -829,7 +829,6 @@ async function confirmPaid(){
   try{
     var res = await fetch(SHEET_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         action:'markPaymentPaid',
         id:_current.id || null,
@@ -852,7 +851,6 @@ async function doDelete(){
   try{
     var res = await fetch(SHEET_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         action:'deleteCalculatorLead',
         id:_current.id || null,
