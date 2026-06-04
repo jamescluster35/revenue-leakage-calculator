@@ -171,6 +171,7 @@ footer a{color:var(--or);text-decoration:none;}
     <div class="cs">
       <div class="ct">📍 About Your Business</div>
       <div class="field"><label>Business name</label><input type="text" id="biz_name" placeholder="Your business name"></div>
+      <div class="field"><label>Street address</label><input type="text" id="biz_street" placeholder="123 Main Street"></div>
       <div class="fr">
         <div class="field"><label>City</label><input type="text" id="biz_city" placeholder="Your city"></div>
         <div class="field"><label>State / Province</label>
@@ -183,6 +184,7 @@ footer a{color:var(--or);text-decoration:none;}
           </optgroup>
           </select>
         </div>
+        <div class="field"><label>Zip code</label><input type="text" id="biz_zip" placeholder="Your zip/postal code"></div>
       </div>
       <div class="field">
         <label>Country</label>
@@ -721,8 +723,10 @@ function _saveLead(status,name,email,phone,website){
         phone:(phone||'').replace(/[^\d\s\-()+]/g,''),
         business:document.getElementById('biz_name').value,
         niche:S.niche,
+        street:document.getElementById('biz_street').value,
         city:document.getElementById('biz_city').value,
         state:document.getElementById('biz_state').value,
+        zip:document.getElementById('biz_zip').value,
         country:_country,
         website:website||document.getElementById('lead_website')&&document.getElementById('lead_website').value||'',
         monthlyRevenue:document.getElementById('monthly_revenue').value,

@@ -529,14 +529,14 @@ async function loadLeads(){
   filterLeads();
   filterAll();
   filterVerifiedPayments();
-  document.getElementById('req-count').textContent = _leads.filter(function(l){return l.paidReport==='Requested'||l.paidReport==='Paid';}).length;
+  document.getElementById('req-count').textContent = _leads.filter(function(l){return !l.paidReport || l.paidReport==='Requested'||l.paidReport==='Paid';}).length;
   document.getElementById('all-count').textContent = _leads.length;
   document.getElementById('paid-count').textContent = _leads.filter(function(l){return l.paidReport==='Paid'||l.paidReport==='Delivered';}).length;
 }
 
 function renderStats(){
   var total     = _leads.length;
-  var requested = _leads.filter(function(l){return l.paidReport==='Requested';}).length;
+  var requested = _leads.filter(function(l){return !l.paidReport || l.paidReport==='Requested';}).length;
   var paid      = _leads.filter(function(l){return l.paidReport==='Paid'||l.paidReport==='Delivered';}).length;
   var delivered = _leads.filter(function(l){return l.paidReport==='Delivered';}).length;
   var revenue   = paid * 47;
@@ -553,7 +553,7 @@ function filterLeads(){
   var q = (document.getElementById('req-search').value||'').toLowerCase();
   var n = document.getElementById('req-niche').value;
   var filtered = _leads.filter(function(l){
-    var isReq = l.paidReport==='Requested'||l.paidReport==='Paid';
+    var isReq = !l.paidReport || l.paidReport==='Requested'||l.paidReport==='Paid';
     if(!isReq) return false;
     if(n && l.niche!==n) return false;
     if(q && !(l.business||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q)) return false;
@@ -718,7 +718,7 @@ function renderTable(tbodyId, rows, isReqs){
         '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
         '<td>'+getStatusBadge(l)+'</td>'+
         '<td><div class="ab-gap">'+
-          (l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+
+          (!l.paidReport || l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+
           (l.paidReport==='Paid'?'<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>':'')+
           '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
           '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
@@ -758,15 +758,19 @@ function openViewModal(i){
 
   // Business info
   document.getElementById('view-biz-info').innerHTML = [
+    ['ID',          l.id||'—'],
+    ['Date',        l.date||'—'],
     ['Name',        l.name||'—'],
     ['Email',       l.email||'—'],
     ['Phone',       l.phone||'—'],
     ['Business',    l.business||'—'],
-    ['Location',    (l.city||'')+(l.state?', '+l.state:'')],
+    ['Street',      l.street||'—'],
+    ['City',        l.city||'—'],
+    ['State',       l.state||'—'],
+    ['Zip',         l.zip||'—'],
     ['Website',     l.website||'—'],
     ['Employees',   l.employees||'—'],
     ['Revenue',     '$'+Number(l.monthlyRevenue||0).toLocaleString()+'/mo'],
-    ['Date',        l.date||'—'],
     ['Status',      getStatusLabel(l)],
   ].map(function(r){
     return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val">'+esc(r[1])+'</span></div>';
