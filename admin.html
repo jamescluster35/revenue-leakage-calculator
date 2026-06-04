@@ -666,6 +666,38 @@ function buildReportHtml(lead, note, template){
   '</div>';
 }
 
+function buildReportSummaryHtml(lead, note, template){
+  var business = esc(lead.business||'Client Business');
+  var email = esc(lead.email||'');
+  var revenue = Number(lead.monthlyRevenue)||0;
+  var monthlyLeak = Number(lead.totalLeakage)||0;
+  var annualLeak = Number(lead.annualLeakage)||0;
+  var breakdown = (lead.leakageBreakdown||template.tips.slice(0,3).join(' | ')).split(' | ').filter(Boolean);
+  var noteHtml = note ? '<div class="rpt-section"><div class="rpt-section-title">✉️ Note</div><div style="font-size:13px;line-height:1.6;color:#d1d5db;">'+esc(note).replace(/\n/g,'<br>')+'</div></div>' : '';
+  return '<div class="rpt-preview">'+
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">📊 Summary for '+business+'</div>'+        
+      '<div class="rpt-item"><span>Business</span><span class="rpt-item-val">'+business+'</span></div>'+        
+      '<div class="rpt-item"><span>Contact</span><span class="rpt-item-val">'+email+'</span></div>'+        
+      '<div class="rpt-item"><span>Monthly Revenue</span><span class="rpt-item-val">$'+revenue.toLocaleString()+'</span></div>'+        
+      '<div class="rpt-item"><span>Estimated Leakage</span><span class="rpt-item-val" style="color:#ef4444;">$'+monthlyLeak.toLocaleString()+'/mo</span></div>'+        
+      '<div class="rpt-item"><span>Estimated Annual Impact</span><span class="rpt-item-val" style="color:#ef4444;">$'+annualLeak.toLocaleString()+'/yr</span></div>'+        
+    '</div>'+
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">🔍 High-level risk areas</div>'+        
+      breakdown.map(function(item){
+        return '<div class="rpt-item"><span>'+esc(item)+'</span><span class="rpt-item-val" style="color:#f97316;">Review</span></div>';
+      }).join('')+
+    '</div>'+        
+    '<div class="rpt-section">'+
+      '<div class="rpt-section-title">📌 What’s next</div>'+        
+      '<div class="rpt-item"><span>Full paid report</span><span class="rpt-item-val">Delivered after payment</span></div>'+        
+      '<div class="rpt-item"><span>Includes</span><span class="rpt-item-val">Detailed benchmarks, action plan, and recovery steps</span></div>'+        
+    '</div>'+        
+    noteHtml+
+  '</div>';
+}
+
 function renderTable(tbodyId, rows, isReqs){
   var tb = document.getElementById(tbodyId);
   if(rows.length===0){
@@ -721,6 +753,8 @@ function openViewModal(i){
   document.getElementById('view-modal-title').textContent = '📊 '+l.business+' — '+l.niche;
   document.getElementById('send-email').value = l.email||'';
   document.getElementById('send-note').value = '';
+  var sendBtn = document.getElementById('send-btn');
+  sendBtn.textContent = (l.paidReport==='Paid' || l.paidReport==='Delivered') ? '📧 Generate & Send Report' : '📧 Send Summary';
 
   // Business info
   document.getElementById('view-biz-info').innerHTML = [
@@ -793,11 +827,16 @@ async function confirmPaid(){
   if(!_current) return;
   var ref = document.getElementById('paid-ref').value.trim();
   try{
-    await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
-      action:'updateCalculatorLead',
-      email:_current.email,
-      changes:{paidReport:'Paid',paymentReference:ref||'Payment confirmed',notes:ref||'Payment confirmed',paymentConfirmedDate:new Date().toLocaleDateString('en-US')}
-    })});
+    await fetch(SHEET_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        action:'updateCalculatorLead',
+        id:_current.id || null,
+        email:_current.email,
+        changes:{paidReport:'Paid',paymentReference:ref||'Payment confirmed',notes:ref||'Payment confirmed',paymentConfirmedDate:new Date().toLocaleDateString('en-US')}
+      })
+    });
     showToast('✅ Marked as paid');
     closeModal('paid-modal');
     loadLeads();
@@ -827,8 +866,9 @@ async function sendReport(){
   btn.disabled = true;
   try{
     var template = getTemplateForLead(_current);
-    var subject = buildEmailSubject(_current, template);
-    var htmlBody = buildReportHtml(_current, note, template);
+    var isPaid = _current.paidReport==='Paid' || _current.paidReport==='Delivered';
+    var subject = isPaid ? buildEmailSubject(_current, template) : 'Revenue Audit Summary — '+(_current.business||'Your Business');
+    var htmlBody = isPaid ? buildReportHtml(_current, note, template) : buildReportSummaryHtml(_current, note, template);
     var res  = await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
       action:'generateAndSendReport',
       lead:_current,
@@ -839,7 +879,7 @@ async function sendReport(){
     })});
     var data = await res.json();
     if(data.success){
-      showToast('✅ Report sent to '+email);
+      showToast(isPaid ? '✅ Report sent to '+email : '✅ Summary sent to '+email);
       closeModal('view-modal');
       loadLeads();
     } else {
