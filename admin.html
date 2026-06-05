@@ -616,6 +616,20 @@ function getStatusBadge(l){
   return '<span class="badge '+c+'">'+s+'</span>';
 }
 
+function generatePersonalNote(lead){
+  var name     = (lead.name||'there').split(' ')[0];
+  var bizName  = lead.business || 'your business';
+  var leakage  = Number(lead.totalLeakage||0);
+  var niche    = (lead.niche||'').toLowerCase();
+  var topArea  = (lead.leakageBreakdown||'').split(' | ')[0] || 'key operational areas';
+  var city     = lead.city ? ' in '+lead.city : '';
+  var phrase   = {dental:'practice',realestate:'agency',healthcare:'practice',legal:'firm',saas:'business',restaurant:'restaurant'}[niche]||'business';
+  return 'Hi '+name+', I have personally reviewed the diagnostic data submitted for '+bizName+city+
+    '. Based on the operational benchmarks I applied to your '+phrase+
+    ', the primary revenue friction point is "'+topArea+'" — this alone accounts for a significant portion of your estimated $'+leakage.toLocaleString()+
+    '/month leakage.\n\nThe 90-day roadmap in this report is sequenced to deliver measurable results within the first 14 days without requiring new technology or significant capital investment.\n\nPlease review the Week 1-2 actions first — these are your highest-ROI quick wins. Reply to this email if you have any questions.';
+}
+
 function getTemplateForLead(lead){
   var niche = (lead.niche||'').toLowerCase();
   return TEMPLATES[niche] || TEMPLATES.dental;
@@ -766,7 +780,7 @@ function openViewModal(i){
   _current = l;
   document.getElementById('view-modal-title').textContent = '📊 '+l.business+' — '+l.niche;
   document.getElementById('send-email').value = l.email||'';
-  document.getElementById('send-note').value = '';
+  document.getElementById('send-note').value = generatePersonalNote(lead);
   var sendBtn = document.getElementById('send-btn');
   sendBtn.textContent = (l.paidReport==='Paid' || l.paidReport==='Delivered') ? '📧 Generate & Send Report' : '📧 Send Summary';
 
