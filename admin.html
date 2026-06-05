@@ -530,23 +530,35 @@ async function loadLeads(){
   filterLeads();
   filterAll();
   filterVerifiedPayments();
-  document.getElementById('req-count').textContent = _leads.filter(function(l){return !l.paidReport || l.paidReport==='Requested'||l.paidReport==='Paid';}).length;
-  document.getElementById('all-count').textContent = _leads.length;
-  document.getElementById('paid-count').textContent = _leads.filter(function(l){return l.paidReport==='Paid'||l.paidReport==='Delivered';}).length;
+  // Counts updated by renderStats()
 }
 
 function renderStats(){
   var total     = _leads.length;
-  var requested = _leads.filter(function(l){return !l.paidReport || l.paidReport==='Requested';}).length;
-  var paid      = _leads.filter(function(l){return l.paidReport==='Paid'||l.paidReport==='Delivered';}).length;
+  var newLeads  = _leads.filter(function(l){return !l.paidReport || l.paidReport===''||l.paidReport==='New';}).length;
+  var requested = _leads.filter(function(l){return l.paidReport==='Requested';}).length;
+  var paid      = _leads.filter(function(l){return l.paidReport==='Paid';}).length;
   var delivered = _leads.filter(function(l){return l.paidReport==='Delivered';}).length;
-  var revenue   = paid * 47;
-  document.getElementById('st-total').textContent     = total;
-  document.getElementById('st-requested').textContent = requested;
-  document.getElementById('st-paid').textContent      = paid;
-  document.getElementById('st-delivered').textContent = delivered;
-  document.getElementById('st-revenue').textContent   = '$'+revenue.toLocaleString();
-  document.getElementById('paid-count').textContent = paid;
+  var revenue   = (paid + delivered) * 47;
+  // Update stat cards
+  var els = {
+    'st-total':     total,
+    'st-requested': requested + newLeads,
+    'st-paid':      paid,
+    'st-delivered': delivered,
+    'st-revenue':   '$'+revenue.toLocaleString()
+  };
+  Object.keys(els).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.textContent = els[id];
+  });
+  // Update tab badges
+  var reqBadge  = document.getElementById('req-count');
+  var allBadge  = document.getElementById('all-count');
+  var paidBadge = document.getElementById('paid-count');
+  if(reqBadge)  reqBadge.textContent  = requested + newLeads;
+  if(allBadge)  allBadge.textContent  = total;
+  if(paidBadge) paidBadge.textContent = paid + delivered;
 }
 
 // ── Filter & render ───────────────────────────────────────
@@ -554,7 +566,8 @@ function filterLeads(){
   var q = (document.getElementById('req-search').value||'').toLowerCase();
   var n = document.getElementById('req-niche').value;
   var filtered = _leads.filter(function(l){
-    var isReq = !l.paidReport || l.paidReport==='Requested'||l.paidReport==='Paid';
+    // Show: New, empty, Requested, Paid — anything not yet Delivered
+    var isReq = !l.paidReport || l.paidReport==='' || l.paidReport==='New' || l.paidReport==='Requested' || l.paidReport==='Paid';
     if(!isReq) return false;
     if(n && l.niche!==n) return false;
     if(q && !(l.business||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q)) return false;
