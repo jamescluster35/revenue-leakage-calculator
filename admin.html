@@ -954,7 +954,7 @@ function openViewModal(i){
   _current = l;
   document.getElementById('view-modal-title').textContent = '📊 '+l.business+' — '+l.niche;
   document.getElementById('send-email').value = l.email||'';
-  document.getElementById('send-note').value = generatePersonalNote(lead);
+  document.getElementById('send-note').value = generatePersonalNote(l);
   var sendBtn = document.getElementById('send-btn');
   sendBtn.textContent = (l.paidReport==='Paid' || l.paidReport==='Delivered') ? '📧 Generate & Send Report' : '📧 Send Summary';
 
