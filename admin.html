@@ -273,6 +273,24 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       <div id="report-preview-content"></div>
     </div>
 
+    <!-- VERIFIED PAYMENTS TAB -->
+    <div class="tab-panel" id="tab-verified">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="vp-search" placeholder="Search verified payments..." oninput="filterVerifiedPayments()">
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Contact</th><th>Niche</th><th>Est. Leakage</th>
+            <th>Payment Ref</th><th>Date Paid</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="verified-body">
+            <tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -321,7 +339,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
     <div class="mc-body">
       <div id="paid-info" style="margin-bottom:16px;"></div>
-      <div class="mf"><label>Payment reference</label><input type="text" id="paid-ref" placeholder="e.g. Wise transfer confirmed 01 Jun 2026 — $47"></div>
+      <div class="mf"><label>Payment reference</label><input type="text" id="paid-ref" placeholder="e.g. transfer confirmed 01 Jun 2026 — $47"></div>
       <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--mu);margin-top:8px;">
         ✅ Only confirm after you have actually received and verified the payment.
       </div>
@@ -593,8 +611,9 @@ function filterAll(){
 }
 
 function filterVerifiedPayments(){
-  var q = (document.getElementById('paid-search').value||'').toLowerCase();
-  var n = document.getElementById('paid-niche').value;
+  var vpEl = document.getElementById('vp-search');
+  var q = vpEl ? vpEl.value.toLowerCase() : '';
+  var n = '';
   var filtered = _leads.filter(function(l){
     if(l.paidReport!=='Paid' && l.paidReport!=='Delivered') return false;
     if(n && l.niche!==n) return false;
@@ -646,53 +665,208 @@ function buildActionPlanHtml(template){
   }).join('');
 }
 function buildReportHtml(lead, note, template){
-  var business = esc(lead.business||'Client Business');
-  var name = esc(lead.name||'Client');
-  var email = esc(lead.email||'');
-  var niche = esc((lead.niche||'').toUpperCase());
-  var revenue = Number(lead.monthlyRevenue)||0;
-  var monthlyLeak = Number(lead.totalLeakage)||0;
-  var annualLeak = Number(lead.annualLeakage)||0;
-  var rating = lead.googleRating || 'N/A';
-  var reviews = lead.googleReviews || '0';
-  var breakdown = esc(lead.leakageBreakdown||'Not available');
-  var platforms = esc(lead.platforms||'Not provided');
-  var ref = esc(lead.paymentReference||'Not provided');
-  var noteHtml = note ? '<div class="rpt-section"><div class="rpt-section-title">✉️ Personal Note</div><div style="font-size:13px;line-height:1.6;color:#d1d5db;">'+esc(note).replace(/\n/g,'<br>')+'</div></div>' : '';
-  return '<div class="rpt-preview">'+
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">📊 Business Overview</div>'+        
-      '<div class="rpt-item"><span>Business</span><span class="rpt-item-val">'+business+'</span></div>'+        
-      '<div class="rpt-item"><span>Contact</span><span class="rpt-item-val">'+name+' · '+email+'</span></div>'+        
-      '<div class="rpt-item"><span>Niche</span><span class="rpt-item-val">'+niche+'</span></div>'+        
-      '<div class="rpt-item"><span>Location</span><span class="rpt-item-val">'+esc((lead.city||'')+(lead.state?(', '+lead.state):''))+'</span></div>'+        
-      '<div class="rpt-item"><span>Monthly Revenue</span><span class="rpt-item-val">$'+revenue.toLocaleString()+'</span></div>'+        
-      '<div class="rpt-item"><span>Payment Reference</span><span class="rpt-item-val" style="color:#10b981;">'+ref+'</span></div>'+        
+  var bizName   = lead.business  || 'Your Business';
+  var firstName = (lead.name||'there').split(' ')[0];
+  var niche     = (lead.niche||'').toLowerCase();
+  var leakage   = Number(lead.totalLeakage||0);
+  var annual    = Number(lead.annualLeakage||0);
+  var daily     = Math.round(leakage/30);
+  var fixTop    = Math.round(leakage*0.6);
+  var grRating  = Number(lead.googleRating||0);
+  var grCount   = Number(lead.googleReviews||0);
+  var items     = (lead.leakageBreakdown||'').split(' | ').filter(Boolean);
+  var reportId  = 'BDL-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+(niche||'GEN').toUpperCase().slice(0,3);
+  var noteBlock = note
+    ? '<div style="background:#1a1d2e;border-left:4px solid #F97316;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px;">'+
+      '<p style="color:#F97316;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;">Personal Note from Your Analyst</p>'+
+      '<p style="color:#E8EAF0;font-size:13px;line-height:1.7;margin:0;">'+esc(note).split('\n').join('<br>')+'</p></div>'
+    : '';
+
+  // Leakage items
+  var leakHtml = items.map(function(item,i){
+    var col = i===0?'#EF4444':i<=2?'#F97316':'#F59E0B';
+    var sev = i===0?'🔴 Critical':i<=2?'🟠 High':'🟡 Medium';
+    var share = Math.round(leakage/Math.max(1,items.length));
+    var w = Math.round(100-(i*60/Math.max(1,items.length-1)));
+    return '<div style="border-left:3px solid '+col+';background:#141720;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:10px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;">'+
+        '<div style="font-size:13px;font-weight:600;color:#E8EAF0;">'+esc(item)+'</div>'+
+        '<div style="text-align:right;flex-shrink:0;">'+
+          '<div style="font-size:14px;font-weight:800;color:'+col+';">-$'+share.toLocaleString()+'/mo</div>'+
+          '<div style="background:rgba(239,68,68,.1);color:'+col+';font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px;display:inline-block;">'+sev+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="height:4px;background:#1E2230;border-radius:2px;margin-bottom:6px;">'+
+        '<div style="width:'+w+'%;height:100%;background:'+col+';border-radius:2px;"></div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:#6B7280;">Resolving this recovers a portion of your $'+leakage.toLocaleString()+'/mo total.</div>'+
+    '</div>';
+  }).join('');
+
+  // 90-day plan from template
+  var plan = template.plan90||[];
+  var weeks = {};
+  plan.forEach(function(p){var w=p.week||'1-2';if(!weeks[w])weeks[w]=[];weeks[w].push(p);});
+  var wColors = {'1-2':'#EF4444','3-4':'#F97316','5-8':'#F59E0B','9-12':'#10B981'};
+  var wTitles = {'1-2':'Weeks 1-2 — Quick Wins','3-4':'Weeks 3-4 — Build Systems','5-8':'Weeks 5-8 — Optimise','9-12':'Weeks 9-12 — Scale'};
+  var planHtml = Object.keys(weeks).map(function(week){
+    var c=wColors[week]||'#F97316';
+    var actions = weeks[week].map(function(p){
+      var tc=p.priority==='CRITICAL'?'#EF4444':p.priority==='HIGH'?'#F97316':'#F59E0B';
+      return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1E2230;">'+
+        '<div style="color:#F97316;font-weight:800;flex-shrink:0;">→</div>'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:13px;font-weight:600;color:#E8EAF0;margin-bottom:3px;">'+esc(p.action)+'</div>'+
+          '<div style="font-size:11px;color:#9CA3AF;line-height:1.5;margin-bottom:4px;">'+esc(p.detail)+'</div>'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+            '<span style="background:rgba(0,0,0,.3);color:'+tc+';font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;">'+(p.priority||'MEDIUM')+'</span>'+
+            (p.quick?'<span style="background:rgba(16,185,129,.12);color:#10B981;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;">⚡ Quick Win</span>':'')+
+            '<span style="color:#10B981;font-size:10px;font-weight:600;">'+(p.impact||'')+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    return '<div style="background:#0F1117;border:1.5px solid #1E2230;border-radius:10px;padding:14px;margin-bottom:10px;">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'+
+        '<div style="width:26px;height:26px;background:'+c+';border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">'+week.split('-')[0]+'</div>'+
+        '<div style="font-size:13px;font-weight:700;color:#E8EAF0;flex:1;">'+(wTitles[week]||'Weeks '+week)+'</div>'+
+        '<div style="font-size:10px;color:#10B981;font-weight:600;">+$'+Math.round(leakage*0.15).toLocaleString()+'/mo potential</div>'+
+      '</div>'+actions+'</div>';
+  }).join('');
+
+  // Niche-specific improve section
+  var improveMap = {
+    dental:[
+      {area:'Patient Retention',fix:'Set up SMS reminders 48h and 2h before appointments. Assign one staff member for recall calls — 10 patients per day. Target: under 8% no-show rate.'},
+      {area:'New Patient Pipeline',fix:'2-hour callback rule for every inquiry. Track inquiry-to-appointment conversion weekly. Top practices convert 65%+ of inquiries.'},
+      {area:'Revenue Per Chair',fix:'Present treatment plans same day of diagnosis. Offer payment plans. Top practices collect 80%+ of treatment plan value within 30 days.'},
+      {area:'Online Reputation',fix:'Ask every satisfied patient for a Google review before they leave. Reply to all reviews. Target: 4.5+ stars, 50+ reviews within 90 days.'},
+    ],
+    realestate:[
+      {area:'Lead Conversion',fix:'7-touch follow-up: Call D1, Text D2, Email D4, Call D7, Text D10, Email D14, Final call D21. Most deals close on contact 5-7.'},
+      {area:'Portal ROI',fix:'Calculate cost-per-deal from each portal monthly. Portals costing over 20% of average commission — reduce spend or pause.'},
+      {area:'Agent Productivity',fix:'Time audit: track agent hours for 1 week. Identify top 3 admin tasks. Delegate to assistant. Each hour recovered = direct commission revenue.'},
+      {area:'Open House Conversion',fix:'Sign-in sheet for every visitor. Call within 24 hours. 3-touch follow-up for non-converts. Structured follow-up doubles conversion rates.'},
+    ],
+    healthcare:[
+      {area:'Appointment Attendance',fix:'SMS + email reminders at 48h and 2h before every appointment. Add online reschedule link. Target: no-show rate below 8%.'},
+      {area:'Insurance Revenue',fix:'Pull all rejected claims from last 90 days. Identify top 3 rejection reasons — most are fixable with a simple process change.'},
+      {area:'Referral Capture',fix:'Contact every referral within 24 hours. Create a warm welcome script. Track referral source conversion monthly.'},
+      {area:'Overtime Prevention',fix:'Review last 4 weeks of timesheets. Match scheduling to actual demand — not assumptions. Adjust templates to prevent recurrence.'},
+    ],
+    legal:[
+      {area:'Billable Hour Capture',fix:'Start daily time tracking immediately — even a spreadsheet. Most firms recover $2,000-5,000/month in the first 30 days of proper tracking.'},
+      {area:'Consultation Conversion',fix:'Follow-up email within 24 hours of every consultation. Phone call at day 3 if no response. Follow-up triples your conversion rate.'},
+      {area:'Admin Reduction',fix:'Identify top 3 admin tasks per attorney. Delegate to paralegal. Each hour recovered = your full billable rate recaptured.'},
+      {area:'Collections',fix:'Fixed monthly review of overdue invoices. Personal calls for balances over $1,000. Day 30, 45, 60 automated reminders for smaller balances.'},
+    ],
+    saas:[
+      {area:'Churn Prevention',fix:'Flag customers inactive 14+ days. Personal outreach within 24 hours — not automated. A single call can save accounts worth $100-500/month each.'},
+      {area:'Trial Conversion',fix:'7-day activation sequence. Get users to their first key action within 48 hours — that single event predicts 80% of conversions.'},
+      {area:'Failed Payments',fix:'Automated retry at Day 0, 3, 7 + email each time. Proper dunning recovers 40-60% of failed charges.'},
+      {area:'Support Cost',fix:'Document top 10 support questions as help articles. Most teams reduce ticket volume 20-40% within 60 days.'},
+    ],
+    restaurant:[
+      {area:'Food Waste',fix:'Daily waste log by category for 2 weeks. You will know exactly what to order less of. Most restaurants reduce food cost 3-5% within 30 days.'},
+      {area:'No-Shows',fix:'SMS confirmation when booking + 24h reminder with clear cancellation policy. Reduces no-shows 40-60% immediately.'},
+      {area:'Staff Scheduling',fix:'Review sales data by hour for last 4 weeks. Match staffing to real demand. Overstaffed slow periods are often the biggest labour leak.'},
+      {area:'Delivery Fees',fix:'Calculate real profit margin on delivery orders after fees. If under 10%, promote direct ordering with a small discount to shift volume.'},
+    ]
+  };
+  var nfixes = improveMap[niche]||improveMap.dental;
+  var improveHtml = nfixes.map(function(item){
+    return '<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1E2230;">'+
+      '<div style="width:5px;height:5px;background:#F97316;border-radius:50%;flex-shrink:0;margin-top:8px;"></div>'+
+      '<div><div style="font-size:12px;font-weight:700;color:#F97316;margin-bottom:2px;">'+esc(item.area)+'</div>'+
+      '<div style="font-size:12px;color:#9CA3AF;line-height:1.5;">'+esc(item.fix)+'</div></div>'+
+    '</div>';
+  }).join('');
+
+  // Reputation
+  var repHtml = '';
+  if(grRating>0){
+    var rc=grRating>=4.5?'#10B981':grRating>=4?'#F59E0B':'#EF4444';
+    var rm=grRating>=4?'Above average':'Below 4.0 — losing customers to competitors';
+    repHtml='<div style="background:#0F1117;padding:20px 24px;margin-bottom:3px;">'+
+      '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">⭐ REPUTATION ANALYSIS</p>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
+        '<div style="flex:1;min-width:140px;background:#141720;border-radius:8px;padding:12px;border:1px solid #1E2230;">'+
+          '<p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:0 0 4px;">Google Rating</p>'+
+          '<p style="font-size:24px;font-weight:800;color:'+rc+';margin:0 0 3px;">'+grRating+' ★</p>'+
+          '<p style="color:#6B7280;font-size:11px;margin:0;">'+rm+'</p></div>'+
+        '<div style="flex:1;min-width:140px;background:#141720;border-radius:8px;padding:12px;border:1px solid #1E2230;">'+
+          '<p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:0 0 4px;">Review Count</p>'+
+          '<p style="font-size:24px;font-weight:800;color:'+(grCount>=50?'#10B981':'#F59E0B')+';margin:0 0 3px;">'+grCount+'</p>'+
+          '<p style="color:#6B7280;font-size:11px;margin:0;">Target: 50+ reviews</p></div>'+
+      '</div></div>';
+  }
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>'+
+  '<body style="margin:0;padding:0;background:#08090C;font-family:Arial,sans-serif;color:#E8EAF0;">'+
+  '<div style="max-width:680px;margin:0 auto;">'+
+  '<div style="background:#F97316;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;">'+
+    '<span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">BDL — Revenue Intelligence</span>'+
+    '<span style="color:rgba(255,255,255,.8);font-size:11px;">Report ID: '+reportId+'</span>'+
+  '</div>'+
+  '<div style="background:#0F1117;border-bottom:3px solid #F97316;padding:26px;">'+
+    '<h1 style="font-size:22px;font-weight:800;margin:0 0 4px;color:#E8EAF0;">'+esc(bizName)+'</h1>'+
+    '<p style="color:#6B7280;font-size:12px;margin:0 0 14px;">Executive Revenue Diagnostic · '+esc((lead.city||'')+(lead.state?', '+lead.state:''))+' · '+(niche.charAt(0).toUpperCase()+niche.slice(1))+'</p>'+
+    noteBlock+
+    '<p style="color:#E8EAF0;font-size:13px;line-height:1.7;margin:0;">Hi '+esc(firstName)+', I have personally reviewed the diagnostic data for <strong>'+esc(bizName)+'</strong>. Below is your complete leakage analysis with a full 90-day recovery roadmap.</p>'+
+  '</div>'+
+  '<div style="background:#141720;padding:24px;text-align:center;border-bottom:1px solid #1E2230;">'+
+    '<p style="color:#6B7280;font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px;">ESTIMATED MONTHLY LEAKAGE</p>'+
+    '<p style="color:#EF4444;font-size:52px;font-weight:800;letter-spacing:-2px;margin:0 0 6px;line-height:1;">$'+leakage.toLocaleString()+'</p>'+
+    '<p style="color:#6B7280;font-size:13px;margin:0 0 16px;">≈ <strong style="color:#E8EAF0;">$'+annual.toLocaleString()+'/year</strong></p>'+
+    '<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">'+
+      '<div style="background:#0F1117;border:1px solid #1E2230;border-radius:8px;padding:10px 16px;text-align:center;">'+
+        '<p style="color:#EF4444;font-size:16px;font-weight:800;margin:0;">$'+daily+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per day</p></div>'+
+      '<div style="background:#0F1117;border:1px solid #1E2230;border-radius:8px;padding:10px 16px;text-align:center;">'+
+        '<p style="color:#10B981;font-size:16px;font-weight:800;margin:0;">+$'+fixTop.toLocaleString()+'/mo</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">recoverable</p></div>'+
     '</div>'+
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">📉 Leakage Summary</div>'+        
-      '<div class="rpt-item"><span>Monthly Leakage</span><span class="rpt-item-val" style="color:#ef4444;">$'+monthlyLeak.toLocaleString()+'/mo</span></div>'+        
-      '<div class="rpt-item"><span>Annual Leakage</span><span class="rpt-item-val" style="color:#ef4444;">$'+annualLeak.toLocaleString()+'/yr</span></div>'+        
-      '<div class="rpt-item"><span>Cost Per Day</span><span class="rpt-item-val" style="color:#ef4444;">$'+Math.round(monthlyLeak/30).toLocaleString()+'/day</span></div>'+        
-    '</div>'+        
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">🔍 Top Leakage Areas</div>'+        
-      breakdown.split(' | ').map(function(item){
-        return '<div class="rpt-item"><span>'+item+'</span><span class="rpt-item-val" style="color:#f97316;">⚠ Identified</span></div>';
-      }).join('')+
-    '</div>'+        
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">🔗 Platform Overview</div>'+        
-      '<div class="rpt-item"><span>Platforms</span><span class="rpt-item-val">'+platforms+'</span></div>'+        
-      '<div class="rpt-item"><span>Rating</span><span class="rpt-item-val">'+rating+' ★ ('+reviews+' reviews)</span></div>'+        
-    '</div>'+        
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">🧭 90-Day Action Plan</div>'+        
-      buildActionPlanHtml(template)+
-    '</div>'+        
-    noteHtml+
-  '</div>';
+  '</div>'+
+  '<div style="background:#08090C;padding:22px 24px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">📉 LEAKAGE BREAKDOWN</p>'+leakHtml+
+  '</div>'+
+  repHtml+
+  '<div style="background:#0F1117;padding:20px 24px;margin-bottom:3px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">🔧 HOW TO IMPROVE — '+niche.toUpperCase()+' SPECIFIC FIXES</p>'+improveHtml+
+  '</div>'+
+  '<div style="background:#08090C;padding:22px 24px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">📅 YOUR 90-DAY RECOVERY ROADMAP</p>'+planHtml+
+  '</div>'+
+  '<div style="background:#141720;padding:20px 24px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">📊 DECISION SUMMARY</p>'+
+    '<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-bottom:12px;text-align:center;">'+
+      '<p style="color:#6B7280;font-size:12px;margin:0 0 10px;">Every day without action costs:</p>'+
+      '<div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">'+
+        '<div><p style="color:#EF4444;font-size:18px;font-weight:800;margin:0;">$'+daily+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per day</p></div>'+
+        '<div><p style="color:#EF4444;font-size:18px;font-weight:800;margin:0;">$'+Math.round(leakage*3).toLocaleString()+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per quarter</p></div>'+
+        '<div><p style="color:#EF4444;font-size:18px;font-weight:800;margin:0;">$'+annual.toLocaleString()+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per year</p></div>'+
+      '</div></div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
+      '<div style="flex:1;min-width:180px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;text-align:center;">'+
+        '<div style="font-size:20px;margin-bottom:5px;">😟</div>'+
+        '<div style="font-size:12px;font-weight:600;margin-bottom:3px;">Do Nothing</div>'+
+        '<div style="color:#EF4444;font-size:18px;font-weight:800;margin-bottom:3px;">-$'+annual.toLocaleString()+'</div>'+
+        '<div style="color:#6B7280;font-size:11px;">lost over 12 months</div></div>'+
+      '<div style="flex:1;min-width:180px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:14px;text-align:center;">'+
+        '<div style="font-size:20px;margin-bottom:5px;">🚀</div>'+
+        '<div style="font-size:12px;font-weight:600;margin-bottom:3px;">Implement Plan</div>'+
+        '<div style="color:#10B981;font-size:18px;font-weight:800;margin-bottom:3px;">+$'+fixTop.toLocaleString()+'/mo</div>'+
+        '<div style="color:#6B7280;font-size:11px;">estimated recovery</div></div>'+
+    '</div>'+
+  '</div>'+
+  '<div style="background:#0F1117;padding:18px 24px;text-align:center;">'+
+    '<p style="color:#F97316;font-size:12px;font-weight:700;margin:0 0 4px;">BDL — Revenue Intelligence</p>'+
+    '<p style="color:#4B5563;font-size:11px;line-height:1.6;margin:0;">Report ID: '+reportId+' · Prepared for '+esc(bizName)+'<br>'+
+    'Senior Revenue Analyst · 14 Years in Data Governance &amp; Revenue Alignment<br>'+
+    'Estimates based on submitted data and verified industry benchmarks. Results may vary.<br>'+
+    '<strong style="color:#6B7280;">Reply within 72 hours for a complimentary clarification call.</strong></p>'+
+  '</div>'+
+  '</div></body></html>';
 }
+
 
 function buildReportSummaryHtml(lead, note, template){
   var business = esc(lead.business||'Client Business');
@@ -701,7 +875,7 @@ function buildReportSummaryHtml(lead, note, template){
   var monthlyLeak = Number(lead.totalLeakage)||0;
   var annualLeak = Number(lead.annualLeakage)||0;
   var breakdown = (lead.leakageBreakdown||template.tips.slice(0,3).join(' | ')).split(' | ').filter(Boolean);
-  var noteHtml = note ? '<div class="rpt-section"><div class="rpt-section-title">✉️ Note</div><div style="font-size:13px;line-height:1.6;color:#d1d5db;">'+esc(note).replace(/\n/g,'<br>')+'</div></div>' : '';
+  var noteHtml = note ? '<div class="rpt-section"><div class="rpt-section-title">✉️ Note</div><div style="font-size:13px;line-height:1.6;color:#d1d5db;">'+esc(note).split('\n').join('<br>')+'</div></div>' : '';
   return '<div class="rpt-preview">'+
     '<div class="rpt-section">'+
       '<div class="rpt-section-title">📊 Summary for '+business+'</div>'+        

@@ -50,7 +50,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',-apple-system,sa
 .field:last-child{margin-bottom:0;}
 .field label{display:block;font-size:13px;font-weight:500;color:var(--tx);margin-bottom:6px;}
 .field .hint{font-size:11px;color:var(--mu);margin-bottom:8px;line-height:1.5;padding:8px 10px;background:var(--card2);border-radius:8px;border-left:2px solid var(--or);}
-.field input,.field select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;transition:border-color .15s;-webkit-appearance:none;-moz-appearance:none;appearance:none;}
+.field input,.field select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;transition:border-color .15s;-webkit-appearance:none;}
 .field input:focus,.field select:focus{outline:none;border-color:var(--or);}
 .field input::placeholder{color:var(--mu);}
 .field select option{background:#1a1c26;}
@@ -170,38 +170,75 @@ footer a{color:var(--or);text-decoration:none;}
     <div class="nerr" id="niche-err">⚠ Please select your business type above</div>
     <div class="cs">
       <div class="ct">📍 About Your Business</div>
-      <div class="field"><label>Business name</label><input type="text" id="biz_name" placeholder="Your business name"></div>
-      <div class="field"><label>Street address</label><input type="text" id="biz_street" placeholder="123 Main Street"></div>
+
+      <div class="field">
+        <label>Business name</label>
+        <input type="text" id="biz_name" placeholder="Your business name">
+      </div>
+
+      <div class="field">
+        <label>Street address</label>
+        <input type="text" id="biz_street" placeholder="123 Main Street">
+      </div>
+
       <div class="fr">
-        <div class="field"><label>City</label><input type="text" id="biz_city" placeholder="Your city"></div>
-        <div class="field"><label>State / Province</label>
-          <select id="biz_state"><option value="">State / Province</option>
-          <optgroup label="🇺🇸 USA — States">
-          <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
-          </optgroup>
-          <optgroup label="🇨🇦 Canada — Provinces">
-          <option>AB — Alberta</option><option>BC — British Columbia</option><option>MB — Manitoba</option><option>NB — New Brunswick</option><option>NL — Newfoundland</option><option>NS — Nova Scotia</option><option>NT — Northwest Territories</option><option>NU — Nunavut</option><option>ON — Ontario</option><option>PE — Prince Edward Island</option><option>QC — Quebec</option><option>SK — Saskatchewan</option><option>YT — Yukon</option>
-          </optgroup>
+        <div class="field">
+          <label>City</label>
+          <input type="text" id="biz_city" placeholder="Your city">
+        </div>
+        <div class="field">
+          <label>ZIP / Postal code</label>
+          <input type="text" id="biz_zip" placeholder="e.g. 78701">
+        </div>
+      </div>
+
+      <div class="fr">
+        <div class="field">
+          <label>State / Province</label>
+          <select id="biz_state">
+            <option value="">Select state</option>
+            <optgroup label="🇺🇸 USA — States">
+            <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
+            </optgroup>
+            <optgroup label="🇨🇦 Canada — Provinces">
+            <option>AB — Alberta</option><option>BC — British Columbia</option><option>MB — Manitoba</option><option>NB — New Brunswick</option><option>NL — Newfoundland</option><option>NS — Nova Scotia</option><option>NT — Northwest Territories</option><option>NU — Nunavut</option><option>ON — Ontario</option><option>PE — Prince Edward Island</option><option>QC — Quebec</option><option>SK — Saskatchewan</option><option>YT — Yukon</option>
+            </optgroup>
           </select>
         </div>
-        <div class="field"><label>Zip code</label><input type="text" id="biz_zip" placeholder="Your zip/postal code"></div>
-      </div>
-      <div class="field">
-        <label>Country</label>
-        <div class="choices" id="country-choices">
-          <div class="choice on" onclick="setCountry(this,'USA')" data-c="USA">🇺🇸 United States</div>
-          <div class="choice" onclick="setCountry(this,'Canada')" data-c="Canada">🇨🇦 Canada</div>
+        <div class="field">
+          <label>Country</label>
+          <div class="choices" id="country-choices">
+            <div class="choice on" onclick="setCountry(this,'USA')" data-c="USA">🇺🇸 USA</div>
+            <div class="choice" onclick="setCountry(this,'Canada')" data-c="Canada">🇨🇦 Canada</div>
+          </div>
         </div>
       </div>
+
       <div class="fr">
-        <div class="field"><label>Approximate monthly revenue</label>
+        <div class="field">
+          <label>Business phone</label>
+          <input type="tel" id="biz_phone" placeholder="512-555-0100">
+        </div>
+        <div class="field">
+          <label>Business website <span style="color:var(--mu);font-weight:400;">(optional)</span></label>
+          <input type="url" id="biz_website" placeholder="https://yourbusiness.com">
+        </div>
+      </div>
+
+      <div class="fr">
+        <div class="field">
+          <label>Approximate monthly revenue</label>
           <div style="display:flex;align-items:center;gap:6px;">
             <span id="curr-symbol" style="color:var(--mu);font-size:14px;white-space:nowrap;">USD $</span>
             <input type="number" id="monthly_revenue" placeholder="Monthly revenue" min="0" style="flex:1;">
           </div>
         </div>
-        <div class="field"><label>Number of employees</label><input type="number" id="num_employees" placeholder="No. of employees" min="1"></div>
+        <div class="field">
+          <label>Number of employees</label>
+          <input type="number" id="num_employees" placeholder="No. of employees" min="1">
+        </div>
       </div>
+
     </div>
     <div class="nb"><button class="bn" onclick="goStep2()">Continue →</button></div>
   </div>
@@ -588,7 +625,9 @@ function gStep(n){
 function goStep2(){
   if(!S.niche){document.getElementById('niche-err').style.display='block';window.scrollTo({top:0,behavior:'smooth'});return;}
   if(!document.getElementById('biz_name').value.trim()){alert('Please enter your business name');return;}
+  if(!document.getElementById('biz_street').value.trim()){alert('Please enter your street address');return;}
   if(!document.getElementById('biz_city').value.trim()){alert('Please enter your city');return;}
+  if(!document.getElementById('biz_zip').value.trim()){alert('Please enter your ZIP / postal code');return;}
   if(!document.getElementById('monthly_revenue').value){alert('Please enter your approximate monthly revenue');return;}
   gStep(2);
 }
@@ -720,15 +759,15 @@ function _saveLead(status,name,email,phone,website){
         date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
         name:name||'',
         email:email||'',
-        phone:(phone||'').replace(/[^\d\s\-()+]/g,''),
+        phone:(document.getElementById('biz_phone')&&document.getElementById('biz_phone').value||phone||'').replace(/[^\d\s\-()+]/g,''),
         business:document.getElementById('biz_name').value,
         niche:S.niche,
-        street:document.getElementById('biz_street').value,
+        street:document.getElementById('biz_street').value||'',
         city:document.getElementById('biz_city').value,
         state:document.getElementById('biz_state').value,
-        zip:document.getElementById('biz_zip').value,
+        zip:document.getElementById('biz_zip').value||'',
         country:_country,
-        website:website||document.getElementById('lead_website')&&document.getElementById('lead_website').value||'',
+        website:website||(document.getElementById('biz_website')&&document.getElementById('biz_website').value)||'',
         monthlyRevenue:document.getElementById('monthly_revenue').value,
         employees:document.getElementById('num_employees').value||'',
         googleRating:S.gr,
@@ -740,7 +779,7 @@ function _saveLead(status,name,email,phone,website){
         paidReport:status==='Requested'?'Requested':'No',
         reportRequestDate:status==='Requested'?new Date().toLocaleDateString('en-US'):'',
         contacted:'No',
-        notes:status==='Requested'?'Audit requested — follow up to confirm and send Wise payment link':''
+        notes:status==='Requested'?'Audit requested — follow up to confirm and send payment link':''
       }
     })
   }).catch(function(){});
