@@ -958,35 +958,40 @@ function buildReportHtml(lead, note, template){
 
 
 function buildReportSummaryHtml(lead, note, template){
-  var business = esc(lead.business||'Client Business');
-  var email = esc(lead.email||'');
-  var revenue = Number(lead.monthlyRevenue)||0;
-  var monthlyLeak = Number(lead.totalLeakage)||0;
-  var annualLeak = Number(lead.annualLeakage)||0;
-  var breakdown = (lead.leakageBreakdown||template.tips.slice(0,3).join(' | ')).split(' | ').filter(Boolean);
-  var noteHtml = note ? '<div class="rpt-section"><div class="rpt-section-title">✉️ Note</div><div style="font-size:13px;line-height:1.6;color:#d1d5db;">'+esc(note).split('\n').join('<br>')+'</div></div>' : '';
-  return '<div class="rpt-preview">'+
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">📊 Summary for '+business+'</div>'+        
-      '<div class="rpt-item"><span>Business</span><span class="rpt-item-val">'+business+'</span></div>'+        
-      '<div class="rpt-item"><span>Contact</span><span class="rpt-item-val">'+email+'</span></div>'+        
-      '<div class="rpt-item"><span>Monthly Revenue</span><span class="rpt-item-val">$'+revenue.toLocaleString()+'</span></div>'+        
-      '<div class="rpt-item"><span>Estimated Leakage</span><span class="rpt-item-val" style="color:#ef4444;">$'+monthlyLeak.toLocaleString()+'/mo</span></div>'+        
-      '<div class="rpt-item"><span>Estimated Annual Impact</span><span class="rpt-item-val" style="color:#ef4444;">$'+annualLeak.toLocaleString()+'/yr</span></div>'+        
-    '</div>'+
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">🔍 High-level risk areas</div>'+        
-      breakdown.map(function(item){
-        return '<div class="rpt-item"><span>'+esc(item)+'</span><span class="rpt-item-val" style="color:#f97316;">Review</span></div>';
-      }).join('')+
-    '</div>'+        
-    '<div class="rpt-section">'+
-      '<div class="rpt-section-title">📌 What’s next</div>'+        
-      '<div class="rpt-item"><span>Full paid report</span><span class="rpt-item-val">Delivered after payment</span></div>'+        
-      '<div class="rpt-item"><span>Includes</span><span class="rpt-item-val">Detailed benchmarks, action plan, and recovery steps</span></div>'+        
-    '</div>'+        
-    noteHtml+
-  '</div>';
+  var biz = esc(lead.business || 'Client Business');
+  var leak = Number(lead.totalLeakage || 0);
+  var items = (lead.leakageBreakdown || '').split(' | ').filter(Boolean);
+  var noteHtml = note ? `<div class="rpt-section" style="background:rgba(249,115,22,0.05); border-left:3px solid var(--or);"><div class="rpt-section-title">✉️ Analyst Note</div><div style="font-size:12px; font-style:italic;">"${esc(note).replace(/\n/g, '<br>')}"</div></div>` : '';
+  
+  return `
+    <div class="rpt-preview">
+      <div style="background:var(--card2); border-radius:12px; padding:24px; text-align:center; margin-bottom:20px; border:1px solid var(--border);">
+        <div style="font-size:10px; color:var(--mu); text-transform:uppercase; margin-bottom:8px;">Revenue Leakage Estimate</div>
+        <div style="font-size:36px; font-weight:800; color:var(--rd); font-family:Syne;">$${leak.toLocaleString()}</div>
+        <div style="font-size:12px; color:var(--mu);">$${(leak*12).toLocaleString()} annual impact</div>
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">🔍 Friction Breakdown</div>
+        ${items.map(i => `
+          <div class="rpt-item">
+            <span>${esc(i)}</span>
+            <span style="color:var(--or); font-weight:bold;">$${Math.round(leak/items.length).toLocaleString()}/mo</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">📅 Roadmap Preview (Weeks 1-2)</div>
+        ${(template.plan90 || []).slice(0, 2).map(p => `
+          <div style="margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <div style="font-size:11px; font-weight:bold; color:var(--tx);">${esc(p.action)}</div>
+            <div style="font-size:10px; color:var(--mu);">${esc(p.detail)}</div>
+          </div>
+        `).join('')}
+      </div>
+      ${noteHtml}
+    </div>`;
 }
 
 function renderTable(tbodyId, rows, isReqs){
@@ -1197,6 +1202,7 @@ async function sendReport(){
     var subject = isPaid ? buildEmailSubject(_current, template) : 'Revenue Audit Summary — '+(_current.business||'Your Business');
     var res  = await fetch(SHEET_URL,{method:'POST',body:JSON.stringify({
       action:'generateAndSendReport',
+      key:_auth,
       lead:_current,
       email:email,
       note:note,

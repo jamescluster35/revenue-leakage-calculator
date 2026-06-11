@@ -709,6 +709,9 @@ function buildFollowUpEmail1(lead, toEmail){
  * @param {string} wiseLink The payment link (e.g., Wise, Stripe, Lemon Squeezy).
  * @returns {object} A success status or an error message.
  */
+/**
+ * Sends a high-fidelity payment request email.
+ */
 function sendPaymentRequestEmail(lead, toEmail, wiseLink) {
   try {
     const bizName = lead.business || 'Your Business';
@@ -717,43 +720,141 @@ function sendPaymentRequestEmail(lead, toEmail, wiseLink) {
     const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (lead.niche || 'GEN').toUpperCase().slice(0, 3);
 
     const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px; background: #fff;">
-      <div style="background: #F97316; padding: 12px 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <span style="color: #fff; font-weight: bold; letter-spacing: 1px;">BDL REVENUE INTELLIGENCE</span>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #08090C; color: #E8EAF0; border-radius: 16px;">
+      <div style="text-align: center; padding: 20px 0;">
+        <div style="color: #F97316; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">BDL REVENUE INTELLIGENCE</div>
       </div>
-      <div style="padding: 24px; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px;">
-        <h2 style="color: #111; margin-top: 0;">Your Executive Diagnostic is Ready</h2>
-        <p style="color: #444; line-height: 1.6;">Hi ${firstName},</p>
-        <p style="color: #444; line-height: 1.6;">Our analysis for <strong>${bizName}</strong> is complete. We have identified significant friction points contributing to your estimated <strong>$${leakage.toLocaleString()}/mo</strong> leakage.</p>
+      <div style="background: #0F1117; border: 1px solid #1E2230; border-radius: 12px; padding: 32px;">
+        <h2 style="color: #fff; margin-top: 0; font-size: 22px;">Your Revenue Audit is Ready</h2>
+        <p style="color: #9CA3AF; line-height: 1.6; font-size: 14px;">Hi ${firstName}, our analyst team has completed the revenue diagnostic for <strong>${bizName}</strong>.</p>
         
-        <div style="background: #fff7ed; padding: 20px; border-radius: 10px; text-align: center; margin: 24px 0; border: 1px solid #fed7aa;">
-          <p style="margin: 0; color: #9a3412; font-size: 12px; font-weight: bold; text-transform: uppercase;">Unlock Your Full 20+ Page Roadmap</p>
-          <p style="margin: 10px 0; color: #dc2626; font-size: 32px; font-weight: 800;">$47.00</p>
-          <a href="${wiseLink}" style="display: inline-block; background: #F97316; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Pay via Wise & Unlock Report →</a>
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0;">
+          <p style="margin: 0; color: #EF4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Identified Monthly Leakage</p>
+          <p style="margin: 8px 0; color: #fff; font-size: 42px; font-weight: 800; line-height: 1;">$${leakage.toLocaleString()}</p>
+          <p style="margin: 0; color: #6B7280; font-size: 13px;">≈ $${(leakage * 12).toLocaleString()} per year</p>
         </div>
 
-        <p style="font-size: 13px; color: #666;"><strong>Note:</strong> Please include reference ID <span style="font-family: monospace; font-weight: bold; color: #111;">${reportId}</span> in your payment notes so we can deliver your report immediately.</p>
-        
-        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee;">
-          <p style="font-size: 12px; color: #999; margin: 0;">Your report includes:</p>
-          <ul style="font-size: 12px; color: #666; padding-left: 20px;">
-            <li>Exact fix steps for your top 5 leakage areas.</li>
-            <li>90-Day implementation roadmap.</li>
-            <li>Industry-specific ROI benchmarks.</li>
-          </ul>
+        <div style="background: #141720; border: 1px solid #1E2230; padding: 20px; border-radius: 10px; margin-bottom: 24px;">
+          <p style="margin: 0 0 12px; font-weight: bold; font-size: 13px; color: #F97316;">How to Unlock Your Full Audit:</p>
+          <p style="margin: 0 0 20px; font-size: 13px; color: #9CA3AF; line-height: 1.5;">
+            1. Click the button below to pay via Wise.<br>
+            2. Include Reference ID: <strong>${reportId}</strong><br>
+            3. Full PDF report delivered within 24 hours.
+          </p>
+          <a href="${wiseLink}" style="display: block; background: #F97316; color: #fff; text-align: center; padding: 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px;">Unlock Report — $47 USD →</a>
         </div>
+
+        <p style="font-size: 12px; color: #6B7280; text-align: center; margin: 0;">One-time secure payment. Professional Analyst support included.</p>
       </div>
-      <p style="text-align: center; font-size: 11px; color: #bbb; margin-top: 15px;">BDL Revenue Intelligence · Ref: ${reportId}</p>
+      <p style="text-align: center; font-size: 11px; color: #4B5563; margin-top: 20px;">BDL Revenue Intelligence • Confidential for ${bizName}</p>
     </div>`;
 
     MailApp.sendEmail({
       to: toEmail,
-      subject: `Action Required: Secure your Audit Report for ${bizName}`,
+      subject: `[ACTION REQUIRED] Unlock your Audit Report — ${bizName} (Ref: ${reportId})`,
       htmlBody: html,
       name: 'BDL Revenue Intelligence'
     });
     return { success: true };
   } catch(err) { return { error: err.message }; }
+}
+
+/**
+ * Builds the Complete High-Fidelity PDF Structure.
+ */
+function buildFullPdfReportHtml(lead, note) {
+  const bizName = esc(lead.business || 'Your Business');
+  const calc = calculateLeadLeakage(lead);
+  const firstName = String(lead.name || 'there').split(' ')[0];
+  const niche = (lead.niche || 'General').toLowerCase();
+  const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (niche.toUpperCase().slice(0, 3));
+  const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM dd, yyyy');
+  const hColor = calc.score > 75 ? '#10B981' : calc.score > 50 ? '#F59E0B' : '#EF4444';
+
+  // Define Explanations for Niche areas
+  const explains = {
+    dental: ['Lost revenue from patients not showing up.', 'Missed revenue from overdue hygiene visits.', 'Potential patients lost due to slow phone callbacks.'],
+    realestate: ['Lost commissions from lead follow-up delays.', 'Inefficient spend on portals vs conversion.', 'Administrative drag on agent selling time.'],
+    general: ['Inefficiencies in sales pipeline conversion.', 'Operational overhead and manual task drag.', 'Missed revenue from unoptimized pricing or follow-up.']
+  };
+  const nicheExplains = explains[niche] || explains.general;
+
+  const itemsHtml = calc.breakdown.map((item, i) => {
+    const col = i === 0 ? '#EF4444' : i === 1 ? '#F97316' : '#F59E0B';
+    const share = Math.round(calc.monthlyLeak / Math.max(1, calc.breakdown.length));
+    return `
+      <div style="margin-bottom:16px; border-left: 4px solid ${col}; background: #f9fafb; padding: 16px; border-radius: 0 12px 12px 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <strong style="font-size:14px; color:#111;">${esc(item)}</strong>
+          <span style="color:${col}; font-weight:800; font-size:15px;">-$${share.toLocaleString()}/mo</span>
+        </div>
+        <div style="font-size:12px; color:#666; line-height:1.6;"><strong>Benchmark Analysis:</strong> ${nicheExplains[i] || 'This area represents a significant gap in your revenue capture cycle.'}</div>
+      </div>`;
+  }).join('');
+
+  const planSteps = (calc.rules.plan90 || []).map((step, i) => `
+    <div style="margin-bottom:20px; padding-left:12px; border-left:2px solid #F97316;">
+      <div style="background:#1a1a2e; color:#fff; padding:4px 10px; border-radius:4px; font-size:10px; font-weight:bold; display:inline-block; margin-bottom:8px;">WEEK ${step.week}</div>
+      <div style="font-weight:bold; font-size:14px; color:#111; margin-bottom:4px;">${esc(step.action)}</div>
+      <div style="font-size:12px; color:#555; line-height:1.5;">${esc(step.detail)}</div>
+      <div style="color:#10B981; font-weight:bold; font-size:11px; margin-top:6px; text-transform:uppercase;">Expected Impact: ${esc(step.impact)}</div>
+    </div>`).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      @page { margin: 15mm; }
+      body { font-family: 'Helvetica', Arial, sans-serif; color: #111; line-height: 1.5; margin: 0; padding: 0; }
+      .page-break { page-break-before: always; }
+      .header { background: #1a1a2e; color: #fff; padding: 30px 24px; display: flex; justify-content: space-between; align-items: center; }
+      .brand { color: #F97316; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+      .stat-card { background: #f3f4f6; border-radius: 12px; padding: 20px; text-align: center; flex: 1; border: 1px solid #e5e7eb; }
+      .score-circle { border: 4px solid ${hColor}; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: ${hColor}; font-size: 20px; }
+    </style></head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="brand">BDL Revenue Intelligence</div>
+          <h1 style="margin: 5px 0 0; font-size: 24px;">Executive Revenue Diagnostic</h1>
+          <div style="font-size: 11px; color: #9ca3af; margin-top: 4px;">ID: ${reportId} • Issued: ${dateStr}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 16px; font-weight: bold;">${bizName}</div>
+          <div style="font-size: 11px; color: #9ca3af;">${esc(lead.city || '')}, ${esc(lead.state || '')}</div>
+        </div>
+      </div>
+
+      <div style="padding: 24px;">
+        <div style="display:flex; gap:16px; margin-bottom: 30px;">
+          <div class="stat-card">
+            <div style="font-size:10px; color:#6b7280; text-transform:uppercase; font-weight:bold; margin-bottom:8px;">Monthly Leakage</div>
+            <div style="font-size:28px; font-weight:900; color:#EF4444;">$${calc.monthlyLeak.toLocaleString()}</div>
+          </div>
+          <div class="stat-card">
+            <div style="font-size:10px; color:#6b7280; text-transform:uppercase; font-weight:bold; margin-bottom:8px;">Annual Impact</div>
+            <div style="font-size:28px; font-weight:900; color:#EF4444;">$${calc.annualLeak.toLocaleString()}</div>
+          </div>
+          <div class="stat-card" style="display:flex; flex-direction:column; align-items:center; background:#fff8f0; border-color:#fed7aa;">
+            <div style="font-size:10px; color:#92400e; text-transform:uppercase; font-weight:bold; margin-bottom:4px;">Audit Score</div>
+            <div class="score-circle">${calc.score}</div>
+            <div style="font-size:10px; font-weight:bold; color:${hColor}; margin-top:4px;">${calc.grade}</div>
+          </div>
+        </div>
+
+        ${note ? `<div style="background:#fff8f0; border-left:4px solid #F97316; padding: 20px; border-radius: 8px; font-style: italic; font-size: 13px; color: #444; margin-bottom: 30px;"><strong>Analyst Note:</strong><br>${esc(note).replace(/\n/g, '<br>')}</div>` : ''}
+
+        <h2 style="font-size:14px; text-transform:uppercase; color:#F97316; letter-spacing:1px; border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:20px;">01 — Critical Friction Points</h2>
+        ${itemsHtml}
+
+        <div class="page-break"></div>
+
+        <h2 style="font-size:14px; text-transform:uppercase; color:#F97316; letter-spacing:1px; border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:24px;">02 — 90-Day Implementation Roadmap</h2>
+        <div style="padding: 0 10px;">${planSteps}</div>
+
+        <div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; color: #9ca3af; font-size: 10px; text-align: center;">
+          BDL Revenue Intelligence • Confidential Report for ${bizName} • © 2026 BDL Intelligence Team
+        </div>
+      </div>
+    </body></html>`;
 }
 
 /**
