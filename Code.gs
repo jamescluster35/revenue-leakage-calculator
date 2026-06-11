@@ -1,7 +1,7 @@
 /**
  * BDL REVENUE AUDIT BACKEND
  * Handles Calculator leads, Admin actions, and 90-Day Tracker data.
- */
+ */ 
 
 const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 const SHEETS = {
@@ -12,7 +12,8 @@ const SHEETS = {
   CONFIG: "Config",
   ARCHIVED: "Archived",
   DELETED: "Deleted",
-  CLIENTS: "Clients"
+  CLIENTS: "Clients",
+  VERIFIED: "Verified Payments" // Added for clarity
 };
 
 const SETTINGS = {
@@ -20,7 +21,7 @@ const SETTINGS = {
   ADMIN_EMAIL: "jamescluster35@gmail.com",
   ADMIN_DASHBOARD_URL: "https://your-domain.com/admin.html"
 };
-
+ 
 /**
  * Retrieves the admin password from the 'Config' sheet.
  * The password is expected to be in cell A1 of the 'Config' sheet.
@@ -56,7 +57,7 @@ function getWebhookSecret() {
  * @returns {GoogleAppsScript.Content.TextOutput} JSON response.
  */
 function doGet(e) { return handleRequest(e); }
-/**
+/** 
  * Entry point for HTTP POST requests. Delegates to handleRequest.
  * @param {GoogleAppsScript.Events.DoPost} e The event object for a POST request.
  * @returns {GoogleAppsScript.Content.TextOutput} JSON response.
@@ -110,6 +111,8 @@ function handleRequest(e) {
     'updateCalculatorLead': (data) => updateCalculatorLead(data.id || data.email, data.changes || {}),
     'markPaymentPaid': (data) => markPaymentPaid(data.id || data.email, data.changes || {}),
     'deleteCalculatorLead': (data) => deleteCalculatorLead(data.id || data.email),
+    'restoreCalculatorLead': (data) => restoreCalculatorLead(data.id),
+    'getDeletedLeads': getDeletedLeads,
     
     // Email & Payment Actions
     'generateAndSendReport': (data) => generateAndSendReport(data.lead, data.email, data.note, data.subject, data.htmlBody),
@@ -154,7 +157,7 @@ function getTracker(trackerId) {
   const trackerSheet = ss.getSheetByName(SHEETS.TRACKER) || ss.insertSheet(SHEETS.TRACKER);
   
   // Get Lead Info
-  const leads = leadSheet.getDataRange().getValues();
+  const leads = leadSheet.getDataRange().getValues(); // Get all data from lead sheet
   const headers = leads.shift();
   let lead = null;
   for (let row of leads) {
@@ -164,7 +167,7 @@ function getTracker(trackerId) {
       break;
     }
   }
-  
+
   if (!lead) return jsonResponse({ error: 'Tracker not found' });
 
   // Engagement alert to admin
@@ -178,7 +181,7 @@ function getTracker(trackerId) {
     
     MailApp.sendEmail(adminEmail, subject, body);
   } catch (e) {
-    Logger.log("Tracker notification error: " + e.toString());
+    Logger.log("Tracker notification error: " + e.toString()); // Log error if notification fails
   }
 
   // Get Saved Progress
@@ -190,7 +193,7 @@ function getTracker(trackerId) {
       break;
     }
   }
-
+ 
   return jsonResponse({ success: true, lead: lead, tracker: tracker });
 }
 
@@ -213,7 +216,7 @@ function jsonResponse(obj) {
 function logAttempt(e, key) {
   // This function is currently not called in handleRequest, but it's good to have.
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let logSheet = ss.getSheetByName(SHEETS.LOGS) || ss.insertSheet(SHEETS.LOGS);
+  let logSheet = ss.getSheetByName(SHEETS.LOGS) || ss.insertSheet(SHEETS.LOGS); // Create Logs sheet if it doesn't exist
   if (logSheet.getLastRow() === 0) logSheet.appendRow(['Timestamp', 'Action', 'Key Attempted', 'Method']);
   let action = e.parameter ? e.parameter.action : "Unknown";
   try { if (e.postData) action = JSON.parse(e.postData.contents).action || action; } catch(err) {}
@@ -226,7 +229,7 @@ function getAll() {
     leads:    getTabData(SHEETS.LEADS),
     archived: getTabData(SHEETS.ARCHIVED),
     deleted:  getTabData(SHEETS.DELETED),
-    clients:  getTabData(SHEETS.CLIENTS),
+    clients:  getTabData(SHEETS.CLIENTS), // Get data from all CRM tabs
   }
 }
 
@@ -263,14 +266,14 @@ function getTabData(tabName) {
  * @returns {object} A success status.
  */
 function addLead(lead) {
-  const sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.LEADS)
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
-  const row     = headers.map(h => {
-    if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || [])
-    if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE'
-    return lead[h] !== undefined ? lead[h] : ''
-  })
-  sheet.appendRow(row)
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.LEADS); // Get Leads sheet
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]; // Get headers
+  const row = headers.map(h => { // Map lead object to row values
+    if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || []); // Stringify JSON fields
+    if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE'; // Convert boolean to string
+    return lead[h] !== undefined ? lead[h] : ''; // Assign other values
+  });
+  sheet.appendRow(row); // Append new row
   return { success: true }
 }
 
@@ -375,21 +378,21 @@ function saveTracker(trackerId, tracker) {
 function saveCalculatorLead(lead) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEETS.CALC_LEADS);
-  const defaultHeaders = ['id','date','name','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes'];
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEETS.CALC_LEADS);
-    sheet.appendRow(defaultHeaders);
+  const defaultHeaders = ['id','date','name','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage']; // Comprehensive list of headers
+  if (!sheet) { // Create sheet if it doesn't exist
+    sheet = ss.insertSheet(SHEETS.CALC_LEADS); // Insert new sheet
+    sheet.appendRow(defaultHeaders); // Add headers
   }
 
-  // Generate a unique ID if one doesn't exist for Foolproof Payment Identification
-  if (!lead.id) {
-    lead.id = 'BDL-' + (lead.niche || 'GEN').toUpperCase().slice(0,3) + '-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'mmssSSS');
+  // Generate a unique ID if one doesn't exist for Foolproof Payment Identification 
+  if (!lead.id) { // If lead ID is not provided
+    lead.id = 'BDL-' + (lead.niche || 'GEN').toUpperCase().slice(0,3) + '-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'mmssSSS'); // Generate unique ID
   }
 
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const emailCol = headers.indexOf('email');
-  let rowIndex = -1;
+  const data = sheet.getDataRange().getValues(); // Get all data
+  const headers = data[0]; // Get headers
+  const emailCol = headers.indexOf('email'); // Get email column index
+  let rowIndex = -1; // Initialize row index
   if (lead.email) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][emailCol]).toLowerCase() === String(lead.email).toLowerCase()) {
@@ -398,15 +401,15 @@ function saveCalculatorLead(lead) {
       }
     }
   }
-  const rowValues = headers.map(h => {
-    let val = lead[h] !== undefined ? lead[h] : '';
+  const rowValues = headers.map(h => { // Map lead object to row values
+    let val = lead[h] !== undefined ? lead[h] : ''; // Get value from lead object
     if (h === 'phone') return "'" + String(val); // Prefix with ' to force text format in Excel/Sheets
-    return val;
+    return val; // Return value
   });
-  if (rowIndex > 0) {
-    sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
-  } else {
-    sheet.appendRow(rowValues);
+  if (rowIndex > 0) { // If lead exists, update row
+    sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]); // Set new values
+  } else { // If lead doesn't exist, append new row
+    sheet.appendRow(rowValues); // Append new row
   }
   if (lead.email && lead.email.includes('@') && lead.paidReport === 'Requested') {
     sendInitialPaymentRequestEmail(lead);
@@ -428,7 +431,7 @@ function generateAndSendReport(lead, toEmail, note, subject, htmlBodyOverride) {
   try {
     const bizName = lead.business || 'Your Business';
     const isPaid = ['paid','delivered'].includes(String(lead.paidReport||'').toLowerCase());
-    const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (lead.niche||'GEN').toUpperCase().slice(0,3);
+    const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (lead.niche||'GEN').toUpperCase().slice(0,3); // Generate report ID
     const attachments = [];
     if (isPaid) {
       attachments.push(createPdfAttachment(buildFullPdfReportHtml(lead, note), bizName + ' Revenue Leakage Report.pdf'));
@@ -496,16 +499,30 @@ function markPaymentPaid(identifier, changes) {
  * @returns {object} A success status or an error message if the lead is not found.
  */
 function deleteCalculatorLead(identifier) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.CALC_LEADS);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.CALC_LEADS);
+  if (!sheet) return { error: 'Sheet not found' };
+
+  const delSheet = ss.getSheetByName(SHEETS.DELETED) || ss.insertSheet(SHEETS.DELETED);
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
+
+  // Initialize headers on Deleted sheet if it's fresh
+  if (delSheet.getLastRow() === 0) {
+    delSheet.appendRow(headers);
+  }
+
   const idCol = headers.indexOf('id');
   const emailCol = headers.indexOf('email');
   const lookupValue = String(identifier || '').trim();
   const isEmail = lookupValue.includes('@');
   for (let i = 1; i < data.length; i++) {
     const matched = (isEmail && String(data[i][emailCol]).toLowerCase() === lookupValue.toLowerCase()) || (!isEmail && String(data[i][idCol]).trim() === lookupValue);
-    if (matched) { sheet.deleteRow(i + 1); return { success: true }; }
+    if (matched) {
+      delSheet.appendRow(data[i]); // Safe storage: move to Deleted tab instead of hard delete
+      sheet.deleteRow(i + 1); 
+      return { success: true }; 
+    }
   }
   return { error: 'Lead not found' };
 }
@@ -516,6 +533,23 @@ function deleteCalculatorLead(identifier) {
  */
 function getCalculatorLeads() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.CALC_LEADS);
+  if (!sheet) return { leads: [] };
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return { leads: [] };
+  const headers = rows[0];
+  const leads = rows.slice(1).map(row => {
+    const lead = {};
+    headers.forEach((h, i) => lead[String(h).trim()] = row[i] || '');
+    return lead;
+  });
+  return { success: true, leads: leads.reverse() };
+}
+
+/**
+ * Fetches leads specifically from the Deleted tab for the Admin UI.
+ */
+function getDeletedLeads() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.DELETED);
   if (!sheet) return { leads: [] };
   const rows = sheet.getDataRange().getValues();
   if (rows.length <= 1) return { leads: [] };
@@ -565,7 +599,7 @@ function verifyPayment(orderId, email) {
 function webhookPayment(data, event) {
   try {
     // Security Check: Verify HMAC-SHA256 signature from provider
-    const secret = getWebhookSecret();
+    const secret = getWebhookSecret(); // Retrieve webhook secret from Config 
     if (secret && event && event.postData) {
       const headers = event.headers || {};
       // Standard Lemon Squeezy header is 'x-signature'
@@ -595,10 +629,10 @@ function webhookPayment(data, event) {
     const niche     = data.data?.attributes?.custom_data?.niche || '';
     const leakage   = data.data?.attributes?.custom_data?.leakage || '';
     const date      = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    sheet.appendRow([orderId, email, business, niche, leakage, amount, date, status]);
+    sheet.appendRow([orderId, email, business, niche, leakage, amount, date, status, '']); // calculatorLeadId is empty for webhooks unless custom_data is passed 
 
-    if (email) {
-      updateCalculatorLead(email, { paidReport: 'Paid', reportRequestDate: date });
+    if (email) { // If email is provided
+      updateCalculatorLead(email, { paidReport: 'Paid', reportRequestDate: date }); // Update lead status 
 
       // Automatically trigger high-fidelity report delivery if payment is verified
       if (status === 'paid' || status === 'completed') {
@@ -610,7 +644,7 @@ function webhookPayment(data, event) {
 
         if (leadRow) {
           const lead = headers.reduce((obj, h, i) => { obj[h] = leadRow[i]; return obj; }, {});
-          // Ensure the object has the correct status for PDF generation logic
+          // Ensure the object has the correct status for PDF generation logic  
           lead.paidReport = 'Paid';
           generateAndSendReport(lead, email, "Payment verified. Your Executive Revenue Diagnostic is attached.", "", null);
         }
@@ -629,7 +663,7 @@ function webhookPayment(data, event) {
 function sendFollowUpEmails(lead, toEmail){
   try {
     const email1 = buildFollowUpEmail1(lead, toEmail);
-    MailApp.sendEmail({ to: toEmail, subject: email1.subject, htmlBody: email1.html, name: 'BDL Revenue Intelligence' });
+    MailApp.sendEmail({ to: toEmail, subject: email1.subject, htmlBody: email1.html, name: 'BDL Revenue Intelligence' }); // Send follow-up email
     return { success: true, message: 'Immediate follow-up email sent.' };
   } catch(err) { return { error: err.message }; }
 }
@@ -645,7 +679,7 @@ function buildFollowUpEmail1(lead, toEmail){
   const niche = lead.niche || 'General';
   const rules = getNicheCalculationRules(niche);
   const quickWins = rules.plan90.filter(function(p){ return p.quick; });
-  const quickWinsHtml = quickWins.map(function(item){
+  const quickWinsHtml = quickWins.map(function(item){ // Build HTML for quick wins
     return '<div style="background:#0F1117;border:1px solid #1E2230;padding:14px;margin-bottom:10px;color:#E8EAF0;">'+
       '<b>✓ '+esc(item.action)+'</b><br><span style="font-size:11px;color:#6B7280;">'+esc(item.detail)+'</span></div>';
   }).join('');
@@ -667,7 +701,7 @@ function sendPaymentRequestEmail(lead, toEmail, wiseLink) {
     const firstName = String(lead.name || 'there').split(' ')[0];
     const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Your Revenue Audit is Ready</h2> 
+        <h2>Your Revenue Audit is Ready</h2> // HTML for payment request email 
         <p>Hi ${firstName}, please use the link below to complete your payment of $47:</p>
         <a href="${wiseLink}" style="background:#F97316;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;">Pay $47 to Unlock Report</a>
       </div>`;
@@ -685,7 +719,7 @@ function sendPaymentRequestEmail(lead, toEmail, wiseLink) {
 function createPdfAttachment(html, filename) {
   const blob = Utilities.newBlob(html, 'text/html', 'report.html');
   const pdfBlob = blob.getAs('application/pdf');
-  pdfBlob.setName(filename || 'Revenue_Audit.pdf');
+  pdfBlob.setName(filename || 'Revenue_Audit.pdf'); // Set PDF filename 
   return pdfBlob;
 }
 
@@ -695,7 +729,7 @@ function createPdfAttachment(html, filename) {
  * @returns {string} The HTML-escaped string.
  */
 function esc(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); // Escape HTML characters 
 }
 
 /**
@@ -826,7 +860,7 @@ function buildFullReportEmailHtml(lead, note, template) {
       <div style="background: #0F1117; padding: 35px 30px; border-bottom: 4px solid #F97316;">
         <h1 style="font-size: 28px; margin: 0 0 5px; color: #fff;">${esc(bizName)}</h1>
         <p style="color: #6B7280; font-size: 14px; margin: 0;">Executive Revenue Diagnostic Report · ${esc(niche.toUpperCase())}</p>
-        ${note ? `<div style="margin-top: 25px; border-left: 4px solid #F97316; background: #141720; padding: 20px; font-size: 14px; line-height: 1.7; color: #E8EAF0;">${esc(note).split('\n').join('<br>')}</div>` : ''}
+        ${note ? `<div style="margin-top: 25px; border-left: 4px solid #F97316; background: #141720; padding: 20px; font-size: 14px; line-height: 1.7; color: #E8EAF0;">${esc(note).split('\n').join('<br>')}</div>` : ''} 
       </div>
       <div style="background: #141720; padding: 40px 30px; text-align: center; border-bottom: 1px solid #1E2230;">
         <p style="color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;">Identified Monthly Leakage</p>
@@ -840,7 +874,7 @@ function buildFullReportEmailHtml(lead, note, template) {
       <div style="background: #0F1117; padding: 30px; text-align: center; border-top: 1px solid #1E2230;">
         <p style="color: #9CA3AF; font-size: 12px; margin-bottom: 0;">Please find your comprehensive 90-day recovery roadmap and implementation steps in the <strong>attached PDF report</strong>.</p>
       </div>
-    </div>`;
+    </div>`; 
 }
 
 /**
@@ -857,7 +891,7 @@ function getNicheCalculationRules(niche) {
       plan90: [
         { week: '1-2', priority: 'CRITICAL', action: 'Deploy SMS reminder system', detail: 'Patients who receive SMS 24-hr reminders see 65% fewer no-shows.', impact: '+$2,500/mo', quick: true },
         { week: '3-4', priority: 'HIGH', action: 'Upfront copay collection', detail: 'Train front desk to collect at booking, not after visit.', impact: '+$1,500/mo', quick: false }
-      ]
+      ] 
     },
     realestate: {
       estimatePct: 0.075,
@@ -865,35 +899,35 @@ function getNicheCalculationRules(niche) {
       plan90: [
         { week: '1-2', priority: 'CRITICAL', action: '5-touch follow-up loop', detail: '90% of deals happen after the 4th contact attempt.', impact: '+$5,000/mo', quick: true }
       ]
-    },
+    }, 
     healthcare: {
       estimatePct: 0.13,
       breakdown: ['Denied insurance claims', 'Patient no-shows', 'Underbilled services'],
       plan90: [
         { week: '1-2', priority: 'CRITICAL', action: 'Insurance verification', detail: 'Check eligibility 48h before the appointment.', impact: '+$3,000/mo', quick: true }
       ]
-    },
+    }, 
     legal: {
       estimatePct: 0.15,
       breakdown: ['Untracked billable hours', 'Low realization rates', 'Administrative delays'],
       plan90: [
         { week: '1-2', priority: 'CRITICAL', action: 'Daily time tracking', detail: 'Attorneys log time daily to recapture 8-12 lost hours/week.', impact: '+$10,000/mo', quick: true }
       ]
-    },
+    }, 
     saas: {
       estimatePct: 0.10,
       breakdown: ['Churn and downgrades', 'Failed payments', 'Weak onboarding flow'],
       plan90: [
         { week: '1-2', priority: 'CRITICAL', action: 'Automated dunning sequence', detail: 'Recover 40% of failed payments with smart retries.', impact: '+$2,000/mo', quick: true }
       ]
-    },
+    }, 
     restaurant: {
       estimatePct: 0.16,
       breakdown: ['No-shows and cancellations', 'Food and labour waste', 'High delivery fees'],
       plan90: [
         { week: '1-2', priority: 'CRITICAL', action: 'Reservation confirmations', detail: 'SMS confirmation reduces no-shows by 50%.', impact: '+$3,500/mo', quick: true }
       ]
-    }
+    } 
   };
   return rules[key] || rules.dental;
 }
@@ -911,7 +945,7 @@ function calculateLeadLeakage(lead) {
   const breakdown = (lead.leakageBreakdown || rules.breakdown.join(' | ')).split(' | ').filter(Boolean);
   const ratio = revenue ? monthlyLeak / revenue : 0;
   const score = Math.max(15, Math.min(85, 100 - Math.round(ratio * 120)));
-  const grade = score < 50 ? 'Critical' : score < 70 ? 'Needs Improvement' : 'Healthy';
+  const grade = score < 50 ? 'Critical' : score < 70 ? 'Needs Improvement' : 'Healthy'; 
   return { revenue, monthlyLeak, annualLeak, breakdown, score, grade, rules };
 }
 
@@ -935,7 +969,7 @@ function buildFullPdfReportHtml(lead, note) {
   const grCount = Number(lead.googleReviews || 0);
   const items = (lead.leakageBreakdown || '').split(' | ').filter(Boolean);
   const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (niche || 'GEN').toUpperCase().slice(0, 3);
-  const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM dd, yyyy');
+  const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM dd, yyyy'); 
   const leakRatio = revenue > 0 ? Math.round((leakage / revenue) * 100) : 0;
 
   // Health score calculation
@@ -944,7 +978,7 @@ function buildFullPdfReportHtml(lead, note) {
   health -= Math.min(40, lr * 100);
   if (grRating > 0 && grRating < 4.0) health -= 15;
   if (grRating === 0) health -= 20;
-  if (grCount < 50) health -= 8;
+  if (grCount < 50) health -= 8; 
   health = Math.max(0, Math.round(health));
   const hColor = health >= 75 ? '#10B981' : health >= 50 ? '#F59E0B' : health >= 30 ? '#F97316' : '#EF4444';
   const hGrade = health >= 75 ? 'Good' : health >= 50 ? 'Needs Attention' : health >= 30 ? 'Critical' : 'Emergency';
@@ -959,7 +993,7 @@ function buildFullPdfReportHtml(lead, note) {
     restaurant: ['Food waste is 100% pure lost profit.', 'No-shows on busy nights are permanent losses.', 'Overstaffing slow periods is common waste.', 'Delivery fees can wipe out margins.']
   };
   const explains = leakExplain[niche] || leakExplain.dental;
-
+ 
   const styles = `
     @page { margin: 15mm 12mm; }
     body { font-family: Arial, sans-serif; font-size: 12px; color: #111; background: #fff; line-height: 1.5; }
@@ -969,7 +1003,7 @@ function buildFullPdfReportHtml(lead, note) {
     p, ul, li { margin: 0 0 8px; padding: 0; }
     ul { list-style-type: disc; margin-left: 20px; }
 
-    /* Layout & Structure */
+    /* Layout & Structure */ 
     .brand-bar { background: #F97316; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .hero { background: #1a1a2e; color: #fff; padding: 24px 20px 20px; margin-bottom: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .hero-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
@@ -1025,7 +1059,7 @@ function buildFullPdfReportHtml(lead, note) {
     /* How to Improve */
     .improve-item { margin-bottom: 14px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
     .improve-header { background: #fff8f0; padding: 10px 14px; border-bottom: 1px solid #fed7aa; }
-    .improve-area { color: #92400e; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin: 0; }
+    .improve-area { color: #92400e; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin: 0; } 
     .improve-body { background: #fff; padding: 12px 14px; }
     .improve-how { color: #374151; font-size: 12px; line-height: 1.7; margin: 0 0 8px; }
     .improve-benchmark { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 6px 10px; color: #166534; font-size: 11px; margin: 0; }
@@ -1034,7 +1068,7 @@ function buildFullPdfReportHtml(lead, note) {
     .plan-week-box { margin-bottom: 16px; }
     .plan-week-header { background: #F97316; border-radius: 8px 8px 0 0; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
     .plan-week-icon { width: 26px; height: 26px; background: rgba(255,255,255,.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
-    .plan-week-title { font-size: 13px; font-weight: 700; color: #fff; flex: 1; margin: 0; }
+    .plan-week-title { font-size: 13px; font-weight: 700; color: #fff; flex: 1; margin: 0; } 
     .plan-week-potential { font-size: 11px; color: rgba(255,255,255,.85); margin: 0; font-weight: 600; }
     .plan-actions-body { background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 14px; }
     .plan-action-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: #fff; }
@@ -1077,7 +1111,7 @@ function buildFullPdfReportHtml(lead, note) {
     .footer-details { color: #9ca3af; font-size: 10px; line-height: 1.6; margin: 0; }
   `;
 
-  // Build Dynamic Content
+  // Build Dynamic Content  
   const leakHtml = items.map((item, i) => {
     const col = i === 0 ? '#EF4444' : i <= 2 ? '#F97316' : '#F59E0B';
     const share = Math.round(leakage / Math.max(1, items.length));

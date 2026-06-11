@@ -191,6 +191,7 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     <div class="tab active" onclick="switchTab('requests',this)">📋 Audit Requests <span class="tab-badge" id="req-count">0</span></div>
     <div class="tab" onclick="switchTab('all',this)">👥 All Leads <span class="tab-badge" id="all-count" style="background:var(--mu)">0</span></div>
     <div class="tab" onclick="switchTab('verified',this)">✅ Verified Payments <span class="tab-badge" id="paid-count" style="background:var(--gn)">0</span></div>
+    <div class="tab" onclick="switchTab('deleted',this)">🗑 Deleted</div>
     <div class="tab" onclick="switchTab('templates',this)">✉️ Email Templates</div>
     <div class="tab" onclick="switchTab('preview',this)">📄 Report Preview</div>
   </div>
@@ -203,7 +204,6 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
       <div class="stat"><div class="stat-label">Audit Requested</div><div class="stat-val" id="st-requested" style="color:var(--or)">—</div></div>
       <div class="stat"><div class="stat-label">Paid</div><div class="stat-val" id="st-paid" style="color:var(--gn)">—</div></div>
       <div class="stat"><div class="stat-label">Delivered</div><div class="stat-val" id="st-delivered" style="color:var(--mu)">—</div></div>
-      <div class="stat"><div class="stat-label">Pending Verification</div><div class="stat-val" id="st-pending" style="color:var(--yl)">—</div></div>
       <div class="stat"><div class="stat-label">Revenue</div><div class="stat-val" id="st-revenue" style="color:var(--or)">—</div></div>
     </div>
 
@@ -224,6 +224,23 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
             <th>Date</th><th>Status</th><th>Actions</th>
           </tr></thead>
           <tbody id="req-body"><tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DELETED LEADS TAB -->
+    <div class="tab-panel" id="tab-deleted">
+      <div class="filter-bar">
+        <div style="font-size:13px; color:var(--mu);">Showing leads moved to the trash. You can restore them to the main list at any time.</div>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Niche</th><th>Est. Leakage</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="deleted-body">
+            <tr><td colspan="5" class="tbl-loading"><div class="spin"></div>Loading trash...</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -310,12 +327,17 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     <div class="mc-body">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
         <div>
-          <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Lead Info</div>
+          <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Business Info</div>
           <div id="view-biz-info"></div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Leakage Summary</div>
           <div id="view-leak-info"></div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+        <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Raw Calculation Inputs</div>
+        <div id="view-calc-inputs-display" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;"></div>
         </div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:16px;">
@@ -329,7 +351,6 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
     </div>
     <div class="mc-foot">
       <button class="btn-secondary" onclick="closeModal('view-modal')">Close</button>
-      <button class="btn-primary" onclick="copyPaymentReference()" style="background:var(--bl);" id="copy-ref-btn">📋 Copy Reference</button>
       <button class="btn-danger" onclick="confirmDelete()">🗑 Delete Lead</button>
       <button class="btn-primary" onclick="copyTrackerLink()" style="background:var(--mu);">🔗 Copy Tracker Link</button>
       <button class="btn-primary" id="dl-pdf-btn" onclick="downloadPdf()" style="background:var(--bl);">📄 Download PDF</button>
@@ -546,6 +567,7 @@ function switchTab(name, el){
   if(name === 'preview')   renderReportPreview();
   if(name === 'requests')  filterLeads();
   if(name === 'all')       filterAll();
+  if(name === 'deleted')   loadDeletedLeads();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -572,6 +594,33 @@ async function loadLeads(){
   }
 }
 
+var _deletedLeads = [];
+async function loadDeletedLeads() {
+  try {
+    var res = await fetch(SHEET_URL + '?action=getDeletedLeads&key=' + encodeURIComponent(_auth));
+    var data = await res.json();
+    _deletedLeads = data.leads || [];
+    renderDeletedTable();
+  } catch (e) { showToast('Error loading deleted leads', true); }
+}
+
+function renderDeletedTable() {
+  var tb = document.getElementById('deleted-body');
+  if (_deletedLeads.length === 0) {
+    tb.innerHTML = '<tr><td colspan="5" class="tbl-empty">Trash is empty</td></tr>';
+    return;
+  }
+  tb.innerHTML = _deletedLeads.map(function(l) {
+    return '<tr>' +
+      '<td><strong>' + esc(l.business) + '</strong><br><span style="font-size:11px;color:var(--mu);">' + esc(l.email) + '</span></td>' +
+      '<td>' + esc(l.niche) + '</td>' +
+      '<td>$' + Number(l.totalLeakage).toLocaleString() + '</td>' +
+      '<td>' + esc(l.date) + '</td>' +
+      '<td><button class="ab ab-orange" onclick="restoreLead(\'' + l.id + '\')">↩ Restore</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
 /**
  * Checks URL for a 'search' parameter and automatically filters the leads list.
  */
@@ -592,14 +641,12 @@ function handleUrlSearch() {
 function renderStats(){
   var total     = _leads.length;
   var newLeads  = _leads.filter(function(l){return !l.paidReport || l.paidReport===''||l.paidReport==='New';}).length;
-  var requested = _leads.filter(function(l){return l.paidReport==='Requested';}).length; // Leads that requested but not yet paid
+  var requested = _leads.filter(function(l){return l.paidReport==='Requested';}).length;
   var paid      = _leads.filter(function(l){return l.paidReport==='Paid';}).length;
   var delivered = _leads.filter(function(l){return l.paidReport==='Delivered';}).length;
-  var pendingVerification = requested; // Same as requested, as these are awaiting admin verification
   var revenue   = (paid + delivered) * 47;
   // Update stat cards
   var els = {
-    'st-pending':   pendingVerification,
     'st-total':     total,
     'st-requested': requested + newLeads,
     'st-paid':      paid,
@@ -1037,13 +1084,24 @@ function openViewModal(i){
     return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val"'+(isLeak?' style="color:var(--rd);"':isRef?' style="color:var(--gn);"':'')+'>'+esc(r[1])+'</span></div>';
   }).join('');
 
-  document.getElementById('view-modal').classList.add('open');
+  // Populate Raw Calculation Inputs
+  var calcInputsDisplayDiv = document.getElementById('view-calc-inputs-display');
+  calcInputsDisplayDiv.innerHTML = ''; // Clear previous content
+  if (_current.calculationInputs) {
+    try {
+      var inputs = JSON.parse(_current.calculationInputs);
+      var html = Object.keys(inputs).map(key => {
+        return `<div class="irow"><span class="irow-label">${esc(key)}</span><span class="irow-val">${esc(inputs[key])}</span></div>`;
+      }).join('');
+      calcInputsDisplayDiv.innerHTML = html;
+    } catch (e) {
+      calcInputsDisplayDiv.innerHTML = `<div style="color:var(--rd);">Error parsing JSON: ${esc(e.message)}</div><div style="white-space:pre-wrap;font-family:monospace;font-size:11px;color:var(--mu);margin-top:8px;">${esc(_current.calculationInputs)}</div>`;
+    }
+  } else {
+    calcInputsDisplayDiv.innerHTML = '<div style="color:var(--mu);">No calculation inputs recorded.</div>';
+  }
 
-  // Show/hide copy reference button
-  const copyRefBtn = document.getElementById('copy-ref-btn');
-  const hasRef = _current.paymentReference && _current.paymentReference !== 'Payment confirmed'; // 'Payment confirmed' is a generic default
-  copyRefBtn.style.display = hasRef ? 'inline-block' : 'none';
-  copyRefBtn.disabled = !hasRef;
+  document.getElementById('view-modal').classList.add('open');
 }
 
 // ── Paid Modal ────────────────────────────────────────────
@@ -1291,17 +1349,20 @@ async function downloadPdf() {
   finally { btn.innerHTML = origTxt; btn.disabled = false; }
 }
 
-function copyPaymentReference() {
-  if (!_current || !_current.paymentReference) {
-    showToast('No payment reference available', true);
-    return;
-  }
-  navigator.clipboard.writeText(_current.paymentReference).then(function() {
-    showToast('✅ Payment reference copied');
-  }).catch(function(err) {
-    console.error('Failed to copy text: ', err);
-    showToast('Failed to copy reference', true);
-  });
+async function restoreLead(id) {
+  if(!confirm('Restore this lead to the active list?')) return;
+  try {
+    var res = await fetch(SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'restoreCalculatorLead', key: _auth, id: id })
+    });
+    var data = await res.json();
+    if (data.success) {
+      showToast('✅ Lead restored');
+      loadLeads();
+      loadDeletedLeads();
+    }
+  } catch (e) { showToast('Restore failed', true); }
 }
 
 function showToast(msg, isErr){
