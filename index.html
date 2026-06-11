@@ -145,8 +145,9 @@ body{background:var(--surface-background);color:var(--text-primary);font-family:
 .pc.on .cb{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff;}
 .nb{display:flex;gap:10px;margin-top:24px;}
 .bn{flex:1;background:var(--brand-primary);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.bn{flex:1;background:var(--brand-primary);color:#fff;border:none;border-radius:12px;padding:18px 24px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;box-shadow:0 4px 12px rgba(249,115,22,0.25);}
 .bn:hover{opacity:.9;}
-.bb{background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:12px;padding:14px 20px;font-size:14px;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.bb{background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:12px;padding:18px 24px;font-size:15px;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;white-space:nowrap;}
 .bb:hover{color:var(--text-primary);}
 .ib{background:hsla(var(--status-info-h), var(--status-info-s), var(--status-info-l), 0.08);border:1px solid hsla(var(--status-info-h), var(--status-info-s), var(--status-info-l), 0.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;}
 .ib strong{color:var(--bl);}
@@ -962,7 +963,9 @@ function goStep3(){
 }
 
 // ── Calculation ───────────────────────────────────────────
-async function runCalc(){
+var _leadSessionId = null;
+async function runCalc() {
+  if(!_leadSessionId) _leadSessionId = 'ID-' + Date.now();
   document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active');});
   document.getElementById('ca').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1097,7 +1100,10 @@ async function submitAuditRequest(){
 }
 
 // ── Save to Google Sheets ─────────────────────────────────
+var _saveInProgress = false;
 function _saveLead(status,name,email,phone,website){
+  if(_saveInProgress && status === 'New') return; // Only allow one 'New' save per refresh
+  _saveInProgress = true;
   var tops=S.res.items.slice(0,3).map(function(i){return i.l;}).join(' | ');
   var pCode = status === 'Requested' ? document.getElementById('lead_phone_code').value : document.getElementById('biz_phone_code').value;
   var pNum = status === 'Requested' ? document.getElementById('lead_phone').value : document.getElementById('biz_phone').value;
@@ -1121,7 +1127,7 @@ function _saveLead(status,name,email,phone,website){
     body:JSON.stringify({
       action:'saveCalculatorLead',
       lead:{
-        id:Date.now().toString(),
+        id:_leadSessionId,
         date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
         name:name||'',
         email:email||'',

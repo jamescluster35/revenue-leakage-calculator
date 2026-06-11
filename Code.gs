@@ -386,13 +386,26 @@ function saveCalculatorLead(lead) {
 
   // Generate a unique ID if one doesn't exist for Foolproof Payment Identification 
   if (!lead.id) { // If lead ID is not provided
-    lead.id = 'BDL-' + (lead.niche || 'GEN').toUpperCase().slice(0,3) + '-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'mmssSSS'); // Generate unique ID
+    lead.id = 'BDL-' + (lead.niche || 'GEN').toUpperCase().slice(0,3) + '-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMddHHmm'); 
   }
 
   const data = sheet.getDataRange().getValues(); // Get all data
   const headers = data[0]; // Get headers
+  const idCol = headers.indexOf('id');
   const emailCol = headers.indexOf('email'); // Get email column index
   let rowIndex = -1; // Initialize row index
+  
+  for (let i = 1; i < data.length; i++) {
+    if (lead.id && String(data[i][idCol]) === String(lead.id)) {
+      rowIndex = i + 1;
+      break;
+    }
+    if (lead.email && String(data[i][emailCol]).toLowerCase() === String(lead.email).toLowerCase()) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+
   if (lead.email) {
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][emailCol]).toLowerCase() === String(lead.email).toLowerCase()) {
@@ -698,14 +711,47 @@ function buildFollowUpEmail1(lead, toEmail){
  */
 function sendPaymentRequestEmail(lead, toEmail, wiseLink) {
   try {
+    const bizName = lead.business || 'Your Business';
     const firstName = String(lead.name || 'there').split(' ')[0];
+    const leakage = Number(lead.totalLeakage || 0);
+    const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (lead.niche || 'GEN').toUpperCase().slice(0, 3);
+
     const html = `
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2>Your Revenue Audit is Ready</h2> // HTML for payment request email 
-        <p>Hi ${firstName}, please use the link below to complete your payment of $47:</p>
-        <a href="${wiseLink}" style="background:#F97316;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;">Pay $47 to Unlock Report</a>
-      </div>`;
-    MailApp.sendEmail({ to: toEmail, subject: 'Payment Required: Revenue Audit', htmlBody: html, name: 'BDL Revenue Intelligence' });
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px; background: #fff;">
+      <div style="background: #F97316; padding: 12px 20px; border-radius: 8px 8px 0 0; text-align: center;">
+        <span style="color: #fff; font-weight: bold; letter-spacing: 1px;">BDL REVENUE INTELLIGENCE</span>
+      </div>
+      <div style="padding: 24px; border: 1px solid #eee; border-top: none; border-radius: 0 0 8px 8px;">
+        <h2 style="color: #111; margin-top: 0;">Your Executive Diagnostic is Ready</h2>
+        <p style="color: #444; line-height: 1.6;">Hi ${firstName},</p>
+        <p style="color: #444; line-height: 1.6;">Our analysis for <strong>${bizName}</strong> is complete. We have identified significant friction points contributing to your estimated <strong>$${leakage.toLocaleString()}/mo</strong> leakage.</p>
+        
+        <div style="background: #fff7ed; padding: 20px; border-radius: 10px; text-align: center; margin: 24px 0; border: 1px solid #fed7aa;">
+          <p style="margin: 0; color: #9a3412; font-size: 12px; font-weight: bold; text-transform: uppercase;">Unlock Your Full 20+ Page Roadmap</p>
+          <p style="margin: 10px 0; color: #dc2626; font-size: 32px; font-weight: 800;">$47.00</p>
+          <a href="${wiseLink}" style="display: inline-block; background: #F97316; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">Pay via Wise & Unlock Report →</a>
+        </div>
+
+        <p style="font-size: 13px; color: #666;"><strong>Note:</strong> Please include reference ID <span style="font-family: monospace; font-weight: bold; color: #111;">${reportId}</span> in your payment notes so we can deliver your report immediately.</p>
+        
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="font-size: 12px; color: #999; margin: 0;">Your report includes:</p>
+          <ul style="font-size: 12px; color: #666; padding-left: 20px;">
+            <li>Exact fix steps for your top 5 leakage areas.</li>
+            <li>90-Day implementation roadmap.</li>
+            <li>Industry-specific ROI benchmarks.</li>
+          </ul>
+        </div>
+      </div>
+      <p style="text-align: center; font-size: 11px; color: #bbb; margin-top: 15px;">BDL Revenue Intelligence · Ref: ${reportId}</p>
+    </div>`;
+
+    MailApp.sendEmail({
+      to: toEmail,
+      subject: `Action Required: Secure your Audit Report for ${bizName}`,
+      htmlBody: html,
+      name: 'BDL Revenue Intelligence'
+    });
     return { success: true };
   } catch(err) { return { error: err.message }; }
 }
@@ -770,6 +816,10 @@ function sendInitialPaymentRequestEmail(lead) {
           When paying via Wise, you <strong>must</strong> include the following ID in the "Reference" or "Message" field so we can identify your audit:<br>
           <span style="display: block; margin-top: 10px; font-family: monospace; font-size: 18px; color: #1e293b; font-weight: bold; background: #e2e8f0; padding: 8px; text-align: center; border-radius: 4px;">${paymentId}</span>
         </p>
+      </div>
+
+      <div style="margin: 20px 0; padding: 15px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+        <p style="margin: 0; color: #166534; font-size: 13px;"><strong>✨ Bonus Included:</strong> Your report will also include a custom 12-month ROI projection based on these fixes if requested today.</p>
       </div>
 
       <p style="font-size: 13px; color: #475569; line-height: 1.6;">Once payment is received, your high-fidelity Executive Diagnostic (PDF) including the 90-day recovery roadmap will be delivered to this email within 24 hours.</p>
