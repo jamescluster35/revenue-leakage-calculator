@@ -388,15 +388,17 @@ function saveCalculatorLead(lead) {
   const headers = data[0]; // Get headers
   const idCol = headers.indexOf('id');
   const emailCol = headers.indexOf('email'); // Get email column index
+  if (idCol === -1 || emailCol === -1) return { error: 'Required columns (id/email) missing in sheet' };
+
   let rowIndex = -1; // Initialize row index
   
   for (let i = 1; i < data.length; i++) {
-    if (lead.id && String(data[i][idCol]) === String(lead.id)) {
+    if (lead.id && String(data[i][idCol]||'').trim() === String(lead.id)) {
       rowIndex = i + 1;
       break;
     }
-    if (lead.email && String(data[i][emailCol]).toLowerCase() === String(lead.email).toLowerCase()) {
-      rowIndex = i + 1;
+    if (lead.email && String(data[i][emailCol]||'').trim().toLowerCase() === String(lead.email).toLowerCase()) {
+      rowIndex = i + 1; // Update existing email match
       break;
     }
   }
@@ -1410,63 +1412,95 @@ function buildFullPdfReportHtml(lead, note) {
   }).join('');
 
   const matrixHtml = `
-    <table style="width:100%; border-collapse:separate; border-spacing:10px 0;">
-      <tr>
-        <td width="50%" style="border:1px solid #bbf7d0; border-radius:8px; padding:12px; vertical-align:top; background:#fff;">
-          <p style="color:#16a34a; font-weight:700; margin:0 0 8px; font-size:11px; text-transform:uppercase;">🟢 DO FIRST</p>
-          ${items.slice(0, 2).map(i => `<p style="font-size:11px; color:#374151; margin:0 0 4px;">→ ${esc(i)}</p>`).join('')}
-        </td>
-        <td width="50%" style="border:1px solid #fed7aa; border-radius:8px; padding:12px; vertical-align:top; background:#fff;">
-          <p style="color:#ea580c; font-weight:700; margin:0 0 8px; font-size:11px; text-transform:uppercase;">🟠 PLAN FOR</p>
-          ${items.slice(2, 4).map(i => `<p style="font-size:11px; color:#374151; margin:0 0 4px;">→ ${esc(i)}</p>`).join('')}
-        </td>
-      </tr>
-    </table>`;
+    <div class="matrix-grid">
+      <div class="matrix-cell" style="border-color: #bbf7d0">
+    <table style="width:100%; border-collapse:separate; border-spacing:10px 0;"><tr>
+      <td width="50%" class="matrix-cell" style="border-color: #bbf7d0; vertical-align:top;">
+        <p style="color:#16a34a; font-weight:700; margin:0 0 8px;">🟢 DO FIRST</p>
+        ${items.slice(0, 2).map(i => `<p style="margin:2px 0;">→ ${esc(i)}</p>`).join('')}
+      </div>
+      <div class="matrix-cell" style="border-color: #fed7aa">
+      </td>
+      <td width="50%" class="matrix-cell" style="border-color: #fed7aa; vertical-align:top;">
+        <p style="color:#ea580c; font-weight:700; margin:0 0 8px;">🟠 PLAN FOR</p>
+        ${items.slice(2, 4).map(i => `<p style="margin:2px 0;">→ ${esc(i)}</p>`).join('')}
+      </td>
+    </tr></table>`;
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>${styles}</style></head>
     <style>
-      ${styles}
-      body { font-family: Helvetica, Arial, sans-serif; color: #111; line-height: 1.5; padding: 0; margin: 0; }
-      .page-break { page-break-before: always; }
+      body { font-family: sans-serif; color: #111; line-height: 1.5; padding: 40px; }
+      .hdr { border-bottom: 4px solid #F97316; padding-bottom: 20px; margin-bottom: 30px; }
+      .stat-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+      .leak-val { color: #dc2626; font-size: 36px; font-weight: bold; }
+      .plan-section { margin-top: 40px; }
+      .action-item { border-left: 4px solid #F97316; background: #fff8f0; padding: 15px; margin-bottom: 15px; }
     </style></head>
     <body>
-      <table width="100%" cellpadding="12" style="background:#F97316; color:#fff; font-weight:bold;">
-        <tr><td>BDL — REVENUE INTELLIGENCE</td><td align="right">ID: ${reportId}</td></tr>
-      </table>
-      <div style="background:#1a1a2e; color:#fff; padding:30px 24px;">
-        <table width="100%">
-          <tr>
-            <td><h1 style="margin:0;">${esc(bizName)}</h1><p style="color:#9ca3af;">Revenue Diagnostic · ${dateStr}</p></td>
-            <td align="right">
-              <div style="border:1px solid #F97316; border-radius:8px; padding:10px; text-align:center;">
-                <div style="font-size:9px; color:#F97316;">SCORE</div>
-                <div style="font-size:24px; font-weight:800;">${health}</div>
-                <div style="font-size:10px; color:${hColor};">${hGrade}</div>
-              </div>
-            </td>
-          </tr>
-        </table>
+      <div class="brand-bar">
+        <span>BDL — REVENUE INTELLIGENCE</span>
+        <span>ID: ${reportId}</span>
+      <div class="hdr">
+        <p style="color: #F97316; font-weight: bold; margin: 0;">BDL REVENUE INTELLIGENCE</p>
+        <h1 style="margin: 5px 0;">Executive Revenue Diagnostic</h1>
+        <p style="color: #666; margin: 0;">Report ID: ${reportId} | Issued: ${dateStr}</p>
       </div>
-      <div style="padding:24px;">
-        ${note ? `<div style="background:#fff8f0; border-left:4px solid #F97316; padding:15px; margin-bottom:20px; font-style:italic; white-space:pre-wrap;">${esc(note)}</div>` : ''}
-        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:16px;">Executive Summary</h2>
-        <table width="100%" cellpadding="15" cellspacing="10">
-          <tr>
-            <td align="center" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
-              <div style="font-size:10px; color:#666;">MONTHLY LEAKAGE</div>
-              <div style="font-size:20px; font-weight:800; color:#EF4444;">$${leakage.toLocaleString()}</div>
-            </td>
-            <td align="center" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
-              <div style="font-size:10px; color:#666;">ANNUAL IMPACT</div>
-              <div style="font-size:20px; font-weight:800; color:#EF4444;">$${annual.toLocaleString()}</div>
-            </td>
-          </tr>
-        </table>
-        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; margin-top:25px; padding-bottom:8px;">Leakage Breakdown</h2>
-        ${leakHtml}
-        <div class="page-break"></div>
-        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Priority Roadmap</h2>
-        ${matrixHtml}
+      <h2>Analysis for ${bizName}</h2>
+      <div class="stat-box">
+        <p class="stat-label">Estimated Monthly Leakage</p>
+        <p style="margin: 0; text-transform: uppercase; font-size: 12px; color: #666;">Estimated Monthly Leakage</p>
+        <div class="leak-val">$${calc.monthlyLeak.toLocaleString()}</div>
+        <p class="stat-annual">Annual Impact: $${calc.annualLeak.toLocaleString()}</p>
+
+      <div class="hero">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h1 style="margin:0;">${bizName}</h1>
+            <p style="color:#9ca3af; margin:4px 0;">Executive Revenue Diagnostic · ${dateStr}</p>
+          </div>
+          <div class="score-badge">
+            <div style="font-size:9px; font-weight:700; color:#F97316;">HEALTH SCORE</div>
+            <div style="font-size:24px; font-weight:800;">${health}</div>
+            <div style="font-size:10px; color:${hColor}">${hGrade}</div>
+          </div>
+        </div>
+        <p style="margin-top:20px; color:#e5e7eb;">Hi ${esc(firstName)}, we have analyzed your data and identified significant opportunities to recapture leaking revenue.</p>
+        ${note ? `<div style="background:rgba(249,115,22,0.1); border-left:3px solid #F97316; padding:12px; margin-top:15px; font-style:italic;">"${esc(note)}"</div>` : ''}
+        <p style="margin: 0; color: #666;">Annual Impact: $${calc.annualLeak.toLocaleString()}</p>
+      </div>
+
+      <div class="summary-box">
+        <h2 style="margin-top:0; color:#F97316; font-size:14px;">EXECUTIVE SUMMARY</h2>
+        <div class="stat-grid">
+          <div class="stat-item"><div class="stat-val">$${leakage.toLocaleString()}</div><div class="stat-label">Monthly Leakage</div></div>
+          <div class="stat-item"><div class="stat-val">$${annual.toLocaleString()}</div><div class="stat-label">Annual Impact</div></div>
+          <div class="stat-item" style="border-color:#bbf7d0"><div class="stat-val" style="color:#16a34a">$${fixTop.toLocaleString()}</div><div class="stat-label">Recoverable/mo</div></div>
+          <div class="stat-item"><div class="stat-val">$${daily}</div><div class="stat-label">Cost Per Day</div></div>
+        </div>
+      </div>
+
+      <h2 style="color:#F97316; font-size:14px;">📉 LEAKAGE BREAKDOWN</h2>
+      ${leakHtml}
+
+      <div class="page-break"></div>
+
+      <h2 style="color:#F97316; font-size:14px;">📅 90-DAY RECOVERY ROADMAP</h2>
+      <div style="margin-bottom:20px;">
+      ${note ? `<div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 30px;"><strong>Analyst Note:</strong><br>${esc(note)}</div>` : ''}
+      <h3>Identified Friction Points</h3>
+      <ul>${calc.breakdown.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+      <div class="plan-section">
+        <h3>90-Day Recovery Roadmap</h3>
+        ${buildPdfPlanActions(lead)}
+      </div>
+
+      <h2 style="color:#F97316; font-size:14px;">🎯 PRIORITY MATRIX</h2>
+      ${matrixHtml}
+
+      <div class="footer">
+        <p>BDL Revenue Intelligence · Confidential Report ID: ${reportId}</p>
+        <p>All estimates based on submitted data and verified industry benchmarks.</p>
       </div>
     </body></html>`;
 }

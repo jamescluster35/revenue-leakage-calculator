@@ -1159,6 +1159,7 @@ async function submitAuditRequest(){
 
 // ── Save to Google Sheets ─────────────────────────────────
 var _saveInProgress = false;
+var SHEET_URL = 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec';
 function _saveLead(status,name,email,phone,website){
   if(_saveInProgress && status === 'New') return; // Only allow one 'New' save per refresh
   _saveInProgress = true;
@@ -1180,7 +1181,7 @@ function _saveLead(status,name,email,phone,website){
       });
     });
   }
-  fetch('https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec',{
+  fetch(SHEET_URL,{
     method:'POST',
     body:JSON.stringify({
       action:'saveCalculatorLead',
@@ -1214,8 +1215,18 @@ function _saveLead(status,name,email,phone,website){
         userAgent: navigator.userAgent,
         timeOnPage: timeOnPage + 's'
       }
-    })
-  }).catch(function(){});
+    }),
+    mode: 'cors'
+  })
+  .then(res => res.json())
+  .then(data => {
+    if(data.error) console.error('Backend Error:', data.error);
+    _saveInProgress = false;
+  })
+  .catch(err => {
+    console.error('Network/CORS Error:', err);
+    _saveInProgress = false;
+  });
 }
 
 /**
