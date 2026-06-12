@@ -134,24 +134,27 @@ footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);margin
 </footer>
 
 <script>
-// Get tracker ID from URL
-const trackerUrl = new URL(window.location.href);
-const trackerId = trackerUrl.searchParams.get('id') || trackerUrl.hash.slice(1);
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec';
-
-let _lead = null;
-let _tracker = null;
+const TrackerApp = {
+  config: {
+    SHEET_URL: 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec'
+  },
+  state: {
+    id: new URL(window.location.href).searchParams.get('id') || new URL(window.location.href).hash.slice(1),
+    lead: null,
+    tracker: null
+  }
+};
 
 async function initTracker(){
-  if(!trackerId){
+  if(!TrackerApp.state.id){
     showError('No tracker ID provided. Check your email link.');
     return;
   }
   
   try {
-    const res = await fetch(SHEET_URL, {
+    const res = await fetch(TrackerApp.config.SHEET_URL, {
       method: 'POST',
-      body: JSON.stringify({action: 'getTrackerData', trackerId: trackerId})
+      body: JSON.stringify({action: 'getTrackerData', trackerId: TrackerApp.state.id})
     });
     const data = await res.json();
     
@@ -160,8 +163,8 @@ async function initTracker(){
       return;
     }
     
-    _lead = data.lead;
-    _tracker = data.tracker || {};
+    TrackerApp.state.lead = data.lead;
+    TrackerApp.state.tracker = data.tracker || {};
     
     document.getElementById('loading').style.display = 'none';
     document.getElementById('progress-section').style.display = 'block';
@@ -181,14 +184,14 @@ function showError(msg){
 }
 
 function renderTracker(){
-  if(!_lead) return;
+  if(!TrackerApp.state.lead) return;
   
   // Header
-  document.getElementById('biz-name').textContent = _lead.business || 'Your Business';
-  document.getElementById('biz-meta').textContent = (_lead.city || '') + (_lead.state ? ', ' + _lead.state : '') + ' · ' + _lead.niche;
+  document.getElementById('biz-name').textContent = TrackerApp.state.lead.business || 'Your Business';
+  document.getElementById('biz-meta').textContent = (TrackerApp.state.lead.city || '') + (TrackerApp.state.lead.state ? ', ' + TrackerApp.state.lead.state : '') + ' · ' + TrackerApp.state.lead.niche;
   
   // Get plan
-  const plan = _lead.plan90 || [];
+  const plan = TrackerApp.state.lead.plan90 || [];
   if(!Array.isArray(plan) || plan.length === 0) {
     showError('No action plan found for this lead.');
     return;
@@ -207,7 +210,7 @@ function renderTracker(){
   // Count completed
   let completed = 0;
   plan.forEach((item, idx) => {
-    if(_tracker['action_' + idx + '_done']) completed++;
+    if(TrackerApp.state.tracker['action_' + idx + '_done']) completed++;
   });
   
   const total = plan.length;
@@ -218,7 +221,7 @@ function renderTracker(){
   document.getElementById('completion-pct').textContent = pct + '% complete';
   
   // Savings
-  const monthlyLeakage = Number(_lead.totalLeakage) || 0;
+  const monthlyLeakage = Number(TrackerApp.state.lead.totalLeakage) || 0;
   const savingsCompleted = Math.round((monthlyLeakage / total) * completed);
   const annualSavings = Math.round(monthlyLeakage * 12);
   
@@ -239,9 +242,9 @@ function renderTracker(){
       '<div class="week-actions">';
     
     items.forEach(item => {
-      const isDone = _tracker['action_' + actionIdx + '_done'];
-      const result = _tracker['action_' + actionIdx + '_result'] || '';
-      const impact = _tracker['action_' + actionIdx + '_impact'] || '';
+      const isDone = TrackerApp.state.tracker['action_' + actionIdx + '_done'];
+      const result = TrackerApp.state.tracker['action_' + actionIdx + '_result'] || '';
+      const impact = TrackerApp.state.tracker['action_' + actionIdx + '_impact'] || '';
       
       html += '<div class="action-item" id="action-' + actionIdx + '">'+
         '<div class="action-check"><input type="checkbox" onchange="toggleAction(' + actionIdx + ')" ' + (isDone ? 'checked' : '') + '></div>'+
@@ -286,29 +289,29 @@ function toggleAction(idx){
 
 function saveResult(idx){
   const input = document.querySelector('#result-' + idx + ' input[type=text]:first-of-type');
-  _tracker['action_' + idx + '_result'] = input.value;
+  TrackerApp.state.tracker['action_' + idx + '_result'] = input.value;
   saveProgress();
 }
 
 function saveImpact(idx){
   const input = document.querySelectorAll('#result-' + idx + ' input[type=text]')[1];
-  _tracker['action_' + idx + '_impact'] = input.value;
+  TrackerApp.state.tracker['action_' + idx + '_impact'] = input.value;
   saveProgress();
 }
 
 async function saveProgress(){
   const allCheckboxes = document.querySelectorAll('.action-item input[type=checkbox]');
   allCheckboxes.forEach((cb, idx) => {
-    _tracker['action_' + idx + '_done'] = cb.checked;
+    TrackerApp.state.tracker['action_' + idx + '_done'] = cb.checked;
   });
   
   try {
-    await fetch(SHEET_URL, {
+    await fetch(TrackerApp.config.SHEET_URL, {
       method: 'POST',
       body: JSON.stringify({
         action: 'saveTrackerData',
-        trackerId: trackerId,
-        tracker: _tracker
+        trackerId: TrackerApp.state.id,
+        tracker: TrackerApp.state.tracker
       })
     });
     renderTracker();
@@ -318,13 +321,13 @@ async function saveProgress(){
 }
 
 function contactSupport(){
-  const subject = 'Implementation Support Request - ' + (_lead?.business || 'Business');
-  const body = 'Hi,\n\nI need help implementing my 90-day action plan.\n\nBusiness: ' + (_lead?.business || '') + '\nEmail: ' + (_lead?.email || '');
+  const subject = 'Implementation Support Request - ' + (TrackerApp.state.lead?.business || 'Business');
+  const body = 'Hi,\n\nI need help implementing my 90-day action plan.\n\nBusiness: ' + (TrackerApp.state.lead?.business || '') + '\nEmail: ' + (TrackerApp.state.lead?.email || '');
   window.location.href = 'mailto:james@bdl.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
 
 function esc(s){
-  return String(s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 window.addEventListener('DOMContentLoaded', initTracker);

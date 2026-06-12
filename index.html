@@ -94,14 +94,28 @@ body{background:var(--surface-background);color:var(--text-primary);font-family:
 .sh{margin-bottom:24px;}
 .sh h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
 .sh p{font-size:13px;color:var(--text-secondary);line-height:1.5;}
-.ng{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
-@media(max-width:420px){.ng{grid-template-columns:repeat(2,1fr);}}
-.nc{border:1.5px solid var(--border-default);border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;background:var(--surface-primary);}
-.nc:hover{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.05);}
+.ng{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:580px){.ng{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:414px){.ng{grid-template-columns:1fr; gap:10px;}}
+.nc{position:relative;border:1.5px solid var(--border-default);border-radius:14px;padding:24px 12px;text-align:center;cursor:pointer;transition:all .2s ease;background:var(--surface-primary);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.nc:hover{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.05);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
 .nc.sel{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);}
-.nc .ic{font-size:30px;margin-bottom:8px;}
-.nc .lb{font-size:12px;font-weight:500;}
-.nc .sl{font-size:10px;color:var(--text-secondary);margin-top:2px;}
+.nc .ic{font-size:48px;margin-bottom:12px;transition:transform .2s ease;}
+.nc:hover .ic{transform:scale(1.1);}
+.nc .lb{font-size:14px;font-weight:700;font-family:'Syne',sans-serif;}
+.nc .sl{font-size:10px;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;}
+
+@media(max-width:414px){
+  .nc{padding:16px 12px; min-height:120px;}
+  .nc .ic{font-size:40px; margin-bottom:8px;}
+}
+
+/* Tooltip Styles */
+.tooltip{visibility:hidden;opacity:0;width:200px;background-color:var(--surface-secondary);color:var(--text-primary);text-align:center;border-radius:8px;padding:10px;position:absolute;z-index:10;bottom:115%;left:50%;transform:translateX(-50%);transition:all .2s ease;font-size:11px;line-height:1.4;border:1px solid var(--border-default);box-shadow:0 10px 30px rgba(0,0,0,0.4);pointer-events:none;}
+.tooltip::after{content:"";position:absolute;top:100%;left:50%;margin-left:-5px;border-width:5px;border-style:solid;border-color:var(--border-default) transparent transparent transparent;}
+.nc:hover .tooltip{visibility:visible;opacity:1;bottom:110%;}
+@media(max-width:768px){.nc .tooltip{display:none;}} /* Disable tooltips on mobile to avoid overlap, use sub-labels instead */
+
 .cs{background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:14px;padding:20px;margin-bottom:14px;}
 .ct{font-size:10px;font-weight:600;color:var(--brand-primary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;}
 .field{margin-bottom:16px;}
@@ -109,6 +123,7 @@ body{background:var(--surface-background);color:var(--text-primary);font-family:
 .field label{display:block;font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:6px;}
 .field .hint{font-size:11px;color:var(--text-secondary);margin-bottom:8px;line-height:1.5;padding:8px 10px;background:var(--surface-secondary);border-radius:8px;border-left:2px solid var(--brand-primary);}
 .field input,.field select{width:100%;background:var(--surface-secondary);border:1.5px solid var(--border-default);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text-primary);font-family:'DM Sans',sans-serif;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+.phone-input-group{display:flex;gap:8px;}
 .field input:focus,.field select:focus{outline:none;border-color:var(--brand-primary);}
 .field input.is-valid{border-color:var(--status-success);}
 .field input.is-invalid{border-color:var(--status-error);}
@@ -120,6 +135,10 @@ body{background:var(--surface-background);color:var(--text-primary);font-family:
   background-repeat: no-repeat;
   background-position: right 10px center; /* Adjust position as needed */
   padding-right: 35px; /* Make space for the arrow */
+}
+@media(max-width:414px){
+  .phone-input-group select{ width:90px !important; }
+  .audit-form{padding:18px;}
 }
 .field input:focus,.field select:focus{outline:none;border-color:var(--brand-primary);}
 .field input::placeholder{color:var(--text-secondary);}
@@ -133,6 +152,17 @@ body{background:var(--surface-background);color:var(--text-primary);font-family:
 .sr{display:flex;gap:6px;flex-wrap:wrap;}
 .star{padding:8px 13px;border:1.5px solid var(--border-default);border-radius:10px;font-size:13px;cursor:pointer;transition:all .15s;background:var(--surface-secondary);color:var(--text-primary);}
 .star:hover,.star.on{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);color:var(--brand-primary);}
+
+/* Comparison Rows */
+.irow{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-default);gap:12px;}
+.irow:last-child{border-bottom:none;}
+.irow-label{font-size:13px;color:var(--text-secondary);flex:1;}
+.irow-val{font-size:14px;font-weight:700;text-align:right;font-family:'Syne',sans-serif;color:var(--text-primary);}
+@media(max-width:414px){
+  .irow-label{font-size:12px;}
+  .irow-val{font-size:13px;}
+}
+
 .pl{display:flex;flex-direction:column;gap:8px;}
 .pc{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border-default);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--surface-secondary);}
 .pc:hover{border-color:var(--brand-primary);}
@@ -165,6 +195,9 @@ body{background:var(--surface-background);color:var(--text-primary);font-family:
 .res-annual{font-size:14px;color:var(--text-secondary);}
 .res-annual strong{color:var(--text-primary);}
 .res-biz{font-size:12px;color:var(--text-secondary);margin-top:8px;}
+#industry-comparison-message, #recovery-message{font-size:14px;color:var(--text-primary);margin-bottom:10px;line-height:1.5;}
+@media(max-width:414px){ .res-annual{font-size:13px;} #industry-comparison-message, #recovery-message{font-size:13px;} }
+
 .free-item{background:var(--surface-primary);border:1.5px solid var(--status-success);border-radius:12px;padding:16px;margin-bottom:10px;}
 .fi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;}
 .fi-name{font-size:14px;font-weight:500;}
@@ -241,7 +274,11 @@ footer a{color:var(--brand-primary);text-decoration:none;}
 }
 .chart-marker#chart-industry-avg { background: var(--status-info); }
 .chart-marker#chart-elite-target { background: var(--status-success); }
-.chart-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); }
+.chart-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 8px; }
+@media(max-width:480px){
+  .chart-labels{flex-wrap:wrap; gap:8px 12px; justify-content: center;}
+  .chart-labels span{font-size:10px; background:var(--surface-secondary); padding:4px 8px; border-radius:6px; border:1px solid var(--border-default);}
+}
 </style>
 </head>
 <body>
@@ -272,13 +309,34 @@ footer a{color:var(--brand-primary);text-decoration:none;}
   <div class="step active" id="step1">
     <div class="sh"><h2>What type of business do you run?</h2><p>Pick the closest match — we'll ask questions specific to your industry</p></div>
     <div class="ng">
-      <div class="nc" data-n="dental" onclick="pickNiche(this)"><div class="ic">🦷</div><div class="lb">Dental Practice</div><div class="sl">Includes: No-shows & Recalls</div></div>
-      <div class="nc" data-n="realestate" onclick="pickNiche(this)"><div class="ic">🏠</div><div class="lb">Real Estate</div><div class="sl">Includes: Portal ROI & Lead Follow-up</div></div>
-      <div class="nc" data-n="healthcare" onclick="pickNiche(this)"><div class="ic">🏥</div><div class="lb">Healthcare</div><div class="sl">Includes: Denied Claims & Referrals</div></div>
-      <div class="nc" data-n="legal" onclick="pickNiche(this)"><div class="ic">⚖️</div><div class="lb">Legal / Law</div><div class="sl">Includes: Billable Hours & Intake</div></div>
-      <div class="nc" data-n="saas" onclick="pickNiche(this)"><div class="ic">💻</div><div class="lb">SaaS / Tech</div><div class="sl">Includes: Churn & Trial Conversion</div></div>
-      <div class="nc" data-n="restaurant" onclick="pickNiche(this)"><div class="ic">🍽️</div><div class="lb">Restaurant</div><div class="sl">Includes: Waste & Table No-shows</div></div>
-      <div class="nc" data-n="general" onclick="pickNiche(this)"><div class="ic">🏢</div><div class="lb">Other / General</div><div class="sl">Any other service biz</div></div>
+      <div class="nc" data-n="dental" onclick="pickNiche(this)">
+        <div class="ic">🦷</div><div class="lb">Dental Practice</div><div class="sl">No-shows & Recalls</div>
+        <span class="tooltip">General dentists, orthodontists, oral surgeons, and specialized dental clinics.</span>
+      </div>
+      <div class="nc" data-n="realestate" onclick="pickNiche(this)">
+        <div class="ic">🏠</div><div class="lb">Real Estate</div><div class="sl">Portal ROI & Leads</div>
+        <span class="tooltip">Residential agents, commercial brokers, property management, and agencies.</span>
+      </div>
+      <div class="nc" data-n="healthcare" onclick="pickNiche(this)">
+        <div class="ic">🏥</div><div class="lb">Healthcare</div><div class="sl">Claims & Referrals</div>
+        <span class="tooltip">Private medical practices, chiropractors, physiotherapists, and wellness clinics.</span>
+      </div>
+      <div class="nc" data-n="legal" onclick="pickNiche(this)">
+        <div class="ic">⚖️</div><div class="lb">Legal / Law</div><div class="sl">Billable Hours & Intake</div>
+        <span class="tooltip">Solo practitioners, multi-partner law firms, and legal consulting services.</span>
+      </div>
+      <div class="nc" data-n="saas" onclick="pickNiche(this)">
+        <div class="ic">💻</div><div class="lb">SaaS / Tech</div><div class="sl">Churn & Conversion</div>
+        <span class="tooltip">Software products, mobile apps, subscription platforms, and tech startups.</span>
+      </div>
+      <div class="nc" data-n="restaurant" onclick="pickNiche(this)">
+        <div class="ic">🍽️</div><div class="lb">Restaurant</div><div class="sl">Waste & Tables</div>
+        <span class="tooltip">Full-service restaurants, cafes, bars, and catering businesses.</span>
+      </div>
+      <div class="nc" data-n="general" onclick="pickNiche(this)">
+        <div class="ic">🏢</div><div class="lb">Other / General</div><div class="sl">Any Service Biz</div>
+        <span class="tooltip">Professional services, trade businesses, or any industry not listed above.</span>
+      </div>
     </div>
     <div class="nerr" id="niche-err">⚠ Please select your business type above</div>
     <div class="cs">
@@ -308,7 +366,7 @@ footer a{color:var(--brand-primary);text-decoration:none;}
       <div class="fr">
         <div class="field">
           <label>State / Province</label>
-          <select id="biz_state">
+          <select id="biz_state" class="has-custom-arrow">
             <option value="">Select state</option>
             <optgroup label="🇺🇸 USA — States">
             <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
@@ -332,8 +390,8 @@ footer a{color:var(--brand-primary);text-decoration:none;}
       <div class="fr">
         <div class="field">
           <label>Business phone</label>
-          <div style="display:flex;gap:8px;">
-            <select id="biz_phone_code" style="width:110px;flex-shrink:0;" onchange="updatePhoneInput(this, 'biz_phone')">
+          <div class="phone-input-group">
+            <select id="biz_phone_code" class="has-custom-arrow" style="width:110px;flex-shrink:0;" onchange="updatePhoneInput(this, 'biz_phone')">
               <option value="+1" data-country="USA" data-min-len="10" data-max-len="10" data-placeholder="(512) 555-0100">🇺🇸 +1</option>
               <option value="+1" data-country="Canada" data-min-len="10" data-max-len="10" data-placeholder="(512) 555-0100">🇨🇦 +1</option>
               <option value="+44" data-country="UK" data-min-len="10" data-max-len="10" data-placeholder="07911 123456">🇬🇧 +44</option>
@@ -442,7 +500,7 @@ footer a{color:var(--brand-primary);text-decoration:none;}
     
     <div class="cs" id="industry-comparison-block" style="display:none; margin-top:14px;">
       <div class="ct">📈 Industry Comparison</div>
-      <div id="industry-comparison-message" style="font-size:14px;color:var(--text-primary);margin-bottom:10px;line-height:1.5;"></div>
+      <div id="industry-comparison-message"></div>
       <div class="irow"><span class="irow-label">Your Monthly Leakage</span><span class="irow-val" id="comp-your-leakage" style="color:var(--status-error);"></span></div>
       <div class="irow"><span class="irow-label">Industry Average</span><span class="irow-val" id="comp-industry-average"></span></div>
     </div>
@@ -497,8 +555,8 @@ footer a{color:var(--brand-primary);text-decoration:none;}
       <div class="field"><label>Business email</label><input type="email" id="lead_email" placeholder="Your business email"></div>
       <div class="field">
         <label>Phone number</label>
-        <div style="display:flex;gap:8px;">
-          <select id="lead_phone_code" style="width:110px;flex-shrink:0;" onchange="updatePhoneInput(this, 'lead_phone')">
+        <div class="phone-input-group">
+          <select id="lead_phone_code" class="has-custom-arrow" style="width:110px;flex-shrink:0;" onchange="updatePhoneInput(this, 'lead_phone')">
             <option value="+1" data-country="USA" data-min-len="10" data-max-len="10" data-placeholder="(512) 555-0100">🇺🇸 +1</option>
             <option value="+1" data-country="Canada" data-min-len="10" data-max-len="10" data-placeholder="(512) 555-0100">🇨🇦 +1</option>
             <option value="+44" data-country="UK" data-min-len="10" data-max-len="10" data-placeholder="07911 123456">🇬🇧 +44</option>
@@ -719,7 +777,7 @@ var NF={
       {id:'staff',l:'Number of staff?',p:'6',type:'num'},
       {id:'srate',l:'Average hourly pay? ($)',p:'25',type:'num'},
     ]}
-  ], estimatePct: 0.13},
+  ], estimatePct: 0.15},
   legal:{title:'Your Law Firm — Quick Questions',secs:[
     {t:'⏰ Billable Time & Clients',f:[
       {id:'att',l:'Number of attorneys?',p:'5',type:'num'},
@@ -730,7 +788,7 @@ var NF={
       {id:'cconv_v',l:'Out of 10 consultations, how many become clients?',type:'choice',opts:['7-10','4-6','2-3','Less than 2'],vals:[80,50,25,10]},
       {id:'casev',l:'Average case value? ($)',p:'5000',type:'num'},
     ]}
-  ], estimatePct: 0.15},
+  ], estimatePct: 0.18},
   saas:{title:'Your SaaS Business — Quick Questions',secs:[
     {t:'💰 Revenue & Growth',f:[
       {id:'mrr',l:'Monthly Recurring Revenue — MRR ($)',p:'50000',type:'num'},
@@ -965,7 +1023,7 @@ function goStep3(){
 // ── Calculation ───────────────────────────────────────────
 var _leadSessionId = null;
 async function runCalc() {
-  if(!_leadSessionId) _leadSessionId = 'ID-' + Date.now();
+  if(!_leadSessionId) _leadSessionId = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
   document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active');});
   document.getElementById('ca').style.display='block';
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1159,6 +1217,32 @@ function _saveLead(status,name,email,phone,website){
     })
   }).catch(function(){});
 }
+
+/**
+ * UNIT TESTS: Core Calculation Logic
+ * Usage: Run 'CalculatorTester.run()' in browser console.
+ */
+const CalculatorTester = {
+  run: function() {
+    console.group('BDL Calculator Logic Tests');
+    
+    // Mock data for Step 3 inputs
+    const mockG = (id) => ({mrr: 50000, trials: 200, dval: 100}[id] || 0);
+    const mockV = (id) => ({churn_v: 5, tconv_v: 10}[id] || 0);
+    
+    const items = getLeakageItems('saas', mockG, mockV);
+    const cm = 0.6; // Conservative multiplier used in engine
+    
+    // Churn: 50000 * 0.05 * 0.6 = 1500
+    console.assert(items[0].v === 1500, 'SAAS Churn calculation mismatch');
+    
+    // Trial Conv: 200 * (1 - 0.1) * 100 * 0.6 = 10800
+    console.assert(items[1].v === 10800, 'SAAS Trial conversion mismatch');
+    
+    console.log('Calculation logic verified for ' + items.length + ' leakage areas.');
+    console.groupEnd();
+  }
+};
 </script>
 </body>
 </html>

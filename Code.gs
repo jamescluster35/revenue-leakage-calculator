@@ -13,9 +13,14 @@ const SHEETS = {
   ARCHIVED: "Archived",
   DELETED: "Deleted",
   CLIENTS: "Clients",
+  TRACKER: "Tracker", // Ensure Tracker is defined here
+  LOGS: "Logs", // Ensure Logs is defined here
   VERIFIED: "Verified Payments" // Added for clarity
 };
+const DEFAULT_CALC_LEAD_HEADERS = ['id','date','name','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage'];
+const DEFAULT_VERIFIED_HEADERS = ['Reference', 'Email', 'Business', 'Niche', 'Leakage', 'Amount', 'Date', 'Status'];
 
+const DEFAULT_TRACKER_HEADERS = ['Tracker ID', 'Data'];
 const SETTINGS = {
   REPORT_PRICE: 47,
   ADMIN_EMAIL: "jamescluster35@gmail.com",
@@ -152,9 +157,8 @@ function handleRequest(e) {
  * @returns {object} A JSON response containing success status, lead data, and tracker data, or an error message.
  */
 function getTracker(trackerId) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const leadSheet = ss.getSheetByName(SHEETS.CALC_LEADS);
-  const trackerSheet = ss.getSheetByName(SHEETS.TRACKER) || ss.insertSheet(SHEETS.TRACKER);
+  const leadSheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
+  const trackerSheet = getOrCreateSheet(SHEETS.TRACKER, DEFAULT_TRACKER_HEADERS);
   
   // Get Lead Info
   const leads = leadSheet.getDataRange().getValues(); // Get all data from lead sheet
@@ -214,10 +218,7 @@ function jsonResponse(obj) {
  * @param {string} key The key/password attempted by the user.
  */
 function logAttempt(e, key) {
-  // This function is currently not called in handleRequest, but it's good to have.
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let logSheet = ss.getSheetByName(SHEETS.LOGS) || ss.insertSheet(SHEETS.LOGS); // Create Logs sheet if it doesn't exist
-  if (logSheet.getLastRow() === 0) logSheet.appendRow(['Timestamp', 'Action', 'Key Attempted', 'Method']);
+  const logSheet = getOrCreateSheet(SHEETS.LOGS, ['Timestamp', 'Action', 'Key Attempted', 'Method']); // Use direct headers
   let action = e.parameter ? e.parameter.action : "Unknown";
   try { if (e.postData) action = JSON.parse(e.postData.contents).action || action; } catch(err) {}
   logSheet.appendRow([new Date(), action, key, e.postData ? 'POST' : 'GET']);
@@ -354,19 +355,19 @@ function moveLead(id, fromTab, toTab, changes) {
  * @param {object} tracker The tracker data object to save.
  */
 function saveTracker(trackerId, tracker) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEETS.TRACKER) || ss.insertSheet(SHEETS.TRACKER);
-  const data = sheet.getDataRange().getValues();
-  
+  const sheet = getOrCreateSheet(SHEETS.TRACKER, DEFAULT_TRACKER_HEADERS); // Use utility function
+  const data = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
   const stringified = JSON.stringify(tracker);
-  for (let i = 0; i < data.length; i++) {
-    if (data[i][0] == trackerId) {
-      sheet.getRange(i + 1, 2).setValue(stringified);
-      return jsonResponse({ success: true });
+  
+  // Find existing row or append new one
+  for (let i = 0; i < data.length; i++) { // Start from 0 to include headers in search
+    if (String(data[i][0]) === String(trackerId)) {
+      sheet.getRange(i + 1, 2).setValue(stringified); // Update existing row
+      return { success: true };
     }
   }
-  sheet.appendRow([trackerId, stringified]);
-  return jsonResponse({ success: true });
+  sheet.appendRow([trackerId, stringified]); // Append new row if not found
+  return { success: true };
 }
 
 /**
@@ -376,17 +377,11 @@ function saveTracker(trackerId, tracker) {
  * @param {object} lead An object containing the calculator lead's data.
  */
 function saveCalculatorLead(lead) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEETS.CALC_LEADS);
-  const defaultHeaders = ['id','date','name','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage']; // Comprehensive list of headers
-  if (!sheet) { // Create sheet if it doesn't exist
-    sheet = ss.insertSheet(SHEETS.CALC_LEADS); // Insert new sheet
-    sheet.appendRow(defaultHeaders); // Add headers
-  }
+  const sheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS);
 
   // Generate a unique ID if one doesn't exist for Foolproof Payment Identification 
   if (!lead.id) { // If lead ID is not provided
-    lead.id = 'BDL-' + (lead.niche || 'GEN').toUpperCase().slice(0,3) + '-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMddHHmm'); 
+    lead.id = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase(); 
   }
 
   const data = sheet.getDataRange().getValues(); // Get all data
@@ -442,17 +437,31 @@ function saveCalculatorLead(lead) {
  */
 function generateAndSendReport(lead, toEmail, note, subject, htmlBodyOverride) {
   try {
-    const bizName = lead.business || 'Your Business';
+    const bizName = esc(lead.business || 'Your Business');
+    const firstName = esc(String(lead.name || 'there').split(' ')[0]);
     const isPaid = ['paid','delivered'].includes(String(lead.paidReport||'').toLowerCase());
-    const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (lead.niche||'GEN').toUpperCase().slice(0,3); // Generate report ID
     const attachments = [];
+    const template = getTemplateForLead(lead);
+    const reportId = lead.id || 'N/A';
+
     if (isPaid) {
       attachments.push(createPdfAttachment(buildFullPdfReportHtml(lead, note), bizName + ' Revenue Leakage Report.pdf'));
     }
+
+    // Use internal generators if no override is provided (standard for Admin Dashboard calls)
+    const finalHtml = htmlBodyOverride || (isPaid ? buildFullReportEmailHtml(lead, note, template) : buildSummaryReportEmailHtml(lead, note, template));
+    
+    // Ensure subject is unique and personalized
+    let finalSubject = (subject || (isPaid ? template.subject : ('Your Revenue Audit — ' + bizName)))
+      .replace('{bizName}', bizName).replace('{name}', firstName).replace('{id}', reportId);
+    
+    // Add Ref ID to subject to prevent Gmail threading
+    if (!finalSubject.includes(reportId)) finalSubject += ` (Ref: ${reportId})`;
+
     MailApp.sendEmail({
       to: toEmail,
-      subject: subject || ('Your Revenue Audit — ' + bizName),
-      htmlBody: htmlBodyOverride,
+      subject: finalSubject,
+      htmlBody: finalHtml,
       name: 'BDL Revenue Intelligence',
       attachments: attachments
     });
@@ -472,11 +481,9 @@ function generateAndSendReport(lead, toEmail, note, subject, htmlBodyOverride) {
  * @returns {object} A success status or an error message if the lead or sheet is not found.
  */
 function markPaymentPaid(identifier, changes) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEETS.CALC_LEADS);
-  if (!sheet) return { error: 'Sheet not found' };
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  const sheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
+  const data = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
+  const headers = data[0]; // Get headers from the fetched data
   const idCol = headers.indexOf('id');
   const emailCol = headers.indexOf('email');
   const lookupValue = String(identifier || '').trim();
@@ -490,16 +497,12 @@ function markPaymentPaid(identifier, changes) {
         const col = headers.indexOf(key);
         if (col !== -1) sheet.getRange(i + 1, col + 1).setValue(changes[key]);
       });
-      const verifiedSheet = ss.getSheetByName(SHEETS.VERIFIED);
-      if (verifiedSheet) {
-        const lead = headers.reduce((obj, h, j) => { obj[h] = data[i][j]; return obj; }, {});
-        const ref = changes.paymentReference || lead.id || 'manual';
-        const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        verifiedSheet.appendRow([ref, lead.email, lead.business, lead.niche, lead.totalLeakage, SETTINGS.REPORT_PRICE, date, 'Paid']);
-        
-        // Automatically trigger report generation now that payment is confirmed
-        generateAndSendReport(lead, lead.email, "Payment verified. Your Executive Revenue Diagnostic is attached.", "", null);
-      }
+      const verifiedSheet = getOrCreateSheet(SHEETS.VERIFIED, DEFAULT_VERIFIED_HEADERS); // Use utility function
+      const lead = headers.reduce((obj, h, j) => { obj[h] = data[i][j]; return obj; }, {});
+      const ref = changes.paymentReference || lead.id || 'manual';
+      const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      verifiedSheet.appendRow([ref, lead.email, lead.business, lead.niche, lead.totalLeakage, SETTINGS.REPORT_PRICE, date, 'Paid']);
+      generateAndSendReport(lead, lead.email, "Payment verified. Your Executive Revenue Diagnostic is attached.", "", null);
       return { success: true };
     }
   }
@@ -512,19 +515,10 @@ function markPaymentPaid(identifier, changes) {
  * @returns {object} A success status or an error message if the lead is not found.
  */
 function deleteCalculatorLead(identifier) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEETS.CALC_LEADS);
-  if (!sheet) return { error: 'Sheet not found' };
-
-  const delSheet = ss.getSheetByName(SHEETS.DELETED) || ss.insertSheet(SHEETS.DELETED);
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-
-  // Initialize headers on Deleted sheet if it's fresh
-  if (delSheet.getLastRow() === 0) {
-    delSheet.appendRow(headers);
-  }
-
+  const sheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
+  const delSheet = getOrCreateSheet(SHEETS.DELETED, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
+  const data = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
+  const headers = data[0]; // Get headers from the fetched data
   const idCol = headers.indexOf('id');
   const emailCol = headers.indexOf('email');
   const lookupValue = String(identifier || '').trim();
@@ -545,14 +539,16 @@ function deleteCalculatorLead(identifier) {
  * @returns {object} A success status and an array of lead objects, or an empty array if the sheet is empty.
  */
 function getCalculatorLeads() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.CALC_LEADS);
-  if (!sheet) return { leads: [] };
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return { leads: [] };
+  const sheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
+  const rows = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
+  if (rows.length <= 1) return { success: true, leads: [] }; // Check rows length after fetching
   const headers = rows[0];
   const leads = rows.slice(1).map(row => {
     const lead = {};
-    headers.forEach((h, i) => lead[String(h).trim()] = row[i] || '');
+    DEFAULT_CALC_LEAD_HEADERS.forEach(h => { // Use default headers for consistent object structure
+      const colIndex = headers.indexOf(h);
+      lead[String(h).trim()] = colIndex !== -1 ? row[colIndex] || '' : '';
+    });
     return lead;
   });
   return { success: true, leads: leads.reverse() };
@@ -562,14 +558,16 @@ function getCalculatorLeads() {
  * Fetches leads specifically from the Deleted tab for the Admin UI.
  */
 function getDeletedLeads() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.DELETED);
-  if (!sheet) return { leads: [] };
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return { leads: [] };
+  const sheet = getOrCreateSheet(SHEETS.DELETED, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
+  const rows = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
+  if (rows.length <= 1) return { success: true, leads: [] }; // Check rows length after fetching
   const headers = rows[0];
   const leads = rows.slice(1).map(row => {
     const lead = {};
-    headers.forEach((h, i) => lead[String(h).trim()] = row[i] || '');
+    DEFAULT_CALC_LEAD_HEADERS.forEach(h => { // Use default headers for consistent object structure
+      const colIndex = headers.indexOf(h);
+      lead[String(h).trim()] = colIndex !== -1 ? row[colIndex] || '' : '';
+    });
     return lead;
   });
   return { success: true, leads: leads.reverse() };
@@ -586,12 +584,11 @@ function normalizeNiche(niche){
 
 function verifyPayment(orderId, email) {
   if (!orderId) return { valid: false, error: 'No order ID' };
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.VERIFIED);
-  if (!sheet) return { valid: false, error: 'Sheet not found' };
-  const data = sheet.getDataRange().getValues();
-  const headers = data[0];
-  const orderCol = headers.indexOf('orderId');
-  const statusCol = headers.indexOf('status');
+  const sheet = getOrCreateSheet(SHEETS.VERIFIED, DEFAULT_VERIFIED_HEADERS); // Use utility function
+  const data = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
+  const headers = data[0]; // Get headers from the fetched data
+  const orderCol = headers.indexOf('Reference'); // Assuming 'Reference' is the order ID column
+  const statusCol = headers.indexOf('Status');
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][orderCol]) === String(orderId)) {
       const status = String(data[i][statusCol] || '').toLowerCase();
@@ -632,8 +629,8 @@ function webhookPayment(data, event) {
       }
     }
 
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.VERIFIED);
-    if (!sheet) return { error: 'Sheet not found' };
+    const sheet = getOrCreateSheet(SHEETS.VERIFIED, DEFAULT_VERIFIED_HEADERS); // Use utility function
+
     const orderId   = data.data?.id || data.orderId || '';
     const email     = data.data?.attributes?.user_email || data.email || '';
     const amount    = data.data?.attributes?.total || SETTINGS.REPORT_PRICE;
@@ -641,7 +638,7 @@ function webhookPayment(data, event) {
     const business  = data.data?.attributes?.custom_data?.business || '';
     const niche     = data.data?.attributes?.custom_data?.niche || '';
     const leakage   = data.data?.attributes?.custom_data?.leakage || '';
-    const date      = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const date      = new Date(); // Store full date object for consistency
     sheet.appendRow([orderId, email, business, niche, leakage, amount, date, status, '']); // calculatorLeadId is empty for webhooks unless custom_data is passed 
 
     if (email) { // If email is provided
@@ -688,17 +685,35 @@ function sendFollowUpEmails(lead, toEmail){
  * @returns {object} An object containing the email subject and HTML body.
  */
 function buildFollowUpEmail1(lead, toEmail){
-  const bizName = lead.business || 'Your Business';
-  const niche = lead.niche || 'General';
-  const rules = getNicheCalculationRules(niche);
-  const quickWins = rules.plan90.filter(function(p){ return p.quick; });
+  const bizName = esc(lead.business || 'Your Business');
+  const firstName = esc(String(lead.name || 'there').split(' ')[0]);
+  const niche = esc(lead.niche || 'General');
+  const rules = getNicheCalculationRules(niche); // Use getNicheCalculationRules
+  const quickWins = (rules.plan90 || []).filter(function(p){ return p.quick; });
   const quickWinsHtml = quickWins.map(function(item){ // Build HTML for quick wins
     return '<div style="background:#0F1117;border:1px solid #1E2230;padding:14px;margin-bottom:10px;color:#E8EAF0;">'+
       '<b>✓ '+esc(item.action)+'</b><br><span style="font-size:11px;color:#6B7280;">'+esc(item.detail)+'</span></div>';
   }).join('');
   return {
     subject: 'Week 1: 3 Quick Wins for ' + bizName,
-    html: '<body style="background:#08090C;color:#E8EAF0;padding:20px;"><h1>3 Quick Wins</h1>'+quickWinsHtml+'</body>'
+    html: `<body style="margin:0;padding:0;background:#08090C;font-family:Arial,sans-serif;color:#E8EAF0;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center" style="padding:20px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#141720;border-radius:12px;border:1px solid #1E2230;">
+              <tr>
+                <td style="padding:20px;">
+                  <h1 style="color:#F97316;font-size:22px;margin-bottom:15px;font-family:Arial,sans-serif;">Hi ${firstName}, here are your Quick Wins for ${bizName}!</h1>
+                  <p style="color:#E8EAF0;font-size:14px;line-height:1.6;margin-bottom:20px;">These are the highest-impact actions you can take in the first 1-2 weeks to start recovering revenue:</p>
+                  ${quickWinsHtml}
+                  <p style="color:#9CA3AF;font-size:12px;line-height:1.6;margin-top:20px;">For your full 90-day roadmap and detailed analysis, please refer to your Executive Revenue Diagnostic PDF.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>`
   };
 }
 
@@ -941,34 +956,60 @@ function buildSummaryReportEmailHtml(lead, note, template) {
   const breakdown = (lead.leakageBreakdown || '').split(' | ').filter(Boolean);
   
   return `
-    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px; background: #08090C;">
-      <div style="background: #0F1117; padding: 20px; border-radius: 12px; border: 1px solid #1E2230; margin-bottom: 20px;">
-        <h3 style="color: #F97316; font-size: 18px; margin-top: 0; margin-bottom: 15px;">📊 Revenue Audit Summary: ${esc(lead.business)}</h3>
-        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E2230; color: #E8EAF0;">
-          <span style="font-size: 13px; color: #6B7280;">Monthly Revenue</span><span style="font-size: 13px; font-weight: bold;">$${Number(lead.monthlyRevenue || 0).toLocaleString()}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E2230; color: #E8EAF0;">
-          <span style="font-size: 13px; color: #6B7280;">Estimated Leakage</span><span style="font-size: 13px; font-weight: bold; color: #EF4444;">$${leakage.toLocaleString()}/mo</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; padding: 8px 0; color: #E8EAF0;">
-          <span style="font-size: 13px; color: #6B7280;">Annual Impact</span><span style="font-size: 13px; font-weight: bold; color: #EF4444;">$${(leakage * 12).toLocaleString()}/yr</span>
-        </div>
-      </div>
-      <div style="background: #0F1117; padding: 20px; border-radius: 12px; border: 1px solid #1E2230; margin-bottom: 20px;">
-        <h4 style="color: #F97316; font-size: 14px; margin-top: 0; margin-bottom: 12px; text-transform: uppercase;">🔍 High-Level Friction Points</h4>
-        ${breakdown.map(item => `
-          <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E2230;">
-            <span style="font-size: 13px; color: #E8EAF0;">${esc(item)}</span>
-            <span style="font-size: 11px; font-weight: 700; color: #F97316; text-transform: uppercase;">[Locked]</span>
-          </div>
-        `).join('')}
-      </div>
-      ${note ? `<div style="padding: 15px; border-left: 3px solid #F97316; background: #141720; margin-bottom: 20px; color: #E8EAF0; font-size: 13px; line-height: 1.6;">${esc(note).split('\n').join('<br>')}</div>` : ''}
-      <div style="text-align: center; padding: 20px; background: rgba(249,115,22,0.1); border-radius: 12px; border: 1px dashed #F97316;">
-        <p style="color: #E8EAF0; font-size: 14px; margin-bottom: 15px;">Your full <strong>Executive Revenue Diagnostic</strong> is ready.</p>
-        <p style="color: #6B7280; font-size: 12px; margin-bottom: 0;">Includes: 90-day roadmap, industry benchmarks, and exact fix steps for all ${breakdown.length} areas.</p>
-      </div>
-    </div>`;
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #08090C; font-family: Arial, sans-serif; color: #E8EAF0;">
+      <tr>
+        <td align="center" style="padding: 20px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; margin: 0 auto;">
+            <tr>
+              <td style="background: #0F1117; padding: 20px; border-radius: 12px; border: 1px solid #1E2230;">
+                <h3 style="color: #F97316; font-size: 18px; margin: 0 0 15px; font-family: Arial, sans-serif;">📊 Revenue Audit Summary: ${esc(lead.business)}</h3>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom: 1px solid #1E2230;">
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 13px; color: #6B7280; font-family: Arial, sans-serif;">Monthly Revenue</td>
+                    <td align="right" style="padding: 8px 0; font-size: 13px; font-weight: bold; color: #E8EAF0; font-family: Arial, sans-serif;">$${Number(lead.monthlyRevenue || 0).toLocaleString()}</td>
+                  </tr>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom: 1px solid #1E2230;">
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 13px; color: #6B7280; font-family: Arial, sans-serif;">Estimated Leakage</td>
+                    <td align="right" style="padding: 8px 0; font-size: 13px; font-weight: bold; color: #EF4444; font-family: Arial, sans-serif;">$${leakage.toLocaleString()}/mo</td>
+                  </tr>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="padding: 8px 0; font-size: 13px; color: #6B7280; font-family: Arial, sans-serif;">Annual Impact</td>
+                    <td align="right" style="padding: 8px 0; font-size: 13px; font-weight: bold; color: #EF4444; font-family: Arial, sans-serif;">$${(leakage * 12).toLocaleString()}/yr</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr><td style="padding: 10px 0;"></td></tr>
+            <tr>
+              <td style="background: #0F1117; padding: 20px; border-radius: 12px; border: 1px solid #1E2230;">
+                <h4 style="color: #F97316; font-size: 14px; margin: 0 0 12px; text-transform: uppercase; font-family: Arial, sans-serif;">🔍 High-Level Friction Points</h4>
+                ${breakdown.map(item => `
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom: 1px solid #1E2230;">
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 13px; color: #E8EAF0; font-family: Arial, sans-serif;">${esc(item)}</td>
+                      <td align="right" style="padding: 8px 0; font-size: 11px; font-weight: 700; color: #F97316; text-transform: uppercase; font-family: Arial, sans-serif;">[Locked]</td>
+                    </tr>
+                  </table>
+                `).join('')}
+              </td>
+            </tr>
+            <tr><td style="padding: 10px 0;"></td></tr>
+            ${note ? `<tr><td style="padding: 15px; border-left: 3px solid #F97316; background: #141720; color: #E8EAF0; font-size: 13px; line-height: 1.6; font-family: Arial, sans-serif;">${esc(note).split('\n').join('<br>')}</td></tr>` : ''}
+            ${note ? `<tr><td style="padding: 10px 0;"></td></tr>` : ''}
+            <tr>
+              <td align="center" style="padding: 20px; background: rgba(249,115,22,0.1); border-radius: 12px; border: 1px dashed #F97316;">
+                <p style="color: #E8EAF0; font-size: 14px; margin: 0 0 15px; font-family: Arial, sans-serif;">Your full <strong>Executive Revenue Diagnostic</strong> is ready.</p>
+                <p style="color: #6B7280; font-size: 12px; margin: 0; font-family: Arial, sans-serif;">Includes: 90-day roadmap, industry benchmarks, and exact fix steps for all ${breakdown.length} areas.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
 }
 
 /**
@@ -992,40 +1033,61 @@ function buildFullReportEmailHtml(lead, note, template) {
     const col = i === 0 ? '#EF4444' : i <= 2 ? '#F97316' : '#F59E0B';
     const share = Math.round(leakage / Math.max(1, items.length));
     return `
-      <div style="border-left: 4px solid ${col}; background: #0F1117; padding: 15px; margin-bottom: 12px; border-radius: 0 10px 10px 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span style="font-weight: 700; color: #E8EAF0; font-size: 14px;">${esc(item)}</span>
-          <span style="font-weight: 800; color: ${col}; font-size: 15px;">-$${share.toLocaleString()}/mo</span>
-        </div>
-        <div style="height: 5px; background: #1E2230; border-radius: 10px; overflow: hidden;">
-          <div style="height: 100%; background: ${col}; width: ${100 - (i * 15)}%;"></div>
-        </div>
+      <div style="border-left: 4px solid ${col}; background: #0F1117; padding: 15px; margin-bottom: 12px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 8px;">
+          <tr>
+            <td align="left" style="font-weight: 700; color: #E8EAF0; font-size: 14px; font-family: Arial, sans-serif;">${esc(item)}</td>
+            <td align="right" style="font-weight: 800; color: ${col}; font-size: 15px; font-family: Arial, sans-serif;">-$${share.toLocaleString()}/mo</td>
+          </tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="height: 5px; background: #1E2230; border-radius: 10px;">
+          <tr>
+            <td style="height: 5px; background: ${col}; width: ${100 - (i * 15)}%; border-radius: 10px;"></td>
+            <td style="height: 5px; background: #1E2230; width: ${i * 15}%;"></td>
+          </tr>
+        </table>
       </div>`;
   }).join('');
 
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 680px; margin: 0 auto; background: #08090C; color: #E8EAF0; padding: 0;">
-      <div style="background: #F97316; padding: 12px 25px; text-align: center; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">
-        BDL — REVENUE INTELLIGENCE · ID: ${reportId}
-      </div>
-      <div style="background: #0F1117; padding: 35px 30px; border-bottom: 4px solid #F97316;">
-        <h1 style="font-size: 28px; margin: 0 0 5px; color: #fff;">${esc(bizName)}</h1>
-        <p style="color: #6B7280; font-size: 14px; margin: 0;">Executive Revenue Diagnostic Report · ${esc(niche.toUpperCase())}</p>
-        ${note ? `<div style="margin-top: 25px; border-left: 4px solid #F97316; background: #141720; padding: 20px; font-size: 14px; line-height: 1.7; color: #E8EAF0;">${esc(note).split('\n').join('<br>')}</div>` : ''} 
-      </div>
-      <div style="background: #141720; padding: 40px 30px; text-align: center; border-bottom: 1px solid #1E2230;">
-        <p style="color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;">Identified Monthly Leakage</p>
-        <p style="color: #EF4444; font-size: 64px; font-weight: 800; margin: 0; line-height: 1; letter-spacing: -2px;">$${leakage.toLocaleString()}</p>
-        <p style="color: #6B7280; font-size: 14px; margin-top: 10px;">≈ <strong style="color: #E8EAF0;">$${annual.toLocaleString()} per year</strong></p>
-      </div>
-      <div style="padding: 30px;">
-        <p style="color: #F97316; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px;">📉 Analysis of Friction Points</p>
-        ${leakHtml}
-      </div>
-      <div style="background: #0F1117; padding: 30px; text-align: center; border-top: 1px solid #1E2230;">
-        <p style="color: #9CA3AF; font-size: 12px; margin-bottom: 0;">Please find your comprehensive 90-day recovery roadmap and implementation steps in the <strong>attached PDF report</strong>.</p>
-      </div>
-    </div>`; 
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: #08090C; font-family: Arial, sans-serif; color: #E8EAF0;">
+      <tr>
+        <td align="center" style="padding: 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 680px; margin: 0 auto;">
+            <tr>
+              <td style="background: #F97316; padding: 12px 25px; text-align: center; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;">
+                BDL — REVENUE INTELLIGENCE · ID: ${reportId}
+              </td>
+            </tr>
+            <tr>
+              <td style="background: #0F1117; padding: 35px 30px; border-bottom: 4px solid #F97316;">
+                <h1 style="font-size: 28px; margin: 0 0 5px; color: #fff; font-family: Arial, sans-serif;">${esc(bizName)}</h1>
+                <p style="color: #6B7280; font-size: 14px; margin: 0;">Executive Revenue Diagnostic Report · ${esc(niche.toUpperCase())}</p>
+                ${note ? `<div style="margin-top: 25px; border-left: 4px solid #F97316; background: #141720; padding: 20px; font-size: 14px; line-height: 1.7; color: #E8EAF0;">${esc(note).split('\n').join('<br>')}</div>` : ''} 
+              </td>
+            </tr>
+            <tr>
+              <td style="background: #141720; padding: 40px 30px; text-align: center; border-bottom: 1px solid #1E2230;">
+                <p style="color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;">Identified Monthly Leakage</p>
+                <p style="color: #EF4444; font-size: 64px; font-weight: 800; margin: 0; line-height: 1; letter-spacing: -2px;">$${leakage.toLocaleString()}</p>
+                <p style="color: #6B7280; font-size: 14px; margin-top: 10px;">≈ <strong style="color: #E8EAF0;">$${annual.toLocaleString()} per year</strong></p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 30px;">
+                <p style="color: #F97316; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px;">📉 Analysis of Friction Points</p>
+                ${leakHtml}
+              </td>
+            </tr>
+            <tr>
+              <td style="background: #0F1117; padding: 30px; text-align: center; border-top: 1px solid #1E2230;">
+                <p style="color: #9CA3AF; font-size: 12px; margin-bottom: 0;">Please find your comprehensive 90-day recovery roadmap and implementation steps in the <strong>attached PDF report</strong>.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`; 
 }
 
 /**
@@ -1040,43 +1102,63 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.11,
       breakdown: ['Appointment no-shows', 'Uncollected copays/fees', 'Unused inventory and supplies'],
       plan90: [
-        { week: '1-2', priority: 'CRITICAL', action: 'Deploy SMS reminder system', detail: 'Patients who receive SMS 24-hr reminders see 65% fewer no-shows.', impact: '+$2,500/mo', quick: true },
-        { week: '3-4', priority: 'HIGH', action: 'Upfront copay collection', detail: 'Train front desk to collect at booking, not after visit.', impact: '+$1,500/mo', quick: false }
-      ] 
+        { week: '1-2', action: 'Audit scheduling', detail: 'Implement appointment reminders and recall workflows to reduce no-shows.', priority: 'CRITICAL', quick: true, impact: '+$800/mo' },
+        { week: '3-4', action: 'Reactivation Campaign', detail: 'Launch a lapsed patient reactivation campaign and measure conversion weekly.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+        { week: '5-8', action: 'Software Audit', detail: 'Review software subscriptions and refine front desk follow-up processes.', priority: 'MEDIUM', quick: true, impact: '+$300/mo' }
+      ]
     },
     realestate: {
-      estimatePct: 0.075,
+      estimatePct: 0.08,
       breakdown: ['Missed lead follow-up', 'Low portal ROI', 'Inefficient offer conversion'],
       plan90: [
-        { week: '1-2', priority: 'CRITICAL', action: '5-touch follow-up loop', detail: '90% of deals happen after the 4th contact attempt.', impact: '+$5,000/mo', quick: true }
+        { week: '1-2', action: '5-Touch Sequence', detail: 'Build a lead follow-up sequence and assign daily tasks to agents.', priority: 'CRITICAL', quick: true, impact: '+$2,500/mo' },
+        { week: '3-4', action: 'Portal ROI Review', detail: 'Review portal performance and shift budget to highest-converting sources.', priority: 'HIGH', quick: false, impact: '+$1,000/mo' },
+        { week: '5-8', action: 'Standardize Outreach', detail: 'Standardize open house follow-up and referral outreach.', priority: 'MEDIUM', quick: false, impact: '+$1,500/mo' }
       ]
     }, 
     healthcare: {
-      estimatePct: 0.13,
+      estimatePct: 0.15,
       breakdown: ['Denied insurance claims', 'Patient no-shows', 'Underbilled services'],
       plan90: [
-        { week: '1-2', priority: 'CRITICAL', action: 'Insurance verification', detail: 'Check eligibility 48h before the appointment.', impact: '+$3,000/mo', quick: true }
+        { week: '1-2', action: 'Reminders & Claims', detail: 'Implement appointment reminders and verify insurance claim workflows.', priority: 'CRITICAL', quick: true, impact: '+$1,100/mo' },
+        { week: '3-4', action: 'Referral Sequence', detail: 'Launch a referral follow-up sequence and reconnect overdue patients.', priority: 'HIGH', quick: false, impact: '+$900/mo' },
+        { week: '5-8', action: 'Staff Optimization', detail: 'Optimize staff scheduling and review denied claims.', priority: 'MEDIUM', quick: false, impact: '+$600/mo' }
       ]
     }, 
     legal: {
-      estimatePct: 0.15,
+      estimatePct: 0.18,
       breakdown: ['Untracked billable hours', 'Low realization rates', 'Administrative delays'],
       plan90: [
-        { week: '1-2', priority: 'CRITICAL', action: 'Daily time tracking', detail: 'Attorneys log time daily to recapture 8-12 lost hours/week.', impact: '+$10,000/mo', quick: true }
+        { week: '1-2', action: 'Time Capture', detail: 'Launch time capture and intake improvements for new consultations.', priority: 'CRITICAL', quick: true, impact: '+$3,000/mo' },
+        { week: '3-4', action: 'Task Delegation', detail: 'Delegate admin tasks and standardize client communication touchpoints.', priority: 'HIGH', quick: false, impact: '+$1,500/mo' },
+        { week: '5-8', action: 'Pipeline Audit', detail: 'Review the case pipeline for delays and improve handoff consistency.', priority: 'MEDIUM', quick: false, impact: '+$2,000/mo' }
       ]
     }, 
     saas: {
       estimatePct: 0.10,
       breakdown: ['Churn and downgrades', 'Failed payments', 'Weak onboarding flow'],
       plan90: [
-        { week: '1-2', priority: 'CRITICAL', action: 'Automated dunning sequence', detail: 'Recover 40% of failed payments with smart retries.', impact: '+$2,000/mo', quick: true }
+        { week: '1-2', action: 'Churn Guard', detail: 'Build churn risk segmentation and launch an activation sequence.', priority: 'CRITICAL', quick: false, impact: '+$1,500/mo' },
+        { week: '3-4', action: 'Dunning Setup', detail: 'Implement failed payment recovery and usage-driven onboarding.', priority: 'HIGH', quick: true, impact: '+$800/mo' },
+        { week: '5-8', action: 'Docs & Support', detail: 'Improve documentation and renewal engagement.', priority: 'MEDIUM', quick: false, impact: '+$500/mo' }
       ]
     }, 
     restaurant: {
       estimatePct: 0.16,
       breakdown: ['No-shows and cancellations', 'Food and labour waste', 'High delivery fees'],
       plan90: [
-        { week: '1-2', priority: 'CRITICAL', action: 'Reservation confirmations', detail: 'SMS confirmation reduces no-shows by 50%.', impact: '+$3,500/mo', quick: true }
+        { week: '1-2', action: 'Reservation Fix', detail: 'Introduce reservation confirmations and order-ahead options.', priority: 'CRITICAL', quick: true, impact: '+$1,200/mo' },
+        { week: '3-4', action: 'Fee Analysis', detail: 'Track delivery platform ROI and reduce high-fee channels.', priority: 'HIGH', quick: true, impact: '+$600/mo' },
+        { week: '5-8', action: 'Menu Optimization', detail: 'Optimize menus, inventory, and staffing.', priority: 'MEDIUM', quick: false, impact: '+$1,000/mo' }
+      ]
+    },
+    general: { // Added 'general' niche
+      estimatePct: 0.12,
+      breakdown: ['Missed lead follow-up', 'Operational bottlenecks', 'Unoptimized service margins'],
+      plan90: [
+        { week: '1-2', action: 'Process Audit', detail: 'Review sales pipeline and identify top 3 manual bottlenecks.', priority: 'CRITICAL', quick: true, impact: '+$500/mo' },
+        { week: '3-4', action: 'Standardize Outreach', detail: 'Build a lead follow-up sequence and automate repetitive intake tasks.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+        { week: '5-8', action: 'Margin Optimization', detail: 'Analyze service profitability and optimize resource allocation.', priority: 'MEDIUM', quick: false, impact: '+$800/mo' }
       ]
     } 
   };
@@ -1089,14 +1171,37 @@ function getNicheCalculationRules(niche) {
  * @returns {object} An object with calculated revenue, leakage, breakdown, score, grade, and rules.
  */
 function calculateLeadLeakage(lead) {
-  const revenue = Number(lead.monthlyRevenue) || 0;
+  // Robust parsing to handle currency strings, commas, or empty values
+  const n = (v) => {
+    if (v === undefined || v === null || v === '') return NaN;
+    const p = parseFloat(String(v).replace(/[$,]/g, ''));
+    return isNaN(p) ? NaN : p;
+  };
+
+  let revenue = n(lead.monthlyRevenue);
+  if (isNaN(revenue)) revenue = 0;
+
   const rules = getNicheCalculationRules(lead.niche);
-  const monthlyLeak = Number(lead.totalLeakage) || Math.round(revenue * rules.estimatePct);
-  const annualLeak = Number(lead.annualLeakage) || Math.round(monthlyLeak * 12);
+
+  let monthlyLeak = n(lead.totalLeakage);
+  // Default to industry benchmark percentage of revenue if specific leakage is missing
+  if (isNaN(monthlyLeak) || (monthlyLeak === 0 && revenue > 0)) {
+    monthlyLeak = Math.round(revenue * rules.estimatePct);
+  }
+
+  let annualLeak = n(lead.annualLeakage);
+  if (isNaN(annualLeak) || annualLeak === 0) {
+    annualLeak = Math.round(monthlyLeak * 12);
+  }
+
   const breakdown = (lead.leakageBreakdown || rules.breakdown.join(' | ')).split(' | ').filter(Boolean);
-  const ratio = revenue ? monthlyLeak / revenue : 0;
+
+  // Ratio calculation: use a conservative 0.15 (15%) if revenue is 0 to avoid zero-division and perfect scores on empty data
+  const ratio = revenue > 0 ? monthlyLeak / revenue : 0.15;
+
   const score = Math.max(15, Math.min(85, 100 - Math.round(ratio * 120)));
   const grade = score < 50 ? 'Critical' : score < 70 ? 'Needs Improvement' : 'Healthy'; 
+
   return { revenue, monthlyLeak, annualLeak, breakdown, score, grade, rules };
 }
 
@@ -1135,7 +1240,7 @@ function buildFullPdfReportHtml(lead, note) {
   const hGrade = health >= 75 ? 'Good' : health >= 50 ? 'Needs Attention' : health >= 30 ? 'Critical' : 'Emergency';
 
   // Niche-specific explanations
-  const leakExplain = {
+  const leakExplainMap = { // Renamed to avoid conflict with 'explains' variable
     dental: ['Empty slots are permanent lost revenue.', 'Unfollowed inquiries go to competitors.', 'Overdue patients churn without recall.', 'Idle staff time is a preventable cost.', 'Unused software is pure overhead.'],
     realestate: ['Leads go cold without 5+ touches.', 'Portal spend often exceeds ROI.', 'Admin tasks kill agent productivity.', 'Open house leads expire in 24 hours.'],
     healthcare: ['Unfilled slots are unrecoverable.', 'Denied claims are earned but uncollected.', 'Delayed referrals often never book.', 'Scheduling inefficiency causes overtime.'],
@@ -1148,6 +1253,7 @@ function buildFullPdfReportHtml(lead, note) {
   const styles = `
     @page { margin: 15mm 12mm; }
     body { font-family: Arial, sans-serif; font-size: 12px; color: #111; background: #fff; line-height: 1.5; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #111; background: #fff; line-height: 1.5; }
     .page-break { page-break-before: always; }
     /* Global */
     h1, h2, h3, h4, h5, h6 { margin: 0; padding: 0; }
@@ -1159,20 +1265,24 @@ function buildFullPdfReportHtml(lead, note) {
     .hero { background: #1a1a2e; color: #fff; padding: 24px 20px 20px; margin-bottom: 16px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .hero-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
     .hero-title { font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 4px; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 4px; font-family: Arial, sans-serif; }
     .hero-meta { color: #9ca3af; font-size: 12px; margin: 0 0 2px; line-height: 1.5; }
     .score-badge { background: rgba(249,115,22,0.2); border: 1px solid rgba(249,115,22,0.4); border-radius: 8px; padding: 10px 14px; text-align: center; flex-shrink: 0; }
+    .score-badge { background: rgba(249,115,22,0.2); border: 1px solid rgba(249,115,22,0.4); border-radius: 8px; padding: 10px 14px; text-align: center; }
     .score-label { color: #F97316; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 2px; }
     .score-value { color: #fff; font-size: 24px; font-weight: 800; margin: 0; line-height: 1; }
     .score-grade { font-size: 10px; font-weight: 600; margin: 2px 0 0; }
     .note-block { background: #fff8f0; border-left: 4px solid #F97316; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0; }
     .note-title { color: #F97316; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 6px; }
-    .note-content { color: #1a1a1a; font-size: 13px; line-height: 1.7; margin: 0; }
+    .note-content { color: #1a1a1a; font-size: 13px; line-height: 1.7; margin: 0; white-space: pre-wrap; word-wrap: break-word; }
 
     /* Executive Summary */
     .summary-box { background: #fff8f0; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
     .summary-title { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #F97316; margin: 0 0 10px; font-weight: 700; }
     .stat-grid { display: flex; gap: 14px; flex-wrap: wrap; }
     .stat-item { flex: 1; min-width: 120px; text-align: center; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
+    .stat-table { width: 100%; border-collapse: separate; border-spacing: 10px 0; }
+    .stat-item { text-align: center; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
     .stat-value { font-size: 26px; font-weight: 800; margin: 0 0 2px; line-height: 1; }
     .stat-label { color: #6b7280; font-size: 10px; text-transform: uppercase; font-weight: 600; margin: 0; }
     .stat-red { color: #dc2626; }
@@ -1183,6 +1293,8 @@ function buildFullPdfReportHtml(lead, note) {
     .leak-item { margin-bottom: 14px; border: 1px solid #e5e7eb; border-left: 4px solid; border-radius: 0 8px 8px 0; padding: 0; overflow: hidden; }
     .leak-header { background: #f9fafb; padding: 12px 16px; }
     .leak-header-content { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .leak-header { background: #f9fafb; padding: 12px 16px; width: 100%; }
+    .leak-table { width: 100%; border-collapse: collapse; }
     .leak-name { font-size: 13px; font-weight: 700; color: #111; }
     .leak-value { font-size: 15px; font-weight: 800; }
     .leak-severity { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; display: inline-block; }
@@ -1199,6 +1311,8 @@ function buildFullPdfReportHtml(lead, note) {
     /* Reputation Analysis */
     .rep-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
     .rep-item { flex: 1; min-width: 160px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
+    .rep-table { width: 100%; border-collapse: separate; border-spacing: 10px 0; margin-bottom: 16px; }
+    .rep-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
     .rep-label { color: #6b7280; font-size: 10px; text-transform: uppercase; font-weight: 600; margin: 0 0 6px; }
     .rep-value { font-size: 28px; font-weight: 800; margin: 0 0 4px; }
     .rep-desc { color: #374151; font-size: 11px; margin: 0; }
@@ -1220,12 +1334,17 @@ function buildFullPdfReportHtml(lead, note) {
     .plan-week-header { background: #F97316; border-radius: 8px 8px 0 0; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
     .plan-week-icon { width: 26px; height: 26px; background: rgba(255,255,255,.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
     .plan-week-title { font-size: 13px; font-weight: 700; color: #fff; flex: 1; margin: 0; } 
+    .plan-week-header { background: #F97316; border-radius: 8px 8px 0 0; padding: 12px 16px; width: 100%; }
+    .plan-week-icon { width: 26px; height: 26px; background: rgba(255,255,255,.3); border-radius: 50%; text-align: center; line-height: 26px; font-size: 12px; font-weight: 700; color: #fff; }
+    .plan-week-title { font-size: 13px; font-weight: 700; color: #fff; margin: 0; } 
     .plan-week-potential { font-size: 11px; color: rgba(255,255,255,.85); margin: 0; font-weight: 600; }
     .plan-actions-body { background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 14px; }
     .plan-action-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; margin-bottom: 10px; background: #fff; }
     .plan-action-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .plan-action-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
     .plan-action-title { font-size: 13px; font-weight: 700; color: #111; margin: 0; }
     .plan-action-tags { display: flex; gap: 5px; flex-shrink: 0; }
+    .plan-action-tags { text-align: right; }
     .plan-action-tag { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; }
     .tag-critical { background: rgba(220,38,38,.08); color: #dc2626; }
     .tag-high { background: rgba(234,88,12,.08); color: #ea580c; }
@@ -1238,6 +1357,8 @@ function buildFullPdfReportHtml(lead, note) {
     /* Priority Matrix */
     .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .matrix-cell { background: #fff; border: 1px solid; border-radius: 8px; padding: 12px; }
+    .matrix-table { width: 100%; border-collapse: separate; border-spacing: 10px 0; margin-bottom: 16px; }
+    .matrix-cell { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; vertical-align: top; }
     .matrix-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
     .matrix-item { font-size: 11px; color: #374151; margin: 0 0 4px; }
 
@@ -1247,10 +1368,13 @@ function buildFullPdfReportHtml(lead, note) {
     .cost-label { color: #6b7280; font-size: 11px; margin: 0 0 10px; font-weight: 600; }
     .cost-grid { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
     .cost-item { text-align: center; }
+    .cost-table { width: 100%; border-collapse: collapse; }
     .cost-value { color: #dc2626; font-size: 18px; font-weight: 800; margin: 0; }
     .cost-period { color: #6b7280; font-size: 9px; text-transform: uppercase; margin: 2px 0 0; }
     .outcome-grid { display: flex; gap: 10px; flex-wrap: wrap; }
     .outcome-item { flex: 1; min-width: 180px; background: #fff; border: 1px solid; border-radius: 8px; padding: 14px; text-align: center; }
+    .outcome-table { width: 100%; border-collapse: separate; border-spacing: 10px 0; }
+    .outcome-item { background: #fff; border: 1px solid; border-radius: 8px; padding: 14px; text-align: center; }
     .outcome-icon { font-size: 20px; margin: 0 0 4px; }
     .outcome-title { font-size: 12px; font-weight: 700; color: #111; margin: 0 0 3px; }
     .outcome-value { font-size: 18px; font-weight: 800; margin: 0 0 3px; }
@@ -1274,6 +1398,10 @@ function buildFullPdfReportHtml(lead, note) {
             <strong>${esc(item)}</strong>
             <span style="color:${col}; font-weight:800;">-$${share.toLocaleString()}/mo</span>
           </div>
+          <table style="width:100%;"><tr>
+            <td><strong>${esc(item)}</strong></td>
+            <td style="text-align:right;"><span style="color:${col}; font-weight:800;">-$${share.toLocaleString()}/mo</span></td>
+          </tr></table>
         </div>
         <div style="background:#fff; padding:10px 16px; border-top:1px solid #e5e7eb;">
           <p style="margin:0; font-size:11px;"><strong>Why it matters:</strong> ${explain}</p>
@@ -1282,91 +1410,63 @@ function buildFullPdfReportHtml(lead, note) {
   }).join('');
 
   const matrixHtml = `
-    <div class="matrix-grid">
-      <div class="matrix-cell" style="border-color: #bbf7d0">
-        <p style="color:#16a34a; font-weight:700; margin:0 0 8px;">🟢 DO FIRST</p>
-        ${items.slice(0, 2).map(i => `<p style="margin:2px 0;">→ ${esc(i)}</p>`).join('')}
-      </div>
-      <div class="matrix-cell" style="border-color: #fed7aa">
-        <p style="color:#ea580c; font-weight:700; margin:0 0 8px;">🟠 PLAN FOR</p>
-        ${items.slice(2, 4).map(i => `<p style="margin:2px 0;">→ ${esc(i)}</p>`).join('')}
-      </div>
-    </div>`;
+    <table style="width:100%; border-collapse:separate; border-spacing:10px 0;">
+      <tr>
+        <td width="50%" style="border:1px solid #bbf7d0; border-radius:8px; padding:12px; vertical-align:top; background:#fff;">
+          <p style="color:#16a34a; font-weight:700; margin:0 0 8px; font-size:11px; text-transform:uppercase;">🟢 DO FIRST</p>
+          ${items.slice(0, 2).map(i => `<p style="font-size:11px; color:#374151; margin:0 0 4px;">→ ${esc(i)}</p>`).join('')}
+        </td>
+        <td width="50%" style="border:1px solid #fed7aa; border-radius:8px; padding:12px; vertical-align:top; background:#fff;">
+          <p style="color:#ea580c; font-weight:700; margin:0 0 8px; font-size:11px; text-transform:uppercase;">🟠 PLAN FOR</p>
+          ${items.slice(2, 4).map(i => `<p style="font-size:11px; color:#374151; margin:0 0 4px;">→ ${esc(i)}</p>`).join('')}
+        </td>
+      </tr>
+    </table>`;
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <style>${styles}</style></head>
     <style>
-      body { font-family: sans-serif; color: #111; line-height: 1.5; padding: 40px; }
-      .hdr { border-bottom: 4px solid #F97316; padding-bottom: 20px; margin-bottom: 30px; }
-      .stat-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
-      .leak-val { color: #dc2626; font-size: 36px; font-weight: bold; }
-      .plan-section { margin-top: 40px; }
-      .action-item { border-left: 4px solid #F97316; background: #fff8f0; padding: 15px; margin-bottom: 15px; }
+      ${styles}
+      body { font-family: Helvetica, Arial, sans-serif; color: #111; line-height: 1.5; padding: 0; margin: 0; }
+      .page-break { page-break-before: always; }
     </style></head>
     <body>
-      <div class="brand-bar">
-        <span>BDL — REVENUE INTELLIGENCE</span>
-        <span>ID: ${reportId}</span>
-      <div class="hdr">
-        <p style="color: #F97316; font-weight: bold; margin: 0;">BDL REVENUE INTELLIGENCE</p>
-        <h1 style="margin: 5px 0;">Executive Revenue Diagnostic</h1>
-        <p style="color: #666; margin: 0;">Report ID: ${reportId} | Issued: ${dateStr}</p>
+      <table width="100%" cellpadding="12" style="background:#F97316; color:#fff; font-weight:bold;">
+        <tr><td>BDL — REVENUE INTELLIGENCE</td><td align="right">ID: ${reportId}</td></tr>
+      </table>
+      <div style="background:#1a1a2e; color:#fff; padding:30px 24px;">
+        <table width="100%">
+          <tr>
+            <td><h1 style="margin:0;">${esc(bizName)}</h1><p style="color:#9ca3af;">Revenue Diagnostic · ${dateStr}</p></td>
+            <td align="right">
+              <div style="border:1px solid #F97316; border-radius:8px; padding:10px; text-align:center;">
+                <div style="font-size:9px; color:#F97316;">SCORE</div>
+                <div style="font-size:24px; font-weight:800;">${health}</div>
+                <div style="font-size:10px; color:${hColor};">${hGrade}</div>
+              </div>
+            </td>
+          </tr>
+        </table>
       </div>
-      <h2>Analysis for ${bizName}</h2>
-      <div class="stat-box">
-        <p class="stat-label">Estimated Monthly Leakage</p>
-        <p style="margin: 0; text-transform: uppercase; font-size: 12px; color: #666;">Estimated Monthly Leakage</p>
-        <div class="leak-val">$${calc.monthlyLeak.toLocaleString()}</div>
-        <p class="stat-annual">Annual Impact: $${calc.annualLeak.toLocaleString()}</p>
-
-      <div class="hero">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <h1 style="margin:0;">${bizName}</h1>
-            <p style="color:#9ca3af; margin:4px 0;">Executive Revenue Diagnostic · ${dateStr}</p>
-          </div>
-          <div class="score-badge">
-            <div style="font-size:9px; font-weight:700; color:#F97316;">HEALTH SCORE</div>
-            <div style="font-size:24px; font-weight:800;">${health}</div>
-            <div style="font-size:10px; color:${hColor}">${hGrade}</div>
-          </div>
-        </div>
-        <p style="margin-top:20px; color:#e5e7eb;">Hi ${esc(firstName)}, we have analyzed your data and identified significant opportunities to recapture leaking revenue.</p>
-        ${note ? `<div style="background:rgba(249,115,22,0.1); border-left:3px solid #F97316; padding:12px; margin-top:15px; font-style:italic;">"${esc(note)}"</div>` : ''}
-        <p style="margin: 0; color: #666;">Annual Impact: $${calc.annualLeak.toLocaleString()}</p>
-      </div>
-
-      <div class="summary-box">
-        <h2 style="margin-top:0; color:#F97316; font-size:14px;">EXECUTIVE SUMMARY</h2>
-        <div class="stat-grid">
-          <div class="stat-item"><div class="stat-val">$${leakage.toLocaleString()}</div><div class="stat-label">Monthly Leakage</div></div>
-          <div class="stat-item"><div class="stat-val">$${annual.toLocaleString()}</div><div class="stat-label">Annual Impact</div></div>
-          <div class="stat-item" style="border-color:#bbf7d0"><div class="stat-val" style="color:#16a34a">$${fixTop.toLocaleString()}</div><div class="stat-label">Recoverable/mo</div></div>
-          <div class="stat-item"><div class="stat-val">$${daily}</div><div class="stat-label">Cost Per Day</div></div>
-        </div>
-      </div>
-
-      <h2 style="color:#F97316; font-size:14px;">📉 LEAKAGE BREAKDOWN</h2>
-      ${leakHtml}
-
-      <div class="page-break"></div>
-
-      <h2 style="color:#F97316; font-size:14px;">📅 90-DAY RECOVERY ROADMAP</h2>
-      <div style="margin-bottom:20px;">
-      ${note ? `<div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 30px;"><strong>Analyst Note:</strong><br>${esc(note)}</div>` : ''}
-      <h3>Identified Friction Points</h3>
-      <ul>${calc.breakdown.map(i => `<li>${esc(i)}</li>`).join('')}</ul>
-      <div class="plan-section">
-        <h3>90-Day Recovery Roadmap</h3>
-        ${buildPdfPlanActions(lead)}
-      </div>
-
-      <h2 style="color:#F97316; font-size:14px;">🎯 PRIORITY MATRIX</h2>
-      ${matrixHtml}
-
-      <div class="footer">
-        <p>BDL Revenue Intelligence · Confidential Report ID: ${reportId}</p>
-        <p>All estimates based on submitted data and verified industry benchmarks.</p>
+      <div style="padding:24px;">
+        ${note ? `<div style="background:#fff8f0; border-left:4px solid #F97316; padding:15px; margin-bottom:20px; font-style:italic; white-space:pre-wrap;">${esc(note)}</div>` : ''}
+        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px; margin-bottom:16px;">Executive Summary</h2>
+        <table width="100%" cellpadding="15" cellspacing="10">
+          <tr>
+            <td align="center" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+              <div style="font-size:10px; color:#666;">MONTHLY LEAKAGE</div>
+              <div style="font-size:20px; font-weight:800; color:#EF4444;">$${leakage.toLocaleString()}</div>
+            </td>
+            <td align="center" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+              <div style="font-size:10px; color:#666;">ANNUAL IMPACT</div>
+              <div style="font-size:20px; font-weight:800; color:#EF4444;">$${annual.toLocaleString()}</div>
+            </td>
+          </tr>
+        </table>
+        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; margin-top:25px; padding-bottom:8px;">Leakage Breakdown</h2>
+        ${leakHtml}
+        <div class="page-break"></div>
+        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Priority Roadmap</h2>
+        ${matrixHtml}
       </div>
     </body></html>`;
 }
