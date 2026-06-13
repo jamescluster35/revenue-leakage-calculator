@@ -73,7 +73,10 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
 .badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
 .b-new{background:rgba(59,130,246,.12);color:var(--bl);}
 .b-requested{background:rgba(249,115,22,.12);color:var(--or);}
+<<<<<<< HEAD
 .b-pending{background:rgba(255,193,7,.15);color:var(--yl);} /* New: Payment Pending badge */
+=======
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
 .b-paid{background:rgba(16,185,129,.12);color:var(--gn);}
 .b-delivered{background:rgba(107,114,128,.15);color:var(--mu);}
 .b-niche{background:rgba(249,115,22,.08);color:var(--or);font-size:10px;padding:2px 7px;border-radius:4px;}
@@ -254,7 +257,10 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-
         <select class="filter-select" id="all-status" onchange="filterAll()">
           <option value="">All statuses</option>
           <option value="New">New</option>
+<<<<<<< HEAD
           <option value="Payment Pending">Payment Pending</option>
+=======
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
           <option value="Requested">Audit Requested</option>
           <option value="Paid">Paid</option>
           <option value="Delivered">Delivered</option>
@@ -715,16 +721,25 @@ function handleUrlSearch() {
 
 function renderStats(){
   var total     = AdminApp.state.leads.length;
+<<<<<<< HEAD
   var newLeads  = AdminApp.state.leads.filter(function(l){return !l.paidReport || l.paidReport==='' || l.paidReport==='New';}).length;
   var requested = AdminApp.state.leads.filter(function(l){return l.paidReport==='Requested';}).length;
   var pending   = AdminApp.state.leads.filter(function(l){return l.paidReport==='Payment Pending';}).length; // New: Count pending
+=======
+  var newLeads  = AdminApp.state.leads.filter(function(l){return !l.paidReport || l.paidReport===''||l.paidReport==='New';}).length;
+  var requested = AdminApp.state.leads.filter(function(l){return l.paidReport==='Requested';}).length;
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
   var paid      = AdminApp.state.leads.filter(function(l){return l.paidReport==='Paid';}).length;
   var delivered = AdminApp.state.leads.filter(function(l){return l.paidReport==='Delivered';}).length;
   var revenue   = (paid + delivered) * 47;
   // Update stat cards
   var els = {
     'st-total':     total,
+<<<<<<< HEAD
     'st-requested': requested + newLeads + pending, // Include pending in requested count
+=======
+    'st-requested': requested + newLeads,
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     'st-paid':      paid,
     'st-delivered': delivered,
     'st-revenue':   '$'+revenue.toLocaleString()
@@ -734,7 +749,11 @@ function renderStats(){
     if(el) el.textContent = els[id];
   });
   // Update tab badges
+<<<<<<< HEAD
   var reqBadge  = document.getElementById('req-count'); // This badge will now show New + Requested + Pending
+=======
+  var reqBadge  = document.getElementById('req-count');
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
   var allBadge  = document.getElementById('all-count');
   var paidBadge = document.getElementById('paid-count');
   if(reqBadge)  reqBadge.textContent  = requested + newLeads;
@@ -757,8 +776,13 @@ function filterLeads(){
     return;
   }
   var filtered = AdminApp.state.leads.filter(function(l){
+<<<<<<< HEAD
     // Show: New, empty, Requested, Payment Pending — anything not yet Delivered or Paid
     var isReq = !l.paidReport || l.paidReport==='' || l.paidReport==='New' || l.paidReport==='Requested' || l.paidReport==='Payment Pending';
+=======
+    // Show: New, empty, Requested, Paid — anything not yet Delivered
+    var isReq = !l.paidReport || l.paidReport==='' || l.paidReport==='New' || l.paidReport==='Requested' || l.paidReport==='Paid';
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     if(!isReq) return false;
     if(n && l.niche!==n) return false;
     if(q && !(l.business||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q) && !(l.id||'').toLowerCase().includes(q)) return false;
@@ -815,6 +839,7 @@ function filterVerifiedPayments(){
 function getStatusLabel(l){
   if(l.paidReport==='Delivered') return 'Delivered';
   if(l.paidReport==='Paid') return 'Paid';
+<<<<<<< HEAD
   if(l.paidReport==='Payment Pending') return 'Payment Pending'; // New: Handle pending status
   if(l.paidReport==='Requested') return 'Requested';
   return 'New';
@@ -822,6 +847,14 @@ function getStatusLabel(l){
 function getStatusBadge(l){ // Updated to include b-pending
   var s = getStatusLabel(l);
   var c = {'New':'b-new','Requested':'b-requested','Payment Pending':'b-pending','Paid':'b-paid','Delivered':'b-delivered'}[s]||'b-new';
+=======
+  if(l.paidReport==='Requested') return 'Requested';
+  return 'New';
+}
+function getStatusBadge(l){
+  var s=getStatusLabel(l);
+  var c={'New':'b-new','Requested':'b-requested','Paid':'b-paid','Delivered':'b-delivered'}[s]||'b-new';
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
   return '<span class="badge '+c+'">'+s+'</span>';
 }
 
@@ -1163,7 +1196,10 @@ function renderTable(tbodyId, rows, isReqs){
         '<td>'+getStatusBadge(l)+'</td>'+
         '<td><div class="ab-gap">'+
           (!l.paidReport || l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+
+<<<<<<< HEAD
           (l.paidReport==='Payment Pending'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+ // Allow marking as paid from pending
+=======
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
           (l.paidReport==='Paid'?'<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>':'')+
           '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
           '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
@@ -1232,7 +1268,10 @@ function openViewModal(i){
     ['Employees',   l.employees||'—'],
     ['Revenue',     '$'+Number(l.monthlyRevenue||0).toLocaleString()+'/mo'],
     ['Status',      getStatusLabel(l)],
+<<<<<<< HEAD
     ['Payment Status', l.paidReport || 'No'], // Explicitly show paidReport status
+=======
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
   ].map(function(r){
     return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val">'+esc(r[1])+'</span></div>';
   }).join('');
@@ -1489,7 +1528,12 @@ function renderVerifiedTable(rows){
 
 async function sendPaymentRequest(){
   if(!AdminApp.state.current||!AdminApp.state.current.email){showToast('No lead selected',true);return;}
+<<<<<<< HEAD
   var wiseLink = ''; // Will fall back to Config sheet on backend
+=======
+  var wiseLink = localStorage.getItem('bdl_wise_link')||'';
+  if(!wiseLink){showToast('Please save your payment link in Delivery Workflow tab first',true);return;}
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
   try{
     var res  = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
       action:'sendPaymentRequestEmail',

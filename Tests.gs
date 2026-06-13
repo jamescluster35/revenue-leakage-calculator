@@ -12,8 +12,12 @@ function runAllBackendTests() {
     testEscaping,
     testNicheRuleRetrieval,
     testLeakageCalculationLogic,
+<<<<<<< HEAD
     testLeakageCalculationMissingRevenue, // New test case
     testGenerateAndSendReportEmptyLead, 
+=======
+    testGenerateAndSendReportEmptyLead,
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     testLeakageBenchmarkDefaulting,
     testPdfGenerationForAllNiches,
     testGetOrCreateSheetAppendsHeaders
@@ -70,6 +74,7 @@ function testLeakageCalculationLogic() {
   if (result.score === undefined) throw new Error("Health score generation missing.");
 }
 
+<<<<<<< HEAD
 /**
  * Verifies that calculateLeadLeakage correctly handles missing monthlyRevenue.
  */
@@ -106,6 +111,8 @@ function testLeakageCalculationMissingRevenue() {
   if (result.grade !== 'Needs Attention') throw new Error(`Default grade for missing revenue should be 'Needs Attention', got ${result.grade}`);
 }
 
+=======
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
 function testGenerateAndSendReportEmptyLead() {
   const lead = {};
   const toEmail = "test@example.com";

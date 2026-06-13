@@ -46,21 +46,33 @@ function runTests() {
 
     // Dental Test Case: 10 appts/day, 10% no-show, $180 avg value
     const dentalG = (id) => ({ slots: 10, aval: 180, recalls: 20, leads: 30, tval: 500 }[id] || 0);
+<<<<<<< HEAD
     const dentalV = (id) => ({ nshow_v: 10, fup_v: 90 }[id] || 0);
+=======
+    const dentalV = (id) => ({ _cv_nshow_v: 10, _cv_fup_v: 90 }[id] || 0);
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     const dentalRes = getLeakageItems('dental', dentalG, dentalV);
     assert(dentalRes.find(i => i.l === 'Appointment No-Show Loss').v, 2376, "Dental No-Show Loss");
     assert(dentalRes.find(i => i.l === 'Unscheduled Recall Patients').v, 2160, "Dental Recall Loss");
 
     // SaaS Test Case: $100k MRR, 5% Churn, 500 trials at 10% conversion
     const saasG = (id) => ({ mrr: 100000, trials: 500, dval: 200 }[id] || 0);
+<<<<<<< HEAD
     const saasV = (id) => ({ churn_v: 5, tconv_v: 10 }[id] || 0);
+=======
+    const saasV = (id) => ({ _cv_churn_v: 5, _cv_tconv_v: 10 }[id] || 0);
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     const saasRes = getLeakageItems('saas', saasG, saasV);
     assert(saasRes.find(i => i.l === 'Monthly Churn Loss').v, 3000, "SaaS Churn Loss");
     assert(saasRes.find(i => i.l === 'Trial No-Convert Loss').v, 54000, "SaaS Trial Loss");
 
     // Restaurant Test Case: 50 reservations/day, 20% no-show, $60 avg spend
     const restG = (id) => ({ fcost: 20000, res: 50, covers: 4, spend: 60 }[id] || 0);
+<<<<<<< HEAD
     const restV = (id) => ({ waste_v: 25, nshow_v: 20 }[id] || 0);
+=======
+    const restV = (id) => ({ _cv_waste_v: 25, _cv_nshow_v: 20 }[id] || 0);
+>>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     const restRes = getLeakageItems('restaurant', restG, restV);
     assert(restRes.find(i => i.l === 'Food Waste').v, 3000, "Restaurant Waste Loss");
     assert(restRes.find(i => i.l === 'No-Show & Cancellation Loss').v, 43200, "Restaurant No-Show Loss");
