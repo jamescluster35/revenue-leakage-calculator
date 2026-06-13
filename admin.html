@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDL Admin — Report Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;--bl:#3B82F6;--yl:#F59E0B;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:360px;text-align:center;}
+.login-icon{font-size:40px;margin-bottom:16px;}
+.login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--mu);margin-bottom:24px;}
+.field-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.field-input:focus{outline:none;border-color:var(--or);}
+.login-btn{width:100%;background:var(--or);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.login-err{color:var(--rd);font-size:12px;margin-top:8px;display:none;}
+
+/* Admin */
+.admin{display:none;}
+.topbar{background:var(--card);border-bottom:1.5px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-logo{display:flex;align-items:center;gap:8px;}
+.topbar-dot{width:8px;height:8px;background:var(--or);border-radius:50%;}
+.topbar-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--or);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.tbtn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
+.tbtn:hover{color:var(--tx);}
+.tbtn-out{background:transparent;border:none;font-size:12px;color:var(--mu);cursor:pointer;}
+.tbtn-out:hover{color:var(--rd);}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1.5px solid var(--border);padding:0 24px;background:var(--card);}
+.tab{padding:12px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--mu);border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:all .15s;}
+.tab.active{color:var(--or);border-bottom-color:var(--or);}
+.tab:hover{color:var(--tx);}
+.tab-badge{display:inline-block;background:var(--or);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:5px;}
+
+/* Content */
+.content{max-width:1100px;margin:0 auto;padding:24px 20px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stat{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;}
+.stat-label{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1;}
+.stat-sub{font-size:10px;color:var(--mu);margin-top:3px;}
+
+/* Search & filter bar */
+.filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.search-input{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;width:240px;}
+.search-input:focus{outline:none;border-color:var(--or);}
+.filter-select{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+
+/* Table */
+.table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;min-width:700px;}
+.tbl th{text-align:left;padding:10px 14px;font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;background:var(--card2);border-bottom:1.5px solid var(--border);white-space:nowrap;}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(249,115,22,.02);}
+.tbl-empty{text-align:center;padding:48px;color:var(--mu);}
+.tbl-loading{text-align:center;padding:32px;color:var(--mu);}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
+.b-new{background:rgba(59,130,246,.12);color:var(--bl);}
+.b-requested{background:rgba(249,115,22,.12);color:var(--or);}
+.b-pending{background:rgba(255,193,7,.15);color:var(--yl);} /* New: Payment Pending badge */
+.b-paid{background:rgba(16,185,129,.12);color:var(--gn);}
+.b-delivered{background:rgba(107,114,128,.15);color:var(--mu);}
+.b-niche{background:rgba(249,115,22,.08);color:var(--or);font-size:10px;padding:2px 7px;border-radius:4px;}
+
+/* Action buttons */
+.ab{border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:transform 0.1s;}
+.ab:active{transform:scale(0.96);}
+.ab:hover{opacity:.85;}
+.ab-orange{background:var(--or);color:#fff;}
+.ab-green{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:var(--gn);}
+.ab-blue{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.2);color:var(--bl);}
+.ab-red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--rd);}
+.ab-gray{background:var(--card2);border:1px solid var(--border);color:var(--mu);}
+.ab-gap{display:flex;gap:5px;flex-wrap:wrap;}
+
+/* Leakage amount */
+.leak-amt{font-family:'Syne',sans-serif;font-weight:700;color:var(--rd);}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);overflow-y:auto;padding:20px;}
+.modal.open{display:flex;align-items:flex-start;justify-content:center;}
+.mc{background:var(--card);border:1.5px solid var(--border);border-radius:16px;width:100%;margin:auto;}
+.mc-sm{max-width:480px;}
+.mc-lg{max-width:720px;}
+.mc-head{padding:18px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.mc-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);line-height:1;}
+.mc-body{padding:20px;}
+.mc-foot{padding:14px 20px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;}
+
+/* Form in modal */
+.mf{margin-bottom:14px;}
+.mf:last-child{margin-bottom:0;}
+.mf label{display:block;font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.mf input,.mf textarea,.mf select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+.mf input:focus,.mf textarea:focus,.mf select:focus{outline:none;border-color:var(--or);}
+.mf textarea{resize:vertical;min-height:90px;line-height:1.5;}
+
+/* Info rows */
+.irow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);gap:12px;}
+.irow:last-child{border-bottom:none;}
+.irow-label{font-size:12px;color:var(--mu);flex-shrink:0;}
+.irow-val{font-size:12px;font-weight:500;text-align:right;}
+
+/* Report preview */
+.rpt-preview{background:var(--bg);border-radius:10px;padding:20px;max-height:400px;overflow-y:auto;}
+.rpt-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+.rpt-section-title{font-size:10px;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.rpt-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.rpt-item:last-child{border-bottom:none;}
+.rpt-item-val{font-weight:700;color:var(--rd);}
+
+/* Buttons */
+.btn-primary{background:var(--or);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.btn-secondary{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;}
+.btn-danger{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--rd);font-family:'DM Sans',sans-serif;}
+.btn-success{background:var(--gn);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* Email template preview */
+.email-template{background:#fff;border-radius:10px;padding:20px;font-family:Arial,sans-serif;color:#1a1a1a;font-size:13px;max-height:350px;overflow-y:auto;}
+.et-header{background:#F97316;padding:16px 20px;border-radius:8px;margin-bottom:16px;text-align:center;}
+.et-logo{color:#fff;font-size:18px;font-weight:700;margin-bottom:4px;}
+.et-sub{color:rgba(255,255,255,.8);font-size:12px;}
+.et-box{background:#f8f8f8;border-radius:8px;padding:14px;margin-bottom:12px;}
+.et-leak{color:#EF4444;font-size:28px;font-weight:800;text-align:center;margin:8px 0;}
+.et-item{padding:6px 0;border-bottom:1px solid #eee;font-size:12px;display:flex;align-items:center;gap:8px;}
+.et-item:last-child{border-bottom:none;}
+
+/* Niche email templates */
+.template-box{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+.template-niche{font-size:11px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.template-subject{font-size:12px;font-weight:500;margin-bottom:4px;}
+.template-preview{font-size:11px;color:var(--mu);line-height:1.5;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--gn);color:#fff;border-radius:10px;padding:12px 20px;font-size:13px;font-weight:500;z-index:200;display:none;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:320px;}
+.toast.err{background:var(--rd);}
+
+/* Spinner */
+.spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* Confirm delete */
+.del-confirm{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px;font-size:13px;color:var(--rd);margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div class="login-wrap" id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">BDL Admin</div>
+    <div class="login-sub">Private access — report generator</div>
+    <input type="password" class="field-input" id="admin-pass" placeholder="Admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-err" id="login-err">⚠ Incorrect password</div>
+  </div>
+</div>
+
+<!-- Admin Dashboard -->
+<div class="admin" id="admin-screen">
+
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="topbar-dot"></div>
+      <div class="topbar-name">BDL Admin</div>
+    </div>
+    <div class="topbar-right">
+      <button class="tbtn" onclick="loadLeads()">↻ Refresh</button>
+      <button class="tbtn-out" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('requests',this)">📋 Audit Requests <span class="tab-badge" id="req-count">0</span></div>
+    <div class="tab" onclick="switchTab('all',this)">👥 All Leads <span class="tab-badge" id="all-count" style="background:var(--mu)">0</span></div>
+    <div class="tab" onclick="switchTab('verified',this)">✅ Verified Payments <span class="tab-badge" id="paid-count" style="background:var(--gn)">0</span></div>
+    <div class="tab" onclick="switchTab('deleted',this)">🗑 Deleted</div>
+    <div class="tab" onclick="switchTab('templates',this)">✉️ Email Templates</div>
+    <div class="tab" onclick="switchTab('preview',this)">📄 Report Preview</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-label">Total Leads</div><div class="stat-val" id="st-total" style="color:var(--tx)">—</div></div>
+      <div class="stat"><div class="stat-label">Audit Requested</div><div class="stat-val" id="st-requested" style="color:var(--or)">—</div></div>
+      <div class="stat"><div class="stat-label">Paid</div><div class="stat-val" id="st-paid" style="color:var(--gn)">—</div></div>
+      <div class="stat"><div class="stat-label">Delivered</div><div class="stat-val" id="st-delivered" style="color:var(--mu)">—</div></div>
+      <div class="stat"><div class="stat-label">Revenue</div><div class="stat-val" id="st-revenue" style="color:var(--or)">—</div></div>
+    </div>
+
+    <!-- AUDIT REQUESTS TAB -->
+    <div class="tab-panel active" id="tab-requests">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="req-search" placeholder="Search requests..." oninput="debouncedFilterLeads()">
+        <select class="filter-select" id="req-niche" onchange="filterLeads()">
+          <option value="">All niches</option>
+          <option>dental</option><option>realestate</option><option>healthcare</option>
+          <option>legal</option><option>saas</option><option>restaurant</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Contact</th><th>Niche</th><th>Est. Leakage</th>
+            <th>Date</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="req-body"><tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DELETED LEADS TAB -->
+    <div class="tab-panel" id="tab-deleted">
+      <div class="filter-bar">
+        <div style="font-size:13px; color:var(--mu);">Showing leads moved to the trash. You can restore them to the main list at any time.</div>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Niche</th><th>Est. Leakage</th><th>Date</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="deleted-body">
+            <tr><td colspan="5" class="tbl-loading"><div class="spin"></div>Loading trash...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ALL LEADS TAB -->
+    <div class="tab-panel" id="tab-all">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="all-search" placeholder="Search all leads..." oninput="debouncedFilterAll()">
+        <select class="filter-select" id="all-status" onchange="filterAll()">
+          <option value="">All statuses</option>
+          <option value="New">New</option>
+          <option value="Payment Pending">Payment Pending</option>
+          <option value="Requested">Audit Requested</option>
+          <option value="Paid">Paid</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+        <select class="filter-select" id="all-niche" onchange="filterAll()">
+          <option value="">All niches</option>
+          <option>dental</option><option>realestate</option><option>healthcare</option>
+          <option>legal</option><option>saas</option><option>restaurant</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Niche</th><th>Location</th><th>Est. Leakage</th>
+            <th>Date</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="all-body"><tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMAIL TEMPLATES TAB -->
+    <div class="tab-panel" id="tab-templates">
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Niche-Specific Email Templates</div>
+        <div style="font-size:13px;color:var(--mu);">These templates are automatically personalised with the client's name, business name, and leakage data when you send a report.</div>
+      </div>
+      <div id="templates-list"></div>
+    </div>
+
+    <!-- REPORT PREVIEW TAB -->
+    <div class="tab-panel" id="tab-preview">
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Report Preview</div>
+          <div style="font-size:13px;color:var(--mu);">This is how the report looks when sent to a client. Data is automatically filled from their calculator submission.</div>
+        </div>
+        <button class="tbtn" onclick="renderReportPreview()" style="white-space:nowrap; color:var(--or);">↻ Refresh Preview</button>
+      </div>
+      <div id="report-preview-content"></div>
+    </div>
+
+    <!-- VERIFIED PAYMENTS TAB -->
+    <div class="tab-panel" id="tab-verified">
+      <div class="filter-bar">
+        <input type="text" class="search-input" id="vp-search" placeholder="Search by ID, Ref, or business..." oninput="debouncedFilterVerifiedPayments()">
+        <select class="filter-select" id="vp-niche" onchange="filterVerifiedPayments()">
+          <option value="">All niches</option>
+          <option>dental</option><option>realestate</option><option>healthcare</option>
+          <option>legal</option><option>saas</option><option>restaurant</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="tbl">
+          <thead><tr>
+            <th>Business</th><th>Contact</th><th>Niche</th><th>Est. Leakage</th>
+            <th>Payment Ref</th><th>Date Paid</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="verified-body">
+            <tr><td colspan="7" class="tbl-loading"><div class="spin"></div>Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- VIEW/GENERATE MODAL -->
+<div class="modal" id="view-modal">
+  <div class="mc mc-lg">
+    <div class="mc-head">
+      <div class="mc-title" id="view-modal-title">Lead Details</div>
+      <button class="mc-close" onclick="closeModal('view-modal')">✕</button>
+    </div>
+    <div class="mc-body">
+      <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+        <label style="display:inline-flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color:var(--mu);">
+          <input type="checkbox" id="summary-toggle" onchange="toggleQuickSummary()"> Quick Summary Mode
+        </label>
+      </div>
+
+      <div id="view-details-container">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div>
+            <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Business Info</div>
+            <div id="view-biz-info"></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Leakage Summary</div>
+            <div id="view-leak-info"></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+          <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Raw Calculation Inputs</div>
+          <div id="view-calc-inputs-display" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+      <div id="view-summary-container" style="display:none; margin-bottom:20px;"></div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px;">
+        <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Send Report Email</div>
+        <div class="mf"><label>Send to email</label><input type="email" id="send-email" placeholder="Client email"></div>
+        <div class="mf">
+          <label style="display:flex; justify-content:space-between; align-items:center;">
+            <span>Personal message (optional)</span>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button type="button" onclick="clearNote()" style="background:none; border:none; color:var(--or); font-size:10px; font-weight:600; cursor:pointer; padding:0; text-transform:uppercase;">[ Clear ]</button>
+              <span id="note-count" style="font-size:10px; color:var(--mu); font-weight:normal; text-transform:none;">0 / 1000</span>
+            </div>
+          </label>
+          <textarea id="send-note" maxlength="1000" oninput="updateNoteCount()" placeholder="Add a personal note — it appears at the top of the email..."></textarea>
+        </div>
+        <div style="background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--mu);margin-top:8px;">
+          💡 The report will be personalised with their business name, leakage data and niche-specific recommendations. Make sure payment is confirmed before sending.
+        </div>
+      </div>
+    </div>
+    <div class="mc-foot">
+      <button class="btn-secondary" onclick="closeModal('view-modal')">Close</button>
+      <button class="btn-danger" onclick="confirmDelete()">🗑 Delete Lead</button>
+      <button class="btn-primary" onclick="copyTrackerLink()" style="background:var(--mu);">🔗 Copy Tracker Link</button>
+      <button class="btn-primary" id="dl-pdf-btn" onclick="downloadPdf()" style="background:var(--bl);">📄 Download PDF</button>
+      <button class="btn-primary" onclick="closeModal('view-modal');sendPaymentRequest();" style="background:var(--bl);">💳 Send Payment Link</button>
+      <button class="btn-primary" onclick="sendFollowUp()" style="background:#10B981;">📨 Send Follow-up</button>
+      <button class="btn-success" id="send-btn" onclick="sendReport()">📧 Send Full Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- MARK PAID MODAL -->
+<div class="modal" id="paid-modal">
+  <div class="mc mc-sm">
+    <div class="mc-head">
+      <div class="mc-title">✅ Confirm Payment Received</div>
+      <button class="mc-close" onclick="closeModal('paid-modal')">✕</button>
+    </div>
+    <div class="mc-body">
+      <div id="paid-info" style="margin-bottom:16px;"></div>
+      <div class="mf"><label>Payment reference</label><input type="text" id="paid-ref" placeholder="e.g. transfer confirmed 01 Jun 2026 — $47"></div>
+      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--mu);margin-top:8px;">
+        ✅ Only confirm after you have actually received and verified the payment.
+      </div>
+    </div>
+    <div class="mc-foot">
+      <button class="btn-secondary" onclick="closeModal('paid-modal')">Cancel</button>
+      <button class="btn-success" onclick="confirmPaid()">Confirm Payment ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal" id="del-modal">
+  <div class="mc mc-sm">
+    <div class="mc-head">
+      <div class="mc-title">🗑 Delete Lead</div>
+      <button class="mc-close" onclick="closeModal('del-modal')">✕</button>
+    </div>
+    <div class="mc-body">
+      <div class="del-confirm">⚠ This will permanently delete this lead from your Google Sheet. This cannot be undone.</div>
+      <div id="del-info"></div>
+    </div>
+    <div class="mc-foot">
+      <button class="btn-secondary" onclick="closeModal('del-modal')">Cancel</button>
+      <button class="btn-danger" onclick="doDelete()">Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const AdminApp = {
+  config: {
+    ADMIN_HASH: '4b8e130ae66ad0a527546d14c2c70b660b069b299d1a27dcd2b534dcc1758734',
+    SHEET_URL: 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec'
+  },
+  state: {
+    leads: [],
+    current: null,
+    auth: null,
+    loginAttempts: 0,
+    loginLockedUntil: 0,
+    deletedLeads: [],
+    initializedTabs: new Set(),
+    searchCache: {} // New: Client-side cache for filtered lead lists
+  }
+};
+
+/**
+ * Returns a function that, as long as it continues to be invoked, will not
+ * be triggered. The function will be called after it stops being called for
+ * N milliseconds.
+ */
+function debounce(func, wait = 300) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+async function hashString(text){
+  var encoder = new TextEncoder();
+  var data = encoder.encode(text);
+  var hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+async function verifyPass(pass){
+  if(!pass) return false;
+  return await hashString(pass)===AdminApp.config.ADMIN_HASH;
+}
+
+// ── Niche email templates ─────────────────────────────────
+var TEMPLATES = {
+  dental: {
+    icon: '🦷',
+    subject: 'Your Dental Practice Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for using our revenue leakage calculator. After reviewing your dental practice data, we\'ve identified several areas where {bizName} is losing revenue that could be recovered quickly.',
+    tips: [
+      'Implement automated SMS reminders 48 hours before appointments — reduces no-shows by 50-70%',
+      'Create a recall patient outreach schedule — call all overdue patients monthly',
+      'Set up a follow-up system for new patient inquiries — aim to call back within 2 hours',
+      'Review all software subscriptions — cancel tools your team doesn\'t use regularly'
+    ],
+    plan90: [
+      { week: '1-2', action: 'Audit scheduling', detail: 'Implement appointment reminders and recall workflows to reduce no-shows.', priority: 'CRITICAL', quick: true, impact: '+$800/mo' },
+      { week: '3-4', action: 'Reactivation Campaign', detail: 'Launch a lapsed patient reactivation campaign and measure conversion weekly.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+      { week: '5-8', action: 'Software Audit', detail: 'Review software subscriptions and refine front desk follow-up processes.', priority: 'MEDIUM', quick: true, impact: '+$300/mo' }
+    ]
+  },
+  realestate: {
+    icon: '🏠',
+    subject: 'Your Real Estate Agency Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for completing our revenue leakage assessment. Based on your agency\'s data, we\'ve identified key areas where {bizName} is losing potential commission revenue.',
+    tips: [
+      'Implement a minimum 5-touch follow-up system for every new lead',
+      'Track your portal ROI monthly — Zillow fees vs deals actually closed',
+      'Reduce agent admin time with templates for common documents',
+      'Create a structured open house follow-up process within 24 hours'
+    ],
+    plan90: [
+      { week: '1-2', action: '5-Touch Sequence', detail: 'Build a lead follow-up sequence and assign daily tasks to agents.', priority: 'CRITICAL', quick: true, impact: '+$2,500/mo' },
+      { week: '3-4', action: 'Portal ROI Review', detail: 'Review portal performance and shift budget to highest-converting sources.', priority: 'HIGH', quick: false, impact: '+$1,000/mo' },
+      { week: '5-8', action: 'Standardize Outreach', detail: 'Standardize open house follow-up and referral outreach.', priority: 'MEDIUM', quick: false, impact: '+$1,500/mo' }
+    ]
+  },
+  healthcare: {
+    icon: '🏥',
+    subject: 'Your Healthcare Practice Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for using our revenue leakage calculator. We\'ve reviewed your practice data and identified key areas where {bizName} is losing billable revenue.',
+    tips: [
+      'Implement automated appointment reminders via SMS and email',
+      'Review your insurance claims process — work with a billing specialist to reduce rejections',
+      'Create a referral conversion process — follow up within 24 hours of receiving a referral',
+      'Optimise staff scheduling to reduce overtime costs'
+    ],
+    plan90: [
+      { week: '1-2', action: 'Reminders & Claims', detail: 'Implement appointment reminders and verify insurance claim workflows.', priority: 'CRITICAL', quick: true, impact: '+$1,100/mo' },
+      { week: '3-4', action: 'Referral Sequence', detail: 'Launch a referral follow-up sequence and reconnect overdue patients.', priority: 'HIGH', quick: false, impact: '+$900/mo' },
+      { week: '5-8', action: 'Staff Optimization', detail: 'Optimize staff scheduling and review denied claims.', priority: 'MEDIUM', quick: false, impact: '+$600/mo' }
+    ]
+  },
+  legal: {
+    icon: '⚖️',
+    subject: 'Your Law Firm Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for completing our revenue leakage assessment. Based on your firm\'s data, we\'ve identified significant areas where {bizName} is losing billable revenue.',
+    tips: [
+      'Implement time tracking software to capture all billable hours accurately',
+      'Create an admin task delegation system — attorneys should focus on billable work',
+      'Build a consultation-to-case conversion process with follow-up calls',
+      'Reduce case delays with a client intake checklist to gather all documents upfront'
+    ],
+    plan90: [
+      { week: '1-2', action: 'Time Capture', detail: 'Launch time capture and intake improvements for new consultations.', priority: 'CRITICAL', quick: true, impact: '+$3,000/mo' },
+      { week: '3-4', action: 'Task Delegation', detail: 'Delegate admin tasks and standardize client communication touchpoints.', priority: 'HIGH', quick: false, impact: '+$1,500/mo' },
+      { week: '5-8', action: 'Pipeline Audit', detail: 'Review the case pipeline for delays and improve handoff consistency.', priority: 'MEDIUM', quick: false, impact: '+$2,000/mo' }
+    ]
+  },
+  saas: {
+    icon: '💻',
+    subject: 'Your SaaS Business Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for using our revenue leakage calculator. We\'ve analysed your SaaS metrics and identified key areas where {bizName} is losing recurring revenue.',
+    tips: [
+      'Implement proactive churn prevention — identify at-risk customers early',
+      'Improve trial onboarding with a structured activation sequence',
+      'Build a failed payment recovery flow — automated retry and email sequence',
+      'Create documentation and video tutorials to reduce avoidable support tickets'
+    ],
+    plan90: [
+      { week: '1-2', action: 'Churn Guard', detail: 'Build churn risk segmentation and launch an activation sequence.', priority: 'CRITICAL', quick: false, impact: '+$1,500/mo' },
+      { week: '3-4', action: 'Dunning Setup', detail: 'Implement failed payment recovery and usage-driven onboarding.', priority: 'HIGH', quick: true, impact: '+$800/mo' },
+      { week: '5-8', action: 'Docs & Support', detail: 'Improve documentation and renewal engagement.', priority: 'MEDIUM', quick: false, impact: '+$500/mo' }
+    ]
+  },
+  restaurant: {
+    icon: '🍽️',
+    subject: 'Your Restaurant Revenue Audit — {bizName}',
+    intro: 'Hi {name}, thank you for completing our revenue leakage assessment. We\'ve reviewed your restaurant\'s data and identified key areas where {bizName} is losing profit.',
+    tips: [
+      'Implement portion control and inventory tracking to reduce food waste',
+      'Create a reservation confirmation system with reminders to reduce no-shows',
+      'Evaluate delivery platform ROI — consider direct ordering to reduce 30% commission fees',
+      'Optimise staff scheduling based on historical busy and slow periods'
+    ],
+    plan90: [
+      { week: '1-2', action: 'Reservation Fix', detail: 'Introduce reservation confirmations and order-ahead options.', priority: 'CRITICAL', quick: true, impact: '+$1,200/mo' },
+      { week: '3-4', action: 'Fee Analysis', detail: 'Track delivery platform ROI and reduce high-fee channels.', priority: 'HIGH', quick: true, impact: '+$600/mo' },
+      { week: '5-8', action: 'Menu Optimization', detail: 'Optimize menus, inventory, and staffing.', priority: 'MEDIUM', quick: false, impact: '+$1,000/mo' }
+    ]
+    },
+    general: {
+      icon: '🏢',
+      subject: 'Your Revenue Audit — {bizName}',
+      intro: 'Hi {name}, thank you for using our revenue leakage calculator. We\'ve reviewed your business data and identified key areas where {bizName} is losing revenue.',
+      tips: [
+        'Perform a 1-week time audit on manual administrative tasks',
+        'Standardize your lead follow-up sequence with at least 3 touches',
+        'Analyze service margins to ensure overhead is correctly allocated',
+        'Request Google reviews from your top 10% of clients this week'
+      ],
+      plan90: [
+        { week: '1-2', action: 'Process Audit', detail: 'Review sales pipeline and identify top 3 manual bottlenecks.', priority: 'CRITICAL', quick: true, impact: '+$500/mo' },
+        { week: '3-4', action: 'Standardize Outreach', detail: 'Build a lead follow-up sequence and automate repetitive intake tasks.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+        { week: '5-8', action: 'Margin Optimization', detail: 'Analyze service profitability and optimize resource allocation.', priority: 'MEDIUM', quick: false, impact: '+$800/mo' }
+      ]
+  }
+};
+
+// ── Auth ──────────────────────────────────────────────────
+async function doLogin(){
+  try{
+    var pass = document.getElementById('admin-pass').value.trim();
+    var err  = document.getElementById('login-err');
+
+    AdminApp.state.auth = pass;
+    const success = await loadLeads(); // loadLeads will now handle the backend auth check
+
+    if (success) {
+      err.style.display = 'none';
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-screen').style.display = 'block';
+    } else { // Backend returned an error, meaning authentication failed
+      AdminApp.state.loginAttempts++;
+      if(AdminApp.state.loginAttempts >= 5){ AdminApp.state.loginLockedUntil=Date.now()+60000; AdminApp.state.loginAttempts=0; }
+      var remaining = 5 - AdminApp.state.loginAttempts;
+      err.textContent='⚠ Incorrect password'+(AdminApp.state.loginAttempts>=3?' — '+remaining+' attempts left':'');
+      err.style.display='block';
+    }
+  } catch(e){
+    document.getElementById('login-err').textContent='Login error — try again';
+    document.getElementById('login-err').style.display='block';
+  }
+}
+function doLogout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('admin-screen').style.display='none';
+  AdminApp.state.auth = null;
+  AdminApp.state.initializedTabs.clear();
+  document.getElementById('admin-pass').value='';
+}
+document.getElementById('admin-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+// ── Tabs ──────────────────────────────────────────────────
+function switchTab(name, el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  var panel = document.getElementById('tab-'+name);
+  if(panel) panel.classList.add('active');
+
+  // Performance: Only run expensive renders or fetches if needed
+  if(name === 'verified')  filterVerifiedPayments();
+  if(name === 'templates' && !AdminApp.state.initializedTabs.has('templates')) {
+    renderTemplates();
+    AdminApp.state.initializedTabs.add('templates');
+  }
+  if(name === 'preview' && !AdminApp.state.initializedTabs.has('preview')) {
+    renderReportPreview();
+    AdminApp.state.initializedTabs.add('preview');
+  }
+  if(name === 'requests')  filterLeads();
+  if(name === 'all')       filterAll();
+  if(name === 'deleted')   loadDeletedLeads();
+
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── Load leads ────────────────────────────────────────────
+async function loadLeads(){
+  try{
+    var res  = await fetch(AdminApp.config.SHEET_URL+'?action=getCalculatorLeads&key='+encodeURIComponent(AdminApp.state.auth));
+    var data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Auth failed');
+    AdminApp.state.leads = (data.leads||[]);
+    
+    // Refresh lists and cached render status
+    AdminApp.state.searchCache = {}; // Clear cache on new data load
+    renderStats();
+    filterLeads();
+    filterAll();
+    filterVerifiedPayments();
+    
+    // If preview was already rendered, refresh it with new data
+    if(AdminApp.state.initializedTabs.has('preview')) renderReportPreview();
+
+    handleUrlSearch();
+    return true;
+  } catch(e){
+    AdminApp.state.leads = [];
+    showToast('Login Failed: ' + e.message, true);
+    return false;
+  }
+}
+
+async function loadDeletedLeads() {
+  try {
+    var res = await fetch(AdminApp.config.SHEET_URL + '?action=getDeletedLeads&key=' + encodeURIComponent(AdminApp.state.auth));
+    var data = await res.json();
+    AdminApp.state.deletedLeads = data.leads || [];
+    renderDeletedTable();
+  } catch (e) { showToast('Error loading deleted leads', true); }
+}
+
+function renderDeletedTable() {
+  var tb = document.getElementById('deleted-body');
+  if (AdminApp.state.deletedLeads.length === 0) {
+    tb.innerHTML = '<tr><td colspan="5" class="tbl-empty">Trash is empty</td></tr>';
+    return;
+  }
+  tb.innerHTML = AdminApp.state.deletedLeads.map(function(l) {
+    return '<tr>' +
+      '<td><strong>' + esc(l.business) + '</strong><br><span style="font-size:11px;color:var(--mu);">' + esc(l.email) + '</span></td>' +
+      '<td>' + esc(l.niche) + '</td>' +
+      '<td>$' + Number(l.totalLeakage).toLocaleString() + '</td>' +
+      '<td>' + esc(l.date) + '</td>' +
+      '<td><button class="ab ab-orange" onclick="restoreLead(\'' + l.id + '\')">↩ Restore</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+/**
+ * Checks URL for a 'search' parameter and automatically filters the leads list.
+ */
+function handleUrlSearch() {
+  const params = new URLSearchParams(window.location.search);
+  const searchQ = params.get('search');
+  if (searchQ) {
+    const allSearchInput = document.getElementById('all-search');
+    if (allSearchInput) {
+      allSearchInput.value = searchQ;
+      filterAll();
+      const allTabEl = Array.from(document.querySelectorAll('.tab')).find(el => el.getAttribute('onclick') && el.getAttribute('onclick').includes("'all'"));
+      if (allTabEl) switchTab('all', allTabEl);
+    }
+  }
+}
+
+function renderStats(){
+  var total     = AdminApp.state.leads.length;
+  var newLeads  = AdminApp.state.leads.filter(function(l){return !l.paidReport || l.paidReport==='' || l.paidReport==='New';}).length;
+  var requested = AdminApp.state.leads.filter(function(l){return l.paidReport==='Requested';}).length;
+  var pending   = AdminApp.state.leads.filter(function(l){return l.paidReport==='Payment Pending';}).length; // New: Count pending
+  var paid      = AdminApp.state.leads.filter(function(l){return l.paidReport==='Paid';}).length;
+  var delivered = AdminApp.state.leads.filter(function(l){return l.paidReport==='Delivered';}).length;
+  var revenue   = (paid + delivered) * 47;
+  // Update stat cards
+  var els = {
+    'st-total':     total,
+    'st-requested': requested + newLeads + pending, // Include pending in requested count
+    'st-paid':      paid,
+    'st-delivered': delivered,
+    'st-revenue':   '$'+revenue.toLocaleString()
+  };
+  Object.keys(els).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.textContent = els[id];
+  });
+  // Update tab badges
+  var reqBadge  = document.getElementById('req-count'); // This badge will now show New + Requested + Pending
+  var allBadge  = document.getElementById('all-count');
+  var paidBadge = document.getElementById('paid-count');
+  if(reqBadge)  reqBadge.textContent  = requested + newLeads;
+  if(allBadge)  allBadge.textContent  = total;
+  if(paidBadge) paidBadge.textContent = paid + delivered;
+}
+
+// ── Filter & render ───────────────────────────────────────
+
+const debouncedFilterLeads = debounce(filterLeads);
+const debouncedFilterAll = debounce(filterAll);
+const debouncedFilterVerifiedPayments = debounce(filterVerifiedPayments);
+
+function filterLeads(){
+  var q = (document.getElementById('req-search').value||'').toLowerCase();
+  var n = document.getElementById('req-niche').value;
+  var cacheKey = 'leads_' + q + '_' + n;
+  if (AdminApp.state.searchCache[cacheKey]) {
+    renderTable('req-body', AdminApp.state.searchCache[cacheKey], true);
+    return;
+  }
+  var filtered = AdminApp.state.leads.filter(function(l){
+    // Show: New, empty, Requested, Payment Pending — anything not yet Delivered or Paid
+    var isReq = !l.paidReport || l.paidReport==='' || l.paidReport==='New' || l.paidReport==='Requested' || l.paidReport==='Payment Pending';
+    if(!isReq) return false;
+    if(n && l.niche!==n) return false;
+    if(q && !(l.business||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q) && !(l.id||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  AdminApp.state.searchCache[cacheKey] = filtered;
+  renderTable('req-body', filtered, true);
+}
+
+function filterAll(){
+  var q  = (document.getElementById('all-search').value||'').toLowerCase();
+  var st = document.getElementById('all-status').value;
+  var n  = document.getElementById('all-niche').value;
+  var cacheKey = 'all_' + q + '_' + st + '_' + n;
+  if (AdminApp.state.searchCache[cacheKey]) {
+    renderTable('all-body', AdminApp.state.searchCache[cacheKey], false);
+    return;
+  }
+  var filtered = AdminApp.state.leads.filter(function(l){
+    if(n && l.niche!==n) return false;
+    if(q && !(l.business||'').toLowerCase().includes(q) && !(l.name||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q) && !(l.id||'').toLowerCase().includes(q)) return false;
+    if(st){
+      var sl = getStatusLabel(l);
+      if(sl!==st) return false;
+    }
+    return true;
+  });
+  AdminApp.state.searchCache[cacheKey] = filtered;
+  renderTable('all-body', filtered, false);
+}
+
+function filterVerifiedPayments(){
+  var vpEl = document.getElementById('vp-search');
+  var q = vpEl ? vpEl.value.toLowerCase() : '';
+  var nEl = document.getElementById('vp-niche');
+  var n = nEl ? nEl.value : '';
+
+  var cacheKey = 'verified_' + q + '_' + n;
+  if (AdminApp.state.searchCache[cacheKey]) {
+    renderVerifiedTable(AdminApp.state.searchCache[cacheKey]);
+    return;
+  }
+
+  var filtered = AdminApp.state.leads.filter(function(l){
+    if(l.paidReport!=='Paid' && l.paidReport!=='Delivered') return false;
+    if(n && l.niche!==n) return false;
+    if(q && !(l.business||'').toLowerCase().includes(q) && !(l.name||'').toLowerCase().includes(q) && !(l.email||'').toLowerCase().includes(q) && !(l.paymentReference||'').toLowerCase().includes(q) && !(l.id||'').toLowerCase().includes(q) && !(l.notes||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  AdminApp.state.searchCache[cacheKey] = filtered;
+  renderVerifiedTable(filtered);
+}
+
+function getStatusLabel(l){
+  if(l.paidReport==='Delivered') return 'Delivered';
+  if(l.paidReport==='Paid') return 'Paid';
+  if(l.paidReport==='Payment Pending') return 'Payment Pending'; // New: Handle pending status
+  if(l.paidReport==='Requested') return 'Requested';
+  return 'New';
+}
+function getStatusBadge(l){ // Updated to include b-pending
+  var s = getStatusLabel(l);
+  var c = {'New':'b-new','Requested':'b-requested','Payment Pending':'b-pending','Paid':'b-paid','Delivered':'b-delivered'}[s]||'b-new';
+  return '<span class="badge '+c+'">'+s+'</span>';
+}
+
+function generatePersonalNote(lead){
+  var name     = (lead.name||'there').split(' ')[0];
+  var bizName  = lead.business || 'your business';
+  var leakage  = Number(lead.totalLeakage||0);
+  var niche    = (lead.niche||'').toLowerCase();
+  var topArea  = (lead.leakageBreakdown||'').split(' | ')[0] || 'key operational areas';
+  var city     = lead.city ? ' in '+lead.city : '';
+  var phrase   = {dental:'practice',realestate:'agency',healthcare:'practice',legal:'firm',saas:'business',restaurant:'restaurant'}[niche]||'business';
+
+  var template = TEMPLATES[niche] || TEMPLATES.dental;
+  var quickWins = (template.plan90 || []).filter(function(p){ return p.quick; }).map(function(p){ return '✓ ' + p.action; });
+  var quickWinsTxt = quickWins.length > 0 ? '\n\nI have highlighted these immediate "Quick Wins" for you to tackle first:\n' + quickWins.join('\n') : '';
+
+  return 'Hi '+name+', I have personally reviewed the diagnostic data submitted for '+bizName+city+
+    '. Based on the operational benchmarks I applied to your '+phrase+
+    ', the primary revenue friction point is "'+topArea+'" — this alone accounts for a significant portion of your estimated $'+leakage.toLocaleString()+
+    '/month leakage.\n\nThe 90-day roadmap in this report is sequenced to deliver measurable results within the first 14 days without requiring new technology or significant capital investment.' +
+    quickWinsTxt +
+    '\n\nPlease review the Week 1-2 actions first — these are your highest-ROI quick wins. Reply to this email if you have any questions.';
+}
+
+function getTemplateForLead(lead){
+  var niche = (lead.niche||'').toLowerCase();
+  return TEMPLATES[niche] || TEMPLATES.dental;
+}
+function buildEmailSubject(lead, template){
+  return (template.subject||'Revenue Audit for {bizName}')
+    .replace('{bizName}', esc(lead.business||'your business'))
+    .replace('{name}', esc(lead.name||''))
+    .replace('{niche}', esc(lead.niche||''));
+}
+function buildActionPlanHtml(template){
+  return (template.plan90||[]).map(function(step,i){
+    var action = typeof step === 'object' ? step.action : step;
+    return '<div class="rpt-item"><span>Month '+(i+1)+'</span><span class="rpt-item-val">'+esc(action)+'</span></div>';
+  }).join('');
+}
+function buildReportHtml(lead, note, template){
+  lead = lead || AdminApp.state.current;
+  if (!lead) return '<div class="tbl-empty" style="padding:80px;">No lead selected. Open a lead from the dashboard to see a live preview here.</div>';
+
+  template = template || getTemplateForLead(lead);
+
+  var bizName   = lead.business || 'Your Business';
+  var firstName = (lead.name||'there').split(' ')[0];
+  var niche     = (lead.niche||'general').toLowerCase();
+  var leakage   = n(lead.totalLeakage, 0);
+  var annual    = n(lead.annualLeakage, leakage * 12);
+  var daily     = Math.round(leakage/30);
+  var fixTop    = Math.round(leakage*0.6);
+  var grRating  = n(lead.googleRating, 0);
+  var grCount   = n(lead.googleReviews, 0);
+  var items     = (lead.leakageBreakdown||'').split(' | ').filter(Boolean);
+  if (items.length === 0) items = ['Operational Revenue Friction'];
+  
+  var reportId  = lead.id || 'BDL-DRAFT';
+  var noteBlock = note
+    ? '<div style="background:#1a1d2e;border-left:4px solid #F97316;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px;">'+
+      '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;font-family:Syne,sans-serif;">Personal Note from Your Analyst</p>'+
+      '<p style="color:#E8EAF0;font-size:13px;line-height:1.7;margin:0;">'+esc(note).split('\n').join('<br>')+'</p></div>'
+    : '';
+
+  // Groups for 90-day plan
+  var plan = template.plan90||[];
+  var weeks = {};
+  if (plan.length === 0) {
+    weeks['1-2'] = [{action: 'Revenue Process Audit', detail: 'Identify the primary manual bottlenecks in your sales cycle.', priority: 'CRITICAL', quick: true, impact: 'High'}];
+  } else {
+    plan.forEach(function(p){ 
+      var w = (typeof p === 'object' ? p.week : '1-2') || '1-2'; 
+      if(!weeks[w]) weeks[w]=[]; 
+      weeks[w].push(p); 
+    });
+  }
+  var wColors = {'1-2':'#EF4444','3-4':'#F97316','5-8':'#F59E0B','9-12':'#10B981'};
+
+  // Leakage items
+  var leakHtml = items.map(function(item,i){
+    var col = i===0?'#EF4444':i<=2?'#F97316':'#F59E0B';
+    var sev = i===0?'🔴 Critical':i<=2?'🟠 High':'🟡 Medium';
+    var share = Math.round(leakage/Math.max(1,items.length));
+    var w = Math.round(100-(i*60/Math.max(1,items.length-1)));
+    return '<div style="border-left:3px solid '+col+';background:#141720;padding:12px 16px;margin-bottom:10px;">'+
+      '<table style="width:100%;border-collapse:collapse;"><tr>'+
+        '<td style="vertical-align:middle;"><div style="font-size:13px;font-weight:600;color:#E8EAF0;font-family:\'DM Sans\',sans-serif;">'+esc(item)+'</div></td>'+
+        '<td style="text-align:right;width:100px;">'+
+          '<div style="font-size:14px;font-weight:800;color:'+col+';font-family:Syne,sans-serif;">-$'+share.toLocaleString()+'/mo</div>'+
+          '<div style="background:rgba(239,68,68,.1);color:'+col+';font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px;">'+sev+'</div>'+
+        '</td>'+
+      '</tr></table>'+
+      '<div style="height:4px;background:#1E2230;border-radius:2px;margin-bottom:6px;">'+
+        '<div style="width:'+w+'%;height:100%;background:'+col+';border-radius:2px;"></div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:#6B7280;font-family:\'DM Sans\',sans-serif;">Resolving this recovers a portion of your $'+leakage.toLocaleString()+'/mo total.</div>'+
+    '</div>';
+  }).join('');
+
+  // 90-day plan from template
+  var wTitles = {'1-2':'Weeks 1-2 — Quick Wins','3-4':'Weeks 3-4 — Build Systems','5-8':'Weeks 5-8 — Optimise','9-12':'Weeks 9-12 — Scale'};
+  var planHtml = Object.keys(weeks).map(function(week){
+    var c = wColors[week]||'#F97316';
+    var itemsInWeek = weeks[week] || [];
+    if (itemsInWeek.length === 0) return '';
+
+    var actions = itemsInWeek.map(function(p){
+      var isObj = typeof p === 'object';
+      var pAction = isObj ? p.action : p;
+      var pDetail = isObj ? p.detail : '';
+      var pPriority = isObj ? p.priority : 'MEDIUM';
+      var tc = pPriority === 'CRITICAL' ? '#EF4444' : pPriority === 'HIGH' ? '#F97316' : '#F59E0B';
+      return '<div style="padding:10px 0;border-bottom:1px solid #1E2230;">'+
+        '<table style="width:100%;"><tr>'+
+        '<td style="width:20px;vertical-align:top;color:#F97316;font-weight:800;">→</td>'+
+        '<td>'+
+          '<div style="font-size:13px;font-weight:600;color:#E8EAF0;margin-bottom:3px;">'+esc(pAction)+'</div>'+
+          '<div style="font-size:11px;color:#9CA3AF;line-height:1.5;margin-bottom:4px;">'+esc(pDetail)+'</div>'+
+          '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
+            '<span style="background:rgba(0,0,0,.3);color:'+tc+';font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;">'+esc(pPriority)+'</span>'+
+            (isObj && p.quick?'<span style="background:rgba(16,185,129,.12);color:#10B981;font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px;">⚡ Quick Win</span>':'')+
+            '<span style="color:#10B981;font-size:10px;font-weight:600;">'+esc(isObj ? p.impact : '')+'</span>'+
+          '</div>'+
+        '</td></tr></table>'+
+      '</div>';
+    }).join('');
+    return '<div style="background:#0F1117;border:1.5px solid #1E2230;border-radius:10px;padding:14px;margin-bottom:10px;">'+
+      '<table style="width:100%;margin-bottom:12px;"><tr>'+
+        '<td style="width:30px;"><div style="width:26px;height:26px;background:'+c+';border-radius:50%;text-align:center;line-height:26px;font-size:11px;font-weight:700;color:#fff;">'+week.split('-')[0]+'</div></td>'+
+        '<td><div style="font-size:13px;font-weight:700;color:#E8EAF0;font-family:Syne,sans-serif;">'+(wTitles[week]||'Weeks '+week)+'</div></td>'+
+        '<td style="text-align:right;"><div style="font-size:10px;color:#10B981;font-weight:600;">+$'+Math.round(leakage*0.15).toLocaleString()+'/mo potential</div></td>'+
+      '</tr></table>'+
+      actions + '</div>';
+  }).join('');
+
+  // Niche-specific improve section
+  var improveMap = {
+    dental:[
+      {area:'Patient Retention',fix:'Set up SMS reminders 48h and 2h before appointments. Assign one staff member for recall calls — 10 patients per day. Target: under 8% no-show rate.'},
+      {area:'New Patient Pipeline',fix:'2-hour callback rule for every inquiry. Track inquiry-to-appointment conversion weekly. Top practices convert 65%+ of inquiries.'},
+      {area:'Revenue Per Chair',fix:'Present treatment plans same day of diagnosis. Offer payment plans. Top practices collect 80%+ of treatment plan value within 30 days.'},
+      {area:'Online Reputation',fix:'Ask every satisfied patient for a Google review before they leave. Reply to all reviews. Target: 4.5+ stars, 50+ reviews within 90 days.'},
+    ],
+    realestate:[
+      {area:'Lead Conversion',fix:'7-touch follow-up: Call D1, Text D2, Email D4, Call D7, Text D10, Email D14, Final call D21. Most deals close on contact 5-7.'},
+      {area:'Portal ROI',fix:'Calculate cost-per-deal from each portal monthly. Portals costing over 20% of average commission — reduce spend or pause.'},
+      {area:'Agent Productivity',fix:'Time audit: track agent hours for 1 week. Identify top 3 admin tasks. Delegate to assistant. Each hour recovered = direct commission revenue.'},
+      {area:'Open House Conversion',fix:'Sign-in sheet for every visitor. Call within 24 hours. 3-touch follow-up for non-converts. Structured follow-up doubles conversion rates.'},
+    ],
+    healthcare:[
+      {area:'Appointment Attendance',fix:'SMS + email reminders at 48h and 2h before every appointment. Add online reschedule link. Target: no-show rate below 8%.'},
+      {area:'Insurance Revenue',fix:'Pull all rejected claims from last 90 days. Identify top 3 rejection reasons — most are fixable with a simple process change.'},
+      {area:'Referral Capture',fix:'Contact every referral within 24 hours. Create a warm welcome script. Track referral source conversion monthly.'},
+      {area:'Overtime Prevention',fix:'Review last 4 weeks of timesheets. Match scheduling to actual demand — not assumptions. Adjust templates to prevent recurrence.'},
+    ],
+    legal:[
+      {area:'Billable Hour Capture',fix:'Start daily time tracking immediately — even a spreadsheet. Most firms recover $2,000-5,000/month in the first 30 days of proper tracking.'},
+      {area:'Consultation Conversion',fix:'Follow-up email within 24 hours of every consultation. Phone call at day 3 if no response. Follow-up triples your conversion rate.'},
+      {area:'Admin Reduction',fix:'Identify top 3 admin tasks per attorney. Delegate to paralegal. Each hour recovered = your full billable rate recaptured.'},
+      {area:'Collections',fix:'Fixed monthly review of overdue invoices. Personal calls for balances over $1,000. Day 30, 45, 60 automated reminders for smaller balances.'},
+    ],
+    saas:[
+      {area:'Churn Prevention',fix:'Flag customers inactive 14+ days. Personal outreach within 24 hours — not automated. A single call can save accounts worth $100-500/month each.'},
+      {area:'Trial Conversion',fix:'7-day activation sequence. Get users to their first key action within 48 hours — that single event predicts 80% of conversions.'},
+      {area:'Failed Payments',fix:'Automated retry at Day 0, 3, 7 + email each time. Proper dunning recovers 40-60% of failed charges.'},
+      {area:'Support Cost',fix:'Document top 10 support questions as help articles. Most teams reduce ticket volume 20-40% within 60 days.'},
+    ],
+    restaurant:[
+      {area:'Food Waste',fix:'Daily waste log by category for 2 weeks. You will know exactly what to order less of. Most restaurants reduce food cost 3-5% within 30 days.'},
+      {area:'No-Shows',fix:'SMS confirmation when booking + 24h reminder with clear cancellation policy. Reduces no-shows 40-60% immediately.'},
+      {area:'Staff Scheduling',fix:'Review sales data by hour for last 4 weeks. Match staffing to real demand. Overstaffed slow periods are often the biggest labour leak.'},
+      {area:'Delivery Fees',fix:'Calculate real profit margin on delivery orders after fees. If under 10%, promote direct ordering with a small discount to shift volume.'},
+    ]
+  };
+  var nfixes = improveMap[niche]||improveMap.dental;
+  var improveHtml = nfixes.map(function(item){
+    return '<div style="padding:10px 0;border-bottom:1px solid #1E2230;">'+
+      '<table style="width:100%;"><tr>'+
+      '<td style="width:12px;vertical-align:top;padding-top:4px;"><div style="width:5px;height:5px;background:#F97316;border-radius:50%;"></div></td>'+
+      '<td><div style="font-size:12px;font-weight:700;color:#F97316;margin-bottom:2px;font-family:Syne,sans-serif;">'+esc(item.area)+'</div>'+
+      '<div style="font-size:12px;color:#9CA3AF;line-height:1.5;">'+esc(item.fix)+'</div></div>'+
+      '</td></tr></table></div>';
+  }).join('');
+
+  // Reputation
+  var repHtml = '';
+  var locParts = [];
+  if (lead.city) locParts.push(lead.city);
+  if (lead.state) locParts.push(lead.state);
+  var locStr = locParts.length > 0 ? esc(locParts.join(', ')) + ' · ' : '';
+  var nicheType = niche ? niche.charAt(0).toUpperCase() + niche.slice(1) : 'General';
+
+  if(grRating>0){
+    var rc=grRating>=4.5?'#10B981':grRating>=4?'#F59E0B':'#EF4444';
+    var rm=grRating>=4?'Above average':'Below 4.0 — losing customers to competitors';
+    repHtml='<div style="background:#0F1117;padding:20px 24px;margin-bottom:3px;">'+
+      '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;">⭐ REPUTATION ANALYSIS</p>'+
+      '<table style="width:100%;border-collapse:separate;border-spacing:5px;"><tr>'+
+        '<td style="width:50%;background:#141720;border-radius:8px;padding:12px;border:1px solid #1E2230;vertical-align:top;">'+
+          '<p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:0 0 4px;">Google Rating</p>'+
+          '<p style="font-size:24px;font-weight:800;color:'+rc+';margin:0 0 3px;font-family:Syne,sans-serif;">'+grRating+' ★</p>'+
+          '<p style="color:#6B7280;font-size:11px;margin:0;">'+rm+'</p></td>'+
+        '<td style="width:50%;background:#141720;border-radius:8px;padding:12px;border:1px solid #1E2230;vertical-align:top;">'+
+          '<p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:0 0 4px;">Review Count</p>'+
+          '<p style="font-size:24px;font-weight:800;color:'+(grCount>=50?'#10B981':'#F59E0B')+';margin:0 0 3px;font-family:Syne,sans-serif;">'+grCount+'</p>'+
+          '<p style="color:#6B7280;font-size:11px;margin:0;">Target: 50+ reviews</p></td>'+
+      '</tr></table></div>';
+  }
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'+
+  '<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">'+
+  '</head>'+
+  '<body style="margin:0;padding:0;background:#08090C;font-family:\'DM Sans\', Helvetica, Arial, sans-serif;color:#E8EAF0;">'+
+  '<div style="max-width:680px;margin:0 auto;">'+
+  '<table style="width:100%;background:#F97316;border-collapse:collapse;"><tr>'+
+    '<td style="padding:10px 24px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:Syne,sans-serif;">BDL — Revenue Intelligence</td>'+
+    '<td style="padding:10px 24px;text-align:right;color:rgba(255,255,255,.8);font-size:11px;">Report ID: '+reportId+'</td>'+
+  '</tr></table>'+
+  '<div style="background:#0F1117;border-bottom:3px solid #F97316;padding:26px;">'+
+    '<h1 style="font-size:22px;font-weight:800;margin:0 0 4px;color:#E8EAF0;font-family:Syne,sans-serif;">'+esc(bizName)+'</h1>'+
+    '<p style="color:#6B7280;font-size:12px;margin:0 0 14px;">Executive Revenue Diagnostic · ' + locStr + nicheType + '</p>'+
+    noteBlock+
+    '<p style="color:#E8EAF0;font-size:13px;line-height:1.7;margin:0;">Hi '+esc(firstName)+', I have personally reviewed the diagnostic data for <strong>'+esc(bizName)+'</strong>. Below is your complete leakage analysis with a full 90-day recovery roadmap.</p>'+
+  '</div>'+
+  '<div style="background:#141720;padding:24px;text-align:center;border-bottom:1px solid #1E2230;">'+
+    '<p style="color:#6B7280;font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px;">ESTIMATED MONTHLY LEAKAGE</p>'+
+    '<p style="color:#EF4444;font-size:52px;font-weight:800;letter-spacing:-2px;margin:0 0 6px;line-height:1;font-family:Syne,sans-serif;">$'+leakage.toLocaleString()+'</p>'+
+    '<p style="color:#6B7280;font-size:13px;margin:0 0 16px;">≈ <strong style="color:#E8EAF0;">$'+annual.toLocaleString()+'/year</strong></p>'+
+    '<table style="margin:0 auto;border-collapse:separate;border-spacing:10px;"><tr>'+
+      '<td style="background:#0F1117;border:1px solid #1E2230;border-radius:8px;padding:10px 16px;text-align:center;">'+
+        '<p style="color:#EF4444;font-size:16px;font-weight:800;margin:0;font-family:Syne,sans-serif;">$'+daily+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per day</p></td>'+
+      '<td style="background:#0F1117;border:1px solid #1E2230;border-radius:8px;padding:10px 16px;text-align:center;">'+
+        '<p style="color:#10B981;font-size:16px;font-weight:800;margin:0;font-family:Syne,sans-serif;">+$'+fixTop.toLocaleString()+'/mo</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">recoverable</p></td>'+
+    '</tr></table>'+
+  '</div>'+
+  '<div style="background:#08090C;padding:22px 24px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">📉 LEAKAGE BREAKDOWN</p>'+leakHtml+
+  '</div>'+
+  repHtml+
+  '<div style="background:#0F1117;padding:20px 24px;margin-bottom:3px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">🔧 HOW TO IMPROVE — '+niche.toUpperCase()+' SPECIFIC FIXES</p>'+improveHtml+
+  '</div>'+
+  '<div style="background:#08090C;padding:22px 24px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">📅 YOUR 90-DAY RECOVERY ROADMAP</p>'+planHtml+
+  '</div>'+
+  '<div style="background:#141720;padding:20px 24px;">'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">📊 DECISION SUMMARY</p>'+
+    '<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-bottom:12px;text-align:center;">'+
+      '<p style="color:#6B7280;font-size:12px;margin:0 0 10px;">Every day without action costs:</p>'+
+      '<table style="width:100%;"><tr>'+
+        '<td style="text-align:center;"><p style="color:#EF4444;font-size:18px;font-weight:800;margin:0;">$'+daily+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per day</p></td>'+
+        '<td style="text-align:center;"><p style="color:#EF4444;font-size:18px;font-weight:800;margin:0;">$'+Math.round(leakage*3).toLocaleString()+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per quarter</p></td>'+
+        '<td style="text-align:center;"><p style="color:#EF4444;font-size:18px;font-weight:800;margin:0;">$'+annual.toLocaleString()+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per year</p></td>'+
+      '</tr></table></div>'+
+    '<table style="width:100%;border-collapse:separate;border-spacing:10px;"><tr>'+
+      '<td style="width:50%;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;text-align:center;">'+
+        '<div style="font-size:20px;margin-bottom:5px;">😟</div>'+
+        '<div style="font-size:12px;font-weight:600;margin-bottom:3px;">Do Nothing</div>'+
+        '<div style="color:#EF4444;font-size:18px;font-weight:800;margin-bottom:3px;">-$'+annual.toLocaleString()+'</div>'+
+        '<div style="color:#6B7280;font-size:11px;">lost over 12 months</div></td>'+
+      '<td style="width:50%;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:14px;text-align:center;">'+
+        '<div style="font-size:20px;margin-bottom:5px;">🚀</div>'+
+        '<div style="font-size:12px;font-weight:600;margin-bottom:3px;">Implement Plan</div>'+
+        '<div style="color:#10B981;font-size:18px;font-weight:800;margin-bottom:3px;">+$'+fixTop.toLocaleString()+'/mo</div>'+
+        '<div style="color:#6B7280;font-size:11px;">estimated recovery</div></td>'+
+    '</tr></table>'+
+  '</div>'+
+  '<div style="background:#0F1117;padding:18px 24px;text-align:center;">'+
+    '<p style="color:#F97316;font-size:12px;font-weight:700;margin:0 0 4px;">BDL — Revenue Intelligence</p>'+
+    '<p style="color:#4B5563;font-size:11px;line-height:1.6;margin:0;">Report ID: '+reportId+' · Prepared for '+esc(bizName)+'<br>'+
+    'Senior Revenue Analyst · 14 Years in Data Governance &amp; Revenue Alignment<br>'+
+    'Estimates based on submitted data and verified industry benchmarks. Results may vary.<br>'+
+    '<strong style="color:#6B7280;">Reply within 72 hours for a complimentary clarification call.</strong></p>'+
+  '</div>'+
+  '</div></body></html>';
+}
+
+
+function buildReportSummaryHtml(lead, note, template){
+  lead = lead || AdminApp.state.current;
+  if (!lead) return '<div class="tbl-empty" style="padding:80px;">No lead selected. Open a lead from the dashboard to see a live preview here.</div>';
+
+  var biz = esc(lead.business || 'Your Business');
+  var leakage = n(lead.totalLeakage, 0);
+  var annual = n(lead.annualLeakage, leakage * 12);
+  var items = (lead.leakageBreakdown || '').split(' | ').filter(Boolean);
+  var noteHtml = note ? `<div class="rpt-section" style="background:rgba(249,115,22,0.05); border-left:3px solid var(--or);"><div class="rpt-section-title">✉️ Analyst Note</div><div style="font-size:12px; font-style:italic;">"${esc(note).replace(/\n/g, '<br>')}"</div></div>` : '';
+  
+  return `
+    <div class="rpt-preview">
+      <div style="background:var(--card2); border-radius:12px; padding:24px; text-align:center; margin-bottom:20px; border:1px solid var(--border);">
+        <div style="font-size:10px; color:var(--mu); text-transform:uppercase; margin-bottom:8px;">Revenue Leakage Estimate</div>
+        <div style="font-size:36px; font-weight:800; color:var(--rd); font-family:Syne;">$${Math.round(leakage).toLocaleString()}</div>
+        <div style="font-size:12px; color:var(--mu);">$${Math.round(annual).toLocaleString()} annual impact</div>
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">🔍 Friction Breakdown</div>
+        ${items.map(i => `
+          <div class="rpt-item">
+            <span>${esc(i)}</span>
+            <span style="color:var(--or); font-weight:bold;">$${Math.round(leakage/items.length).toLocaleString()}/mo</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="rpt-section">
+        <div class="rpt-section-title">📅 Roadmap Preview (Weeks 1-2)</div>
+        ${(template.plan90 || []).slice(0, 2).map(p => `
+          <div style="margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border);">
+            <div style="font-size:11px; font-weight:bold; color:var(--tx);">${esc(p.action)}</div>
+            <div style="font-size:10px; color:var(--mu);">${esc(p.detail)}</div>
+          </div>
+        `).join('')}
+      </div>
+      ${noteHtml}
+    </div>`;
+}
+
+function renderTable(tbodyId, rows, isReqs){
+  var tb = document.getElementById(tbodyId);
+  if(rows.length===0){
+    tb.innerHTML='<tr><td colspan="7" class="tbl-empty">'+
+      (isReqs ? '📭 No audit requests yet — share your calculator to get started' : '📊 No leads found')+
+      '</td></tr>';
+    return;
+  }
+  var idx = function(l){ return AdminApp.state.leads.indexOf(l); };
+  if(isReqs){
+    tb.innerHTML = rows.map(function(l){
+      var i=idx(l);
+      return '<tr>'+
+        '<td><strong>'+esc(l.business||'—')+'</strong><br><span style="color:var(--mu);font-size:11px;">'+esc((l.city||'')+(l.state?', '+l.state:''))+'</span></td>'+
+        '<td>'+esc(l.name||'—')+'<br><span style="color:var(--mu);font-size:11px;">'+esc(l.email||'')+'</span><br><span style="color:var(--mu);font-size:11px;">'+esc(l.phone||'')+'</span></td>'+
+        '<td><span class="b-niche">'+esc(l.niche||'—')+'</span></td>'+
+        '<td><span class="leak-amt">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</span></td>'+
+        '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
+        '<td>'+getStatusBadge(l)+'</td>'+
+        '<td><div class="ab-gap">'+
+          (!l.paidReport || l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+
+          (l.paidReport==='Payment Pending'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+ // Allow marking as paid from pending
+          (l.paidReport==='Paid'?'<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>':'')+
+          '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
+          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
+        '</div></td>'+
+      '</tr>';
+    }).join('');
+  } else {
+    tb.innerHTML = rows.map(function(l){
+      var i=idx(l);
+      return '<tr>'+
+        '<td><strong>'+esc(l.business||'—')+'</strong></td>'+
+        '<td><span class="b-niche">'+esc(l.niche||'—')+'</span></td>'+
+        '<td style="color:var(--mu);font-size:12px;">'+esc((l.city||'')+(l.state?', '+l.state:''))+'</td>'+
+        '<td><span class="leak-amt">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</span></td>'+
+        '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
+        '<td>'+getStatusBadge(l)+'</td>'+
+        '<td><div class="ab-gap">'+
+          '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
+          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
+        '</div></td>'+
+      '</tr>';
+    }).join('');
+  }
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/**
+ * Safe parsing utility to handle malformed strings or missing values.
+ */
+function n(v, def) {
+  if (v === undefined || v === null || v === '') return def || 0;
+  var parsed = parseFloat(String(v).replace(/[$,]/g, ''));
+  return isNaN(parsed) ? (def || 0) : parsed;
+}
+
+// ── View Modal ────────────────────────────────────────────
+function openViewModal(i){
+  var l = AdminApp.state.leads[i];
+  AdminApp.state.current = l;
+  document.getElementById('view-modal-title').textContent = '📊 '+l.business+' — '+l.niche;
+  document.getElementById('send-email').value = l.email||'';
+  if (typeof generatePersonalNote === 'function') {
+    document.getElementById('send-note').value = generatePersonalNote(l);
+  }
+  updateNoteCount();
+  AdminApp.state.initializedTabs.delete('preview');
+  document.getElementById('summary-toggle').checked = false;
+  toggleQuickSummary();
+  var sendBtn = document.getElementById('send-btn');
+  sendBtn.textContent = (l.paidReport==='Paid' || l.paidReport==='Delivered') ? '📧 Generate & Send Report' : '📧 Send Summary';
+
+  // Business info
+  document.getElementById('view-biz-info').innerHTML = [
+    ['ID',          l.id||'—'],
+    ['Date',        l.date||'—'],
+    ['Name',        l.name||'—'],
+    ['Email',       l.email||'—'],
+    ['Phone',       l.phone||'—'],
+    ['Business',    l.business||'—'],
+    ['Street',      l.street||'—'],
+    ['City',        l.city||'—'],
+    ['State',       l.state||'—'],
+    ['Zip',         l.zip||'—'],
+    ['Website',     l.website||'—'],
+    ['Employees',   l.employees||'—'],
+    ['Revenue',     '$'+Number(l.monthlyRevenue||0).toLocaleString()+'/mo'],
+    ['Status',      getStatusLabel(l)],
+    ['Payment Status', l.paidReport || 'No'], // Explicitly show paidReport status
+  ].map(function(r){
+    return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val">'+esc(r[1])+'</span></div>';
+  }).join('');
+
+  // Leakage info
+  document.getElementById('view-leak-info').innerHTML = [
+    ['Est. Monthly Leakage', '$'+Number(l.totalLeakage||0).toLocaleString()+'/mo'],
+    ['Est. Annual Leakage',  '$'+Number(l.annualLeakage||0).toLocaleString()+'/yr'],
+    ['Google Rating',        l.googleRating>0?l.googleRating+' ★':'Not listed'],
+    ['Google Reviews',       l.googleReviews||'0'],
+    ['Top Leakage Areas',    l.leakageBreakdown||'—'],
+    ['Platforms Used',       l.platforms||'None'],
+    ['Payment Reference',    l.paymentReference||'Not submitted'],
+    ['Paid Report',          l.paidReport||'No'],
+  ].map(function(r){
+    var isLeak = r[0].includes('Leakage');
+    var isRef = r[0] === 'Payment Reference';
+    return '<div class="irow"><span class="irow-label">'+r[0]+'</span><span class="irow-val"'+(isLeak?' style="color:var(--rd);"':isRef?' style="color:var(--gn);"':'')+'>'+esc(r[1])+'</span></div>';
+  }).join('');
+
+  // Populate Raw Calculation Inputs
+  var calcInputsDisplayDiv = document.getElementById('view-calc-inputs-display');
+  calcInputsDisplayDiv.innerHTML = ''; // Clear previous content
+  if (AdminApp.state.current.calculationInputs) {
+    try {
+      var inputs = JSON.parse(AdminApp.state.current.calculationInputs);
+      var html = Object.keys(inputs).map(key => {
+        return `<div class="irow"><span class="irow-label">${esc(key)}</span><span class="irow-val">${esc(inputs[key])}</span></div>`;
+      }).join('');
+      calcInputsDisplayDiv.innerHTML = html;
+    } catch (e) {
+      calcInputsDisplayDiv.innerHTML = `<div style="color:var(--rd);">Error parsing JSON: ${esc(e.message)}</div><div style="white-space:pre-wrap;font-family:monospace;font-size:11px;color:var(--mu);margin-top:8px;">${esc(AdminApp.state.current.calculationInputs)}</div>`;
+    }
+  } else {
+    calcInputsDisplayDiv.innerHTML = '<div style="color:var(--mu);">No calculation inputs recorded.</div>';
+  }
+
+  document.getElementById('view-modal').classList.add('open');
+}
+
+function toggleQuickSummary() {
+  var isSummary = document.getElementById('summary-toggle').checked;
+  var details = document.getElementById('view-details-container');
+  var summary = document.getElementById('view-summary-container');
+  
+  if (isSummary) {
+    details.style.display = 'none';
+    summary.style.display = 'block';
+    summary.innerHTML = buildReportSummaryHtml();
+  } else {
+    details.style.display = 'block';
+    summary.style.display = 'none';
+  }
+}
+
+// ── Paid Modal ────────────────────────────────────────────
+function openPaidModal(i){
+  var l = AdminApp.state.leads[i];
+  AdminApp.state.current = l;
+  document.getElementById('paid-ref').value='';
+  document.getElementById('paid-info').innerHTML =
+    '<div style="background:var(--card2);border-radius:8px;padding:12px;">'+
+    '<div class="irow"><span class="irow-label">Business</span><span class="irow-val">'+esc(l.business||'—')+'</span></div>'+
+    '<div class="irow"><span class="irow-label">Email</span><span class="irow-val">'+esc(l.email||'—')+'</span></div>'+
+    '<div class="irow"><span class="irow-label">Amount</span><span class="irow-val" style="color:var(--gn);">$47</span></div>'+
+    '</div>';
+  document.getElementById('paid-modal').classList.add('open');
+}
+
+// ── Delete Modal ──────────────────────────────────────────
+function openDeleteModal(i){
+  var l = AdminApp.state.leads[i];
+  AdminApp.state.current = l;
+  document.getElementById('del-info').innerHTML =
+    '<div class="irow"><span class="irow-label">Business</span><span class="irow-val">'+esc(l.business||'—')+'</span></div>'+
+    '<div class="irow"><span class="irow-label">Email</span><span class="irow-val">'+esc(l.email||'—')+'</span></div>';
+  document.getElementById('del-modal').classList.add('open');
+}
+
+function confirmDelete(){
+  closeModal('view-modal');
+  if(AdminApp.state.current) openDeleteModal(AdminApp.state.leads.indexOf(AdminApp.state.current));
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── Actions ───────────────────────────────────────────────
+async function confirmPaid(){
+  if(!AdminApp.state.current) return;
+  var ref = document.getElementById('paid-ref').value.trim();
+  try{
+    var res = await fetch(AdminApp.config.SHEET_URL,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'markPaymentPaid',
+        key:AdminApp.state.auth,
+        id:AdminApp.state.current.id || null,
+        email:AdminApp.state.current.email,
+        changes:{paidReport:'Paid',paymentReference:ref||'Payment confirmed',notes:ref||'Payment confirmed',paymentConfirmedDate:new Date().toLocaleDateString('en-US')}
+      })
+    });
+    var data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Update failed');
+    }
+    showToast('✅ Payment verified — Report is being sent');
+    closeModal('paid-modal');
+    loadLeads();
+  } catch(e){ showToast('Error updating record: '+e.message,true); }
+}
+
+async function doDelete(){
+  if(!AdminApp.state.current) return;
+  try{
+    var res = await fetch(AdminApp.config.SHEET_URL,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'deleteCalculatorLead',
+        key:AdminApp.state.auth,
+        id:AdminApp.state.current.id || null,
+        email:AdminApp.state.current.email
+      })
+    });
+    var data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Delete failed');
+    }
+    showToast('🗑 Lead deleted');
+    closeModal('del-modal');
+    loadLeads();
+  } catch(e){ showToast('Error deleting lead: '+e.message,true); }
+}
+
+async function sendReport(){
+  var email = document.getElementById('send-email').value.trim();
+  var note  = document.getElementById('send-note').value.trim();
+  if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}
+  if(!AdminApp.state.current){showToast('No lead selected',true);return;}
+  var btn = document.getElementById('send-btn');
+  btn.innerHTML = '<div class="spin" style="width:16px;height:16px;border-width:2px;"></div> Generating & Sending...';
+  btn.disabled = true;
+  try{
+    var template = getTemplateForLead(AdminApp.state.current);
+    var isPaid = /paid|delivered/i.test(String(AdminApp.state.current.paidReport||''));
+    var subject = isPaid ? buildEmailSubject(AdminApp.state.current, template) : 'Revenue Audit Summary — '+(AdminApp.state.current.business||'Your Business');
+    var res  = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
+      action:'generateAndSendReport',
+      key:AdminApp.state.auth,
+      lead:AdminApp.state.current,
+      email:email,
+      note:note,
+      subject:subject // Subject is still useful for backend to use if it wants
+    })});
+    var data = await res.json();
+    if(data.success){
+      showToast(isPaid ? '✅ Report sent to '+email : '✅ Summary sent to '+email);
+      closeModal('view-modal');
+      loadLeads();
+    } else {
+      showToast('Error: '+(data.error||'Check Apps Script'),true);
+    }
+  } catch(e){ showToast('Failed — check Apps Script URL',true); }
+  btn.innerHTML = '📧 Generate & Send Report';
+  btn.disabled = false;
+}
+
+function updateNoteCount(){
+  var val = document.getElementById('send-note').value;
+  var countEl = document.getElementById('note-count');
+  if(countEl) countEl.textContent = val.length + ' / 1000';
+}
+
+function clearNote(){
+  document.getElementById('send-note').value = '';
+  updateNoteCount();
+}
+
+async function sendFollowUp(){
+  if(!AdminApp.state.current||!AdminApp.state.current.email){showToast('No lead selected',true);return;}
+  var isPaid = /paid|delivered/i.test(String(AdminApp.state.current.paidReport||''));
+  if(!isPaid){showToast('Follow-up only sent after paid report. Send report first.',true);return;}
+  try{
+    var res = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
+      action:'sendFollowUpEmails',
+      key:AdminApp.state.auth,
+      lead:AdminApp.state.current,
+      email:AdminApp.state.current.email
+    })});
+    var data = await res.json();
+    showToast('✅ Follow-up email sent to '+AdminApp.state.current.email);
+    closeModal('view-modal');
+    loadLeads();
+  } catch(e){ 
+    showToast('Error sending follow-up: '+e.message,true); 
+  }
+}
+
+// ── Templates Tab ─────────────────────────────────────────
+function renderTemplates(){
+  var html = '';
+  Object.keys(TEMPLATES).forEach(function(niche){
+    var t = TEMPLATES[niche];
+    html += '<div class="template-box">'+
+      '<div class="template-niche">'+t.icon+' '+niche.toUpperCase()+'</div>'+
+      '<div class="template-subject">📧 Subject: '+t.subject+'</div>'+
+      '<div class="template-preview" style="margin-top:8px;margin-bottom:10px;">'+t.intro+'</div>'+
+      '<div style="font-size:10px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Niche-specific recommendations included:</div>'+
+      t.tips.map(function(tip,i){return '<div style="font-size:11px;color:var(--mu);display:flex;gap:6px;margin-bottom:4px;"><span style="color:var(--or);">'+(i+1)+'.</span><span>'+tip+'</span></div>';}).join('')+
+      '<div style="font-size:10px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:12px;margin-bottom:6px;">90-day action plan:</div>'+ 
+      t.plan90.map(function(step,i){return '<div style="font-size:11px;color:var(--mu);display:flex;gap:6px;margin-bottom:4px;"><span style="color:var(--or);">Week '+(step.week || (i*2+1))+'.</span><span>'+(step.action || step)+'</span></div>';}).join('')+
+    '</div>';
+  });
+  document.getElementById('templates-list').innerHTML = html;
+}
+
+// ── Report Preview Tab ────────────────────────────────────
+function renderReportPreview(){
+  var lead = AdminApp.state.current || {
+    business: 'Sample Business Inc.', name: 'Sarah Johnson',
+    niche: 'dental', city: 'Austin', state: 'TX',
+    monthlyRevenue: 65000, totalLeakage: 8450, annualLeakage: 101400,
+    googleRating: 3.4, googleReviews: 28,
+    leakageBreakdown: 'No-Show Appointment Loss | New Patient Follow-Up Gap | Unscheduled Recall Patients',
+    platforms: 'Zocdoc'
+  };
+  var note = AdminApp.state.current ? (document.getElementById('send-note').value || '') : 'This is a sample of the high-fidelity audit report delivered to paid clients.';
+  document.getElementById('report-preview-content').innerHTML = buildReportHtml(lead, note, getTemplateForLead(lead));
+}
+
+function renderVerifiedTable(rows){
+  var tb = document.getElementById('verified-body');
+  if(!tb) return;
+  if(rows.length===0){
+    tb.innerHTML = '<tr><td colspan="7" class="tbl-empty">📭 No verified payments yet.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(function(l){
+    var i = AdminApp.state.leads.indexOf(l);
+    return '<tr>'+ 
+      '<td><strong>'+esc(l.business||'—')+'</strong><br><span style="color:var(--mu);font-size:11px;">'+esc((l.city||'')+(l.state?', '+l.state:''))+'</span></td>'+ 
+      '<td>'+esc(l.name||'—')+'<br><span style="color:var(--mu);font-size:11px;">'+esc(l.email||'')+'</span></td>'+ 
+      '<td><span class="b-niche">'+esc(l.niche||'—')+'</span></td>'+ 
+      '<td><span class="leak-amt">$'+Number(l.totalLeakage||0).toLocaleString()+'/mo</span></td>'+ 
+      '<td style="color:var(--mu);font-size:12px;">'+esc(l.paymentReference||'—')+'</td>'+ 
+      '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+ 
+      '<td><div class="ab-gap">'+
+        '<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>'+ 
+        '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+ 
+        '<button class="ab ab-green" onclick="sendReport('+i+')">↻ Resend Report</button>'+
+      '</div></td>'+ 
+    '</tr>';
+  }).join('');
+}
+
+async function sendPaymentRequest(){
+  if(!AdminApp.state.current||!AdminApp.state.current.email){showToast('No lead selected',true);return;}
+  var wiseLink = ''; // Will fall back to Config sheet on backend
+  try{
+    var res  = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
+      action:'sendPaymentRequestEmail',
+      key:AdminApp.state.auth,
+      lead:AdminApp.state.current,
+      email:AdminApp.state.current.email,
+      wiseLink:wiseLink
+    })});
+    var data = await res.json();
+    if(data.success){showToast('✅ Payment request sent to '+AdminApp.state.current.email);}
+    else{showToast('Error: '+(data.error||'Check Apps Script'),true);}
+  }catch(e){showToast('Failed: '+e.message,true);}
+}
+
+function copyTrackerLink() {
+  if (!AdminApp.state.current || !AdminApp.state.current.id) {
+    showToast('No lead ID available', true);
+    return;
+  }
+  var baseUrl = window.location.href.split('admin.html')[0];
+  var trackerUrl = baseUrl + 'tracker.html?id=' + encodeURIComponent(AdminApp.state.current.id);
+  navigator.clipboard.writeText(trackerUrl).then(function() {
+    showToast('✅ Tracker link copied to clipboard');
+  });
+}
+
+async function downloadPdf() {
+  if (!AdminApp.state.current) { showToast('No lead selected', true); return; }
+  var note = document.getElementById('send-note').value.trim();
+  var btn = document.getElementById('dl-pdf-btn');
+  var origTxt = btn.innerHTML;
+  btn.innerHTML = '<div class="spin" style="width:12px;height:12px;border-width:2px;margin-right:0;"></div>';
+  btn.disabled = true;
+
+  try {
+    var res = await fetch(AdminApp.config.SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'getLeadPdf',
+        key: AdminApp.state.auth,
+        lead: AdminApp.state.current,
+        note: note
+      })
+    });
+    var data = await res.json();
+    if (data.success && data.base64) {
+      const link = document.createElement('a');
+      link.href = 'data:application/pdf;base64,' + data.base64;
+      link.download = data.filename || 'Revenue_Audit.pdf';
+      link.click();
+      showToast('✅ PDF generated');
+    } else { showToast('Error: ' + (data.error || 'Failed to generate PDF'), true); }
+  } catch (e) { showToast('Download failed: ' + e.message, true); }
+  finally { btn.innerHTML = origTxt; btn.disabled = false; }
+}
+
+async function restoreLead(id) {
+  if(!confirm('Restore this lead to the active list?')) return;
+  try {
+    var res = await fetch(AdminApp.config.SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'restoreCalculatorLead', key: AdminApp.state.auth, id: id })
+    });
+    var data = await res.json();
+    if (data.success) {
+      showToast('✅ Lead restored');
+      loadLeads();
+      loadDeletedLeads();
+    }
+  } catch (e) { showToast('Restore failed', true); }
+}
+
+function showToast(msg, isErr){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='toast'+(isErr?' err':'');
+  t.style.display='block';
+  setTimeout(function(){t.style.display='none';},3500);
+}
+
+/**
+ * DEV UTILITY: Run UI Logic Tests
+ * Usage: AdminApp.runTests() in browser console
+ */
+AdminApp.runTests = function() {
+  console.group('Admin UI Logic Tests');
+  
+  // Test niche template icon/subject resolution
+  const t = getTemplateForLead({niche: 'legal'});
+  console.assert(t.icon === '⚖️', 'Legal template icon mismatch');
+  
+  // Test personalized subject lines
+  const lead = { business: 'Test Law', name: 'Sarah' };
+  const sub = buildEmailSubject(lead, t);
+  console.assert(sub.includes('Test Law') && sub.includes('Your Law Firm'), 'Subject placeholder replacement failed');
+  
+  // Test auto-generated Analyst Notes
+  const note = generatePersonalNote({name: 'John', business: 'Dentist', totalLeakage: 2000, niche: 'dental'});
+  console.assert(note.includes('Hi John') && note.includes('$2,000'), 'Analyst note personalization failed');
+  
+  console.log('UI Tests Passed.');
+  console.groupEnd();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>90-Day Action Tracker | BDL</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;--bl:#3B82F6;--yl:#F59E0B;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',-apple-system,sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+.container{max-width:900px;margin:0 auto;padding:40px 20px;}
+.header{text-align:center;margin-bottom:40px;padding:32px;background:var(--card);border:1.5px solid var(--border);border-top:3px solid var(--or);border-radius:12px;}
+.header h1{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:8px;color:var(--or);}
+.header p{color:var(--mu);font-size:15px;margin-bottom:16px;}
+.biz-name{font-size:20px;font-weight:600;color:var(--tx);margin-bottom:8px;}
+.biz-meta{font-size:12px;color:var(--mu);}
+.progress-section{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:28px;margin-bottom:28px;}
+.progress-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:20px;color:var(--tx);}
+.progress-bar{width:100%;height:12px;background:var(--card2);border-radius:999px;overflow:hidden;margin-bottom:12px;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--ord),var(--or));border-radius:999px;transition:width .6s ease;width:0%;}
+.progress-text{display:flex;justify-content:space-between;font-size:12px;color:var(--mu);margin-bottom:24px;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr;}}
+.stat-card{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+.stat-label{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--or);}
+.stat-sub{font-size:10px;color:var(--mu);margin-top:4px;}
+.actions-section{margin-bottom:28px;}
+.week-group{background:var(--card);border:1.5px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;}
+.week-header{background:var(--card2);padding:14px 16px;display:flex;align-items:center;gap:10px;border-bottom:1.5px solid var(--border);}
+.week-label{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--or);}
+.week-actions{padding:0;}
+.action-item{display:flex;gap:12px;padding:16px;border-bottom:1px solid var(--border);align-items:flex-start;}
+.action-item:last-child{border-bottom:none;}
+.action-check{flex-shrink:0;margin-top:2px;}
+.action-check input{width:20px;height:20px;cursor:pointer;accent-color:var(--or);}
+.action-body{flex:1;}
+.action-title{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:4px;}
+.action-detail{font-size:12px;color:var(--mu);line-height:1.5;margin-bottom:8px;}
+.action-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.action-tag{background:rgba(249,115,22,.12);color:var(--or);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;}
+.action-tag.completed{background:rgba(16,185,129,.12);color:var(--gn);}
+.action-tag.quick{background:rgba(16,185,129,.12);color:var(--gn);}
+.action-result{display:none;margin-top:12px;padding:12px;background:var(--card2);border-radius:8px;}
+.action-result.show{display:block;}
+.action-result label{font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;margin-bottom:6px;display:block;}
+.action-result input,.action-result textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:6px;padding:8px;color:var(--tx);font-size:12px;font-family:'DM Sans',sans-serif;margin-bottom:6px;}
+.action-result input:focus,.action-result textarea:focus{outline:none;border-color:var(--or);}
+.action-result button{background:var(--or);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.action-result button:hover{opacity:.9;}
+.cta-section{background:linear-gradient(135deg,rgba(249,115,22,.12),rgba(234,88,12,.06));border:1.5px solid rgba(249,115,22,.4);border-radius:12px;padding:28px;text-align:center;}
+.cta-badge{display:inline-block;background:var(--or);color:#fff;font-size:10px;font-weight:700;padding:6px 16px;border-radius:20px;letter-spacing:.06em;margin-bottom:16px;text-transform:uppercase;}
+.cta-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;color:var(--tx);}
+.cta-sub{font-size:13px;color:var(--mu);margin-bottom:20px;line-height:1.6;}
+.cta-btn{display:inline-block;background:var(--or);color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;cursor:pointer;border:none;font-size:14px;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
+.cta-btn:hover{opacity:.9;}
+.loading{text-align:center;padding:40px;color:var(--mu);}
+.spin{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:14px;color:var(--rd);margin-bottom:20px;font-size:13px;}
+footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);margin-top:40px;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- Header -->
+  <div class="header" id="header">
+    <h1>📈 90-Day Action Tracker</h1>
+    <p>Track your progress and watch your revenue leakage shrink</p>
+    <div class="biz-name" id="biz-name">Loading...</div>
+    <div class="biz-meta" id="biz-meta"></div>
+  </div>
+
+  <!-- Error message -->
+  <div class="error" id="error-msg" style="display:none;"></div>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progress-section" style="display:none;">
+    <div class="progress-title">Your Progress</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-text">
+      <span id="actions-done">0 of 18 actions completed</span>
+      <span id="completion-pct">0% complete</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Est. Monthly Savings</div>
+        <div class="stat-value" id="savings-monthly">$0</div>
+        <div class="stat-sub">if all implemented</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Your Goal (90-Day)</div>
+        <div class="stat-value" id="leakage-total">$0</div>
+        <div class="stat-sub">revenue to recover</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Projected Annual</div>
+        <div class="stat-value" id="savings-annual">$0</div>
+        <div class="stat-sub">from full implementation</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions-section" id="actions-section" style="display:none;">
+    <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;color:var(--tx);">Your 90-Day Action Plan</h2>
+    <div id="actions-container"></div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spin"></div>
+    <p style="margin-top:16px;">Loading your action plan...</p>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-section" id="cta-section" style="display:none;">
+    <div class="cta-badge">🚀 NEED HELP IMPLEMENTING?</div>
+    <div class="cta-title">90-Day Implementation Program</div>
+    <div class="cta-sub">
+      Our team can guide you through every step, conduct staff training, and ensure you hit your 90-day targets.<br>
+      <strong>Weekly check-ins + hands-on support.</strong>
+    </div>
+    <button class="cta-btn" onclick="contactSupport()">Get Implementation Support →</button>
+  </div>
+
+</div>
+
+<footer>
+  <p>BDL — Revenue Audit Service · <a href="mailto:james@bdl.com" style="color:var(--or);text-decoration:none;">james@bdl.com</a></p>
+</footer>
+
+<script>
+const TrackerApp = {
+  config: {
+    SHEET_URL: 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec'
+  },
+  state: {
+    id: new URL(window.location.href).searchParams.get('id') || new URL(window.location.href).hash.slice(1),
+    lead: null,
+    tracker: null
+  }
+};
+
+async function initTracker(){
+  if(!TrackerApp.state.id){
+    showError('No tracker ID provided. Check your email link.');
+    return;
+  }
+  
+  try {
+    const res = await fetch(TrackerApp.config.SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({action: 'getTrackerData', trackerId: TrackerApp.state.id})
+    });
+    const data = await res.json();
+    
+    if(data.error) {
+      showError('Tracker not found. ' + data.error);
+      return;
+    }
+    
+    TrackerApp.state.lead = data.lead;
+    TrackerApp.state.tracker = data.tracker || {};
+    
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('progress-section').style.display = 'block';
+    document.getElementById('actions-section').style.display = 'block';
+    document.getElementById('cta-section').style.display = 'block';
+    
+    renderTracker();
+  } catch(err) {
+    showError('Failed to load tracker: ' + err.message);
+  }
+}
+
+function showError(msg){
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-msg').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+}
+
+function renderTracker(){
+  if(!TrackerApp.state.lead) return;
+  
+  // Header
+  document.getElementById('biz-name').textContent = TrackerApp.state.lead.business || 'Your Business';
+  document.getElementById('biz-meta').textContent = (TrackerApp.state.lead.city || '') + (TrackerApp.state.lead.state ? ', ' + TrackerApp.state.lead.state : '') + ' · ' + TrackerApp.state.lead.niche;
+  
+  // Get plan
+  const plan = TrackerApp.state.lead.plan90 || [];
+  if(!Array.isArray(plan) || plan.length === 0) {
+    showError('No action plan found for this lead.');
+    return;
+  }
+  
+  // Group by week
+  const weekGroups = {};
+  ['1-2', '3-4', '5-8', '9-12'].forEach(w => weekGroups[w] = []);
+  
+  plan.forEach(item => {
+    const w = item.week || '1-2';
+    if(!weekGroups[w]) weekGroups[w] = [];
+    weekGroups[w].push(item);
+  });
+  
+  // Count completed
+  let completed = 0;
+  plan.forEach((item, idx) => {
+    if(TrackerApp.state.tracker['action_' + idx + '_done']) completed++;
+  });
+  
+  const total = plan.length;
+  const pct = Math.round((completed / total) * 100);
+  
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('actions-done').textContent = completed + ' of ' + total + ' actions completed';
+  document.getElementById('completion-pct').textContent = pct + '% complete';
+  
+  // Savings
+  const monthlyLeakage = Number(TrackerApp.state.lead.totalLeakage) || 0;
+  const savingsCompleted = Math.round((monthlyLeakage / total) * completed);
+  const annualSavings = Math.round(monthlyLeakage * 12);
+  
+  document.getElementById('leakage-total').textContent = '$' + monthlyLeakage.toLocaleString();
+  document.getElementById('savings-monthly').textContent = '$' + savingsCompleted.toLocaleString();
+  document.getElementById('savings-annual').textContent = '$' + annualSavings.toLocaleString();
+  
+  // Render actions by week
+  let html = '';
+  let actionIdx = 0;
+  
+  Object.keys(weekGroups).forEach(week => {
+    const items = weekGroups[week];
+    if(!items.length) return;
+    
+    html += '<div class="week-group">'+
+      '<div class="week-header"><div class="week-label">📅 Week ' + week + '</div></div>'+
+      '<div class="week-actions">';
+    
+    items.forEach(item => {
+      const isDone = TrackerApp.state.tracker['action_' + actionIdx + '_done'];
+      const result = TrackerApp.state.tracker['action_' + actionIdx + '_result'] || '';
+      const impact = TrackerApp.state.tracker['action_' + actionIdx + '_impact'] || '';
+      
+      html += '<div class="action-item" id="action-' + actionIdx + '">'+
+        '<div class="action-check"><input type="checkbox" onchange="toggleAction(' + actionIdx + ')" ' + (isDone ? 'checked' : '') + '></div>'+
+        '<div class="action-body">'+
+          '<div class="action-title">' + (item.action || item) + '</div>'+
+          '<div class="action-detail">' + (item.detail || '') + '</div>'+
+          '<div class="action-meta">'+
+            (item.quick ? '<span class="action-tag quick">✓ Quick Win</span>' : '')+
+            '<span class="action-tag">' + (item.priority || 'Action') + '</span>'+
+            '<span class="action-tag">💰 ' + (item.impact || '') + '</span>'+
+          '</div>'+
+          '<div class="action-result' + (isDone ? ' show' : '') + '" id="result-' + actionIdx + '">'+
+            '<label>What results did you see?</label>'+
+            '<input type="text" placeholder="e.g., 5% fewer no-shows, $500 recovered" value="' + esc(result) + '" onchange="saveResult(' + actionIdx + ')">'+
+            '<label>Estimated savings from this action</label>'+
+            '<input type="text" placeholder="e.g., $300/month" value="' + esc(impact) + '" onchange="saveImpact(' + actionIdx + ')">'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+      
+      actionIdx++;
+    });
+    
+    html += '</div></div>';
+  });
+  
+  document.getElementById('actions-container').innerHTML = html;
+}
+
+function toggleAction(idx){
+  const checkbox = document.querySelector('#action-' + idx + ' input[type=checkbox]');
+  const resultBox = document.getElementById('result-' + idx);
+  
+  if(checkbox.checked) {
+    resultBox.classList.add('show');
+  } else {
+    resultBox.classList.remove('show');
+  }
+  
+  saveProgress();
+}
+
+function saveResult(idx){
+  const input = document.querySelector('#result-' + idx + ' input[type=text]:first-of-type');
+  TrackerApp.state.tracker['action_' + idx + '_result'] = input.value;
+  saveProgress();
+}
+
+function saveImpact(idx){
+  const input = document.querySelectorAll('#result-' + idx + ' input[type=text]')[1];
+  TrackerApp.state.tracker['action_' + idx + '_impact'] = input.value;
+  saveProgress();
+}
+
+async function saveProgress(){
+  const allCheckboxes = document.querySelectorAll('.action-item input[type=checkbox]');
+  allCheckboxes.forEach((cb, idx) => {
+    TrackerApp.state.tracker['action_' + idx + '_done'] = cb.checked;
+  });
+  
+  try {
+    await fetch(TrackerApp.config.SHEET_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'saveTrackerData',
+        trackerId: TrackerApp.state.id,
+        tracker: TrackerApp.state.tracker
+      })
+    });
+    renderTracker();
+  } catch(err) {
+    console.error('Failed to save progress', err);
+  }
+}
+
+function contactSupport(){
+  const subject = 'Implementation Support Request - ' + (TrackerApp.state.lead?.business || 'Business');
+  const body = 'Hi,\n\nI need help implementing my 90-day action plan.\n\nBusiness: ' + (TrackerApp.state.lead?.business || '') + '\nEmail: ' + (TrackerApp.state.lead?.email || '');
+  window.location.href = 'mailto:james@bdl.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+}
+
+function esc(s){
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+window.addEventListener('DOMContentLoaded', initTracker);
+</script>
+
+</body>
+</html>

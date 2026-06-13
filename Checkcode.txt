@@ -1,0 +1,344 @@
+const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+
+function getAdminPassword() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Config');
+  if (!sheet) return "SHEET_NOT_FOUND";
+  return String(sheet.getRange('A1').getValue());
+}
+
+function doGet(e) { return handleRequest(e); }
+function doPost(e) { return handleRequest(e); }
+
+function handleRequest(e) {
+  const event = e || {};
+  const data = (event.postData && event.postData.contents) ? JSON.parse(event.postData.contents) : {};
+  let action = data.action || (event.parameter ? event.parameter.action : null);
+  const password = data.password || "";
+
+  // Detect a webhook payload when no explicit action is provided
+  if (!action && data && data.data && data.data.id && data.data.attributes) {
+    action = 'webhookPayment';
+  }
+
+  // Password Protection Logic
+  const protectedActions = ['getAll', 'moveLead', 'deleteLead', 'archiveLead', 'promoteClient'];
+  if (protectedActions.includes(action) && password !== getAdminPassword()) {
+    return ContentService.createTextOutput(JSON.stringify({ error: 'Unauthorized: Access Denied' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // 3. Routing Logic
+  try {
+    let result;
+    switch (action) {
+      case 'getAll':               result = getAll(); break;
+      case 'addLead':              result = addLead(data.lead); break;
+      case 'updateLead':           result = updateLead(data.id, data.changes, data.tab || 'Leads'); break;
+      case 'moveLead':             result = moveLead(data.id, data.fromTab, data.toTab, data.changes || {}); break;
+      case 'deleteLead':           result = moveLead(data.id, data.fromTab, 'Deleted', {}); break;
+      case 'archiveLead':          result = moveLead(data.id, 'Leads', 'Archived', {}); break;
+      case 'promoteClient':        result = moveLead(data.id, 'Leads', 'Clients', {}); break;
+      case 'restoreLead':          result = moveLead(data.id, data.fromTab, 'Leads', { status: 'New' }); break;
+      case 'saveCalculatorLead':    result = saveCalculatorLead(data.lead); break;
+      case 'verifyPayment':         result = verifyPayment(data.orderId, data.email); break;
+      case 'webhookPayment':        result = webhookPayment(data); break;
+      case 'getCalculatorLeads':    result = getCalculatorLeads(); break;
+      case 'updateCalculatorLead':  result = updateCalculatorLead(data.id || data.email, data.changes || {}); break;
+      case 'markPaymentPaid':       result = markPaymentPaid(data.id || data.email, data.changes || {}); break;
+      case 'deleteCalculatorLead':  result = deleteCalculatorLead(data.id || data.email); break;
+      case 'generateAndSendReport': result = generateAndSendReport(data.lead, data.email, data.note, data.subject, data.htmlBody); break;
+      case 'sendFollowUpEmail1':       result = sendFollowUpEmailDirect(data.lead, data.email); break;
+      case 'sendFollowUpEmails':        result = sendFollowUpEmails(data.lead, data.email); break;
+      case 'sendPaymentRequestEmail':   result = sendPaymentRequestEmail(data.lead, data.email, data.wiseLink); break;
+      default: result = { error: 'Unknown action: ' + action };
+    }
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message, stack: err.stack }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+// ── Get all tabs data ──────────────────────────────────
+function getAll() {
+  return {
+    leads:    getTabData('Leads'),
+    archived: getTabData('Archived'),
+    deleted:  getTabData('Deleted'),
+    clients:  getTabData('Clients'),
+  }
+}
+
+function getTabData(tabName) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName)
+  if (!sheet) return []
+  const rows = sheet.getDataRange().getValues()
+  if (rows.length <= 1) return []
+  const headers = rows[0]
+  return rows.slice(1).map(row => {
+    const lead = {}
+    headers.forEach((h, i) => {
+      if (h === 'outreachLog' || h === 'contacts') {
+        try { lead[h] = JSON.parse(row[i] || '[]') }
+        catch { lead[h] = [] }
+      } else if (h === 'pitchSent') {
+        lead[h] = row[i] === true || row[i] === 'TRUE' || row[i] === 'true'
+      } else {
+        lead[h] = row[i] === undefined ? '' : row[i]
+      }
+    })
+    return lead
+  }).filter(l => l.id && l.id !== '')
+}
+
+// ── Add lead to Leads tab ──────────────────────────────
+function addLead(lead) {
+  const sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Leads')
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+  const row     = headers.map(h => {
+    if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || [])
+    if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE'
+    return lead[h] !== undefined ? lead[h] : ''
+  })
+  sheet.appendRow(row)
+  return { success: true }
+}
+
+// ── Update lead in any tab ─────────────────────────────
+function updateLead(id, changes, tabName) {
+  const sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName)
+  if (!sheet) return { error: 'Tab not found: ' + tabName }
+  const data    = sheet.getDataRange().getValues()
+  const headers = data[0]
+  const idCol   = headers.indexOf('id')
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]) === String(id)) {
+      Object.keys(changes).forEach(key => {
+        const col = headers.indexOf(key)
+        if (col !== -1) {
+          let val = changes[key]
+          if (key === 'outreachLog' || key === 'contacts') val = JSON.stringify(val)
+          if (key === 'pitchSent') val = val ? 'TRUE' : 'FALSE'
+          sheet.getRange(i + 1, col + 1).setValue(val)
+        }
+      })
+      return { success: true }
+    }
+  }
+  return { error: 'Lead not found in ' + tabName }
+}
+
+// ── Move lead between tabs ─────────────────────────────
+function moveLead(id, fromTab, toTab, changes) {
+  const ss       = SpreadsheetApp.getActiveSpreadsheet()
+  const fromSheet = ss.getSheetByName(fromTab)
+  const toSheet   = ss.getSheetByName(toTab)
+  if (!fromSheet) return { error: 'Source tab not found: ' + fromTab }
+  if (!toSheet)   return { error: 'Destination tab not found: ' + toTab }
+
+  const fromData    = fromSheet.getDataRange().getValues()
+  const fromHeaders = fromData[0]
+  const toHeaders   = toSheet.getRange(1, 1, 1, toSheet.getLastColumn()).getValues()[0]
+  const idCol       = fromHeaders.indexOf('id')
+
+  for (let i = 1; i < fromData.length; i++) {
+    if (String(fromData[i][idCol]) === String(id)) {
+      // Build lead object from source row
+      const lead = {}
+      fromHeaders.forEach((h, j) => {
+        if (h === 'outreachLog' || h === 'contacts') {
+          try { lead[h] = JSON.parse(fromData[i][j] || '[]') }
+          catch { lead[h] = [] }
+        } else {
+          lead[h] = fromData[i][j]
+        }
+      })
+
+      // Apply any changes
+      Object.assign(lead, changes)
+
+      // Build row for destination tab
+      const newRow = toHeaders.map(h => {
+        if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || [])
+        if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE'
+        return lead[h] !== undefined ? lead[h] : ''
+      })
+
+      // Add to destination, delete from source
+      toSheet.appendRow(newRow)
+      fromSheet.deleteRow(i + 1)
+      return { success: true }
+    }
+  }
+  return { error: 'Lead not found in ' + fromTab }
+}
+
+function saveCalculatorLead(lead) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('Calculator Leads')
+  if (!sheet) {
+    // Try to create the tab if it doesn't exist
+    const ss = SpreadsheetApp.getActiveSpreadsheet()
+    const newSheet = ss.insertSheet('Calculator Leads')
+    const defaultHeaders = ['id','date','name','email','phone','business','niche',
+      'street','city','state','zip','country','website','monthlyRevenue','employees',
+      'googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown',
+      'platforms','paidReport','reportRequestDate','contacted','notes']
+    newSheet.appendRow(defaultHeaders)
+    newSheet.appendRow(defaultHeaders.map(h => {
+      const val = lead[h] !== undefined ? lead[h] : ''
+      if (h === 'phone') return String(val).replace(/^\+/, '')
+      return val
+    }))
+    return { success: true, created: true }
+  }
+  const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+  // If sheet is completely empty, add headers first
+  if (existingHeaders.every(h => !h)) {
+    const defaultHeaders = ['id','date','name','email','phone','business','niche',
+      'street','city','state','zip','country','website','monthlyRevenue','employees',
+      'googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown',
+      'platforms','paidReport','reportRequestDate','contacted','notes']
+    sheet.getRange(1, 1, 1, defaultHeaders.length).setValues([defaultHeaders])
+    sheet.appendRow(defaultHeaders.map(h => {
+      const val = lead[h] !== undefined ? lead[h] : ''
+      if (h === 'phone') return String(val).replace(/^\+/, '')
+      return val
+    }))
+    return { success: true }
+  }
+  const headers = existingHeaders
+  const row = headers.map(h => {
+    const key = String(h).trim()
+    const val = lead[key] !== undefined ? lead[key] : ''
+    if (key === 'phone') return String(val).replace(/^\+/, '')
+    return val
+  })
+  sheet.appendRow(row)
+
+  // Send request confirmation email to client (only when they submit the form with email)
+  const clientEmail = String(lead.email || '').trim()
+  const hasName     = String(lead.name  || '').trim()
+  const bizName     = String(lead.business || 'your business').trim()
+  const leakage     = Number(lead.totalLeakage || 0)
+  const niche       = String(lead.niche || '').trim()
+  const firstName   = hasName ? hasName.split(' ')[0] : 'there'
+
+  if (clientEmail && clientEmail.includes('@') && lead.paidReport === 'Requested') {
+    try {
+      const confirmHtml =
+        '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>' +
+        '<body style="margin:0;padding:0;background:#f9fafb;font-family:Arial,sans-serif;">' +
+        '<div style="max-width:560px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">' +
+
+          // Header
+          '<div style="background:#F97316;padding:16px 24px;">' +
+            '<p style="color:#fff;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0;">BDL — Revenue Intelligence</p>' +
+          '</div>' +
+
+          '<div style="padding:28px;">' +
+            '<h2 style="font-size:20px;font-weight:700;color:#111;margin:0 0 6px;">We Received Your Audit Request ✅</h2>' +
+            '<p style="color:#6b7280;font-size:13px;margin:0 0 18px;line-height:1.6;">Hi ' + esc(firstName) + ', thank you for submitting your revenue leakage assessment for <strong>' + esc(bizName) + '</strong>. Your request has been received and saved.</p>' +
+
+            // Leakage preview box
+            '<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px;margin-bottom:18px;text-align:center;">' +
+              '<p style="color:#9a3412;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px;">Your Estimated Monthly Leakage</p>' +
+              '<p style="color:#dc2626;font-size:38px;font-weight:800;letter-spacing:-1px;margin:0 0 4px;line-height:1;">$' + leakage.toLocaleString() + '</p>' +
+              '<p style="color:#9a3412;font-size:12px;margin:0;">≈ $' + (leakage * 12).toLocaleString() + ' per year from your ' + esc(niche) + ' business</p>' +
+            '</div>' +
+
+            // What happens next
+            '<div style="background:#f9fafb;border-radius:10px;padding:14px 18px;margin-bottom:18px;">' +
+              '<p style="color:#374151;font-size:12px;font-weight:700;margin:0 0 10px;">What Happens Next:</p>' +
+              '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #e5e7eb;">' +
+                '<div style="width:22px;height:22px;background:#F97316;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">1</div>' +
+                '<p style="color:#374151;font-size:12px;margin:0;line-height:1.5;">Our team reviews your submission — usually within a few hours</p>' +
+              '</div>' +
+              '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #e5e7eb;">' +
+                '<div style="width:22px;height:22px;background:#F97316;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">2</div>' +
+                '<p style="color:#374151;font-size:12px;margin:0;line-height:1.5;">We send you a payment link for <strong>$47 USD</strong></p>' +
+              '</div>' +
+              '<div style="display:flex;gap:10px;padding:8px 0;">' +
+                '<div style="width:22px;height:22px;background:#10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">3</div>' +
+                '<p style="color:#374151;font-size:12px;margin:0;line-height:1.5;">After payment — your full Executive Revenue Diagnostic PDF is emailed within 24 hours</p>' +
+              '</div>' +
+            '</div>' +
+
+            // What they will get
+            '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px 18px;margin-bottom:20px;">' +
+              '<p style="color:#374151;font-size:12px;font-weight:700;margin:0 0 8px;">Your Full Report Will Include:</p>' +
+              [
+                'Complete breakdown of every leakage area with dollar amounts',
+                'Industry benchmarks specific to ' + esc(niche) + ' businesses',
+                'HOW TO IMPROVE — exact fix steps with implementation detail',
+                '90-day recovery roadmap (week by week, each action explained)',
+                'Priority matrix — what to fix first for maximum ROI',
+                'Decision summary — cost of inaction vs implementing the plan',
+                'Delivered as a PDF within 24 hours of payment'
+              ].map(function(item){
+                return '<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6;">' +
+                  '<span style="color:#10B981;font-size:12px;">✓</span>' +
+                  '<p style="color:#374151;font-size:12px;margin:0;">' + item + '</p>' +
+                '</div>'
+              }).join('') +
+            '</div>' +
+
+            '<p style="color:#6b7280;font-size:12px;margin:0 0 14px;line-height:1.6;">If you have any questions before receiving your report, simply reply to this email. We aim to respond within a few hours.</p>' +
+
+            '<p style="font-size:13px;color:#374151;margin:0;">Best regards,<br><strong>BDL Revenue Intelligence Team</strong><br>' +
+            '<span style="color:#6b7280;font-size:11px;">Senior Revenue Analyst · Data Governance &amp; Revenue Alignment</span></p>' +
+          '</div>' +
+
+          // Footer
+          '<div style="background:#f9fafb;padding:12px 24px;border-top:1px solid #e5e7eb;text-align:center;">' +
+            '<p style="color:#9ca3af;font-size:11px;margin:0;">BDL Revenue Intelligence · You received this because you submitted a revenue audit request.<br>Reply to this email with any questions.</p>' +
+          '</div>' +
+
+        '</div></body></html>'
+
+      MailApp.sendEmail({
+        to:       clientEmail,
+        subject:  'Audit Request Received — ' + bizName + ' ($' + leakage.toLocaleString() + '/mo identified)',
+        htmlBody: confirmHtml,
+        name:     'BDL Revenue Intelligence'
+      })
+    } catch(mailErr) {
+      Logger.log('Request confirmation email error: ' + mailErr.message)
+    }
+  }
+
+  return { success: true }
+}
+
+function deleteCalculatorLead(identifier) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('Calculator Leads')
+  if (!sheet) return { error: 'Sheet not found' }
+  const data = sheet.getDataRange().getValues()
+  const headers = data[0]
+  const idCol = headers.indexOf('id')
+  const emailCol = headers.indexOf('email')
+  const lookupValue = String(identifier || '').trim()
+  const isEmail = lookupValue.includes('@')
+  if (!lookupValue) return { error: 'No identifier provided' }
+
+  for (let i = 1; i < data.length; i++) {
+    const rowId = idCol !== -1 ? String(data[i][idCol]).trim() : ''
+    const rowEmail = emailCol !== -1 ? String(data[i][emailCol]).trim().toLowerCase() : ''
+    const matched = (isEmail && rowEmail === lookupValue.toLowerCase()) || (!isEmail && rowId === lookupValue)
+    if (matched) {
+      sheet.deleteRow(i + 1)
+      return { success: true }
+    }
+  }
+  return { error: 'Lead not found' }
+}
+
+function createPdfAttachment(html, filename) {
+  const blob = Utilities.newBlob(html, 'text/html', filename || 'report.html')
+  const pdfBlob = blob.getAs('application/pdf')
+  pdfBlob.setName((filename || 'report').replace(/\.html?$/i, '') + '.pdf')
+  return pdfBlob
+}
+
+    const props = PropertiesService.getScriptProperties();

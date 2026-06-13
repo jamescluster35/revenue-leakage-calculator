@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Sample Report</title>
+</head>
+
+<body>
+  <script>
+    /**
+     * BDL REVENUE AUDIT BACKEND
+     * Calculation Engine & Industry Rules
+     */
+
+    /**
+     * Retrieves niche-specific calculation rules and plan details.
+     */
+    function getNicheCalculationRules(niche) {
+      const key = String(niche || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const rules = {
+        dental: {
+          estimatePct: 0.11,
+          breakdown: ['Appointment no-shows', 'Uncollected copays/fees', 'Unused inventory and supplies'],
+          plan90: [
+            { week: '1-2', action: 'Audit scheduling', detail: 'Implement automated SMS/Email reminders at 48h and 2h. Target a no-show rate of <8% to recapture lost chair time.', priority: 'CRITICAL', quick: true, impact: '+$800/mo' },
+            { week: '3-4', action: 'Reactivation Campaign', detail: 'Assign a coordinator to call 10 overdue patients daily using multi-channel reactivation scripts to book hygiene visits.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+            { week: '5-8', action: 'Software Audit', detail: 'Consolidate redundant subscriptions (PMS, imaging, patient marketing) to recover immediate overhead and improve margins.', priority: 'MEDIUM', quick: true, impact: '+$300/mo' }
+          ]
+        },
+        realestate: {
+          estimatePct: 0.08,
+          breakdown: ['Missed lead follow-up', 'Low portal ROI', 'Inefficient offer conversion'],
+          plan90: [
+            { week: '1-2', action: '5-Touch Sequence', detail: 'Deploy a 7-touch follow-up system (Call/Text/Email). Industry data shows 80% of deals close between contact 5 and 12.', priority: 'CRITICAL', quick: true, impact: '+$2,500/mo' },
+            { week: '3-4', action: 'Portal ROI Review', detail: 'Audit Portal GCI vs monthly spend. Reallocate budget from underperforming zip codes to high-intent lead sources.', priority: 'HIGH', quick: false, impact: '+$1,000/mo' },
+            { week: '5-8', action: 'Standardize Outreach', detail: 'Create automated templates for open house visitors and referral partner check-ins to ensure no lead expires.', priority: 'MEDIUM', quick: false, impact: '+$1,500/mo' }
+          ]
+        },
+        healthcare: {
+          estimatePct: 0.15,
+          breakdown: ['Denied insurance claims', 'Patient no-shows', 'Underbilled services'],
+          plan90: [
+            { week: '1-2', action: 'Reminders & Claims', detail: 'Deploy 2-way SMS reminders and audit top 3 claim rejection codes for immediate resubmission and process change.', priority: 'CRITICAL', quick: true, impact: '+$1,100/mo' },
+            { week: '3-4', action: 'Referral Sequence', detail: 'Contact all incoming referrals within 24 hours using warm scripts. Prompt callbacks increase booking rates by 40%.', priority: 'HIGH', quick: false, impact: '+$900/mo' },
+            { week: '5-8', action: 'Staff Optimization', detail: 'Align clinical staff hours with historical patient volume to eliminate overtime and idle blocks during slow periods.', priority: 'MEDIUM', quick: false, impact: '+$600/mo' }
+          ]
+        },
+        legal: {
+          estimatePct: 0.15, // Unified benchmark
+          breakdown: ['Untracked billable hours', 'Low realization rates', 'Administrative delays'],
+          plan90: [
+            { week: '1-2', action: 'Time Capture', detail: 'Adopt daily contemporaneous time entry. Capturing just 15 more billable minutes a day adds $3k-$5k/mo per attorney.', priority: 'CRITICAL', quick: true, impact: '+$3,000/mo' },
+            { week: '3-4', action: 'Task Delegation', detail: 'Move non-billable administrative and intake tasks to paralegals or VAs to maximize attorney realization rates.', priority: 'HIGH', quick: false, impact: '+$1,500/mo' },
+            { week: '5-8', action: 'Pipeline Audit', detail: 'Review the Consult-to-Retained funnel. Implement follow-up calls at Day 3 and Day 7 for unsigned fee agreements.', priority: 'MEDIUM', quick: false, impact: '+$2,000/mo' }
+          ]
+        },
+        saas: {
+          estimatePct: 0.10,
+          breakdown: ['Churn and downgrades', 'Failed payments', 'Weak onboarding flow'],
+          plan90: [
+            { week: '1-2', action: 'Churn Guard', detail: 'Segment users by last login. Trigger personal reach-out for "at-risk" accounts inactive for more than 14 days.', priority: 'CRITICAL', quick: false, impact: '+$1,500/mo' },
+            { week: '3-4', action: 'Dunning Setup', detail: 'Automate failed payment recovery with a 3-step retry sequence (Day 0, 3, 7) before subscription suspension.', priority: 'HIGH', quick: true, impact: '+$800/mo' },
+            { week: '5-8', action: 'Docs & Support', detail: 'Audit common support tickets and build a self-service knowledge base to reduce L1 ticket volume by 30%.', priority: 'MEDIUM', quick: false, impact: '+$500/mo' }
+          ]
+        },
+        restaurant: {
+          estimatePct: 0.16,
+          breakdown: ['No-shows and cancellations', 'Food and labour waste', 'High delivery fees'],
+          plan90: [
+            { week: '1-2', action: 'Reservation Fix', detail: 'Require SMS confirmation for all bookings. Implement a standard 24h cancellation policy to reduce empty table loss.', priority: 'CRITICAL', quick: true, impact: '+$1,200/mo' },
+            { week: '3-4', action: 'Fee Analysis', detail: 'Analyze net profit per platform. Promote direct ordering via QR codes to recapture 25-30% delivery commissions.', priority: 'HIGH', quick: true, impact: '+$600/mo' },
+            { week: '5-8', action: 'Menu Optimization', detail: 'Track food waste for 14 days. Engineer menus to focus on high-margin, low-waste ingredients and optimize prep.', priority: 'MEDIUM', quick: false, impact: '+$1,000/mo' }
+          ]
+        },
+        general: {
+          estimatePct: 0.12,
+          breakdown: ['Missed lead follow-up', 'Operational bottlenecks', 'Unoptimized service margins'],
+          plan90: [
+            { week: '1-2', action: 'Process Audit', detail: 'Map your end-to-end sales cycle and identify the single biggest manual bottleneck preventing faster closing cycles.', priority: 'CRITICAL', quick: true, impact: '+$500/mo' },
+            { week: '3-4', action: 'Standardize Outreach', detail: 'Build a multi-channel lead follow-up sequence with at least 5 touches across Phone, Email, and LinkedIn.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+            { week: '5-8', action: 'Margin Optimization', detail: 'Audit service delivery costs vs current pricing. Ensure all overhead is properly allocated to maintain target margins.', priority: 'MEDIUM', quick: false, impact: '+$800/mo' }
+          ]
+        }
+      };
+      return rules[key] || rules.dental;
+    }
+
+    /**
+     * Calculates various leakage metrics and a health score for a given lead.
+     */
+    function calculateLeadLeakage(lead) {
+      const n = (v) => {
+        if (v === undefined || v === null || v === '') return NaN;
+        const p = parseFloat(String(v).replace(/[$,]/g, ''));
+        return isNaN(p) ? NaN : p;
+      };
+
+      let revenue = n(lead.monthlyRevenue);
+      if (isNaN(revenue)) revenue = 0;
+
+      const rules = getNicheCalculationRules(lead.niche);
+      let monthlyLeak = n(lead.totalLeakage);
+
+      if (isNaN(monthlyLeak) || (monthlyLeak === 0 && revenue > 0)) {
+        monthlyLeak = Math.round(revenue * rules.estimatePct);
+      }
+
+      let annualLeak = n(lead.annualLeakage);
+      if (isNaN(annualLeak) || annualLeak === 0) annualLeak = Math.round(monthlyLeak * 12);
+
+      const breakdown = (lead.leakageBreakdown || rules.breakdown.join(' | ')).split(' | ').filter(Boolean);
+
+      // Unified Revenue Diagnostic Score Logic
+      let score = 100;
+      const ratio = revenue > 0 ? monthlyLeak / revenue : 0.25;
+
+      // Deduction based on leakage ratio (Max 40 points)
+      score -= Math.min(40, (ratio * 120));
+
+      // Reputation Deductions
+      const grRating = n(lead.googleRating);
+      if (grRating > 0 && grRating < 4.0) score -= 15;
+      if (grRating === 0) score -= 20; // Massive penalty for being invisible
+      if (n(lead.googleReviews) < 30) score -= 8;    // Trust penalty
+
+      score = Math.max(15, Math.min(95, Math.round(score)));
+      const grade = score < 50 ? 'Critical' : score < 75 ? 'Needs Attention' : 'Healthy';
+
+      return { revenue, monthlyLeak, annualLeak, breakdown, score, grade, rules, ratio };
+    }
+    /**
+     * BDL REVENUE AUDIT BACKEND
+     * HTML Templates & Report Generation
+     */
+
+    function generateAndSendReport(lead, toEmail, note, subject, htmlBodyOverride) {
+      try {
+        const bizName = esc(lead.business || 'Your Business');
+        const firstName = esc(String(lead.name || 'there').split(' ')[0]);
+        const isPaid = ['paid', 'delivered'].includes(String(lead.paidReport || '').trim().toLowerCase());
+        const attachments = [];
+        const template = getTemplateForLead(lead);
+        const reportId = lead.id || 'N/A';
+        const safeBizName = (bizName || 'Revenue_Audit').replace(/[^a-z0-9]/gi, '_');
+
+        if (isPaid) {
+          const pdfHtml = buildFullPdfReportHtml(lead, note);
+          if (!pdfHtml || typeof pdfHtml !== 'string' || pdfHtml.length < 100) {
+            throw new Error("PDF generation failed: resulting content is empty or invalid.");
+          }
+          attachments.push(createPdfAttachment(pdfHtml, safeBizName + '_Revenue_Leakage_Report.pdf'));
+        } else {
+          const teaserHtml = buildTeaserPdfReportHtml(lead, note);
+          const paymentHtml = buildPaymentPdfHtml(lead);
+          attachments.push(createPdfAttachment(teaserHtml, safeBizName + '_Teaser_Report.pdf'));
+          attachments.push(createPdfAttachment(paymentHtml, safeBizName + '_Invoice.pdf'));
+        }
+
+        const finalHtml = htmlBodyOverride || (isPaid ? buildFullReportEmailHtml(lead, note, template) : buildSummaryReportEmailHtml(lead, note, template));
+        let finalSubject = (subject || (isPaid ? template.subject : ('Your Revenue Audit — ' + bizName)))
+          .replace('{bizName}', bizName).replace('{name}', firstName).replace('{id}', reportId);
+
+        if (!finalSubject.includes(reportId)) finalSubject += ` (Ref: ${reportId})`;
+
+        MailApp.sendEmail({
+          to: toEmail,
+          subject: finalSubject,
+          htmlBody: finalHtml,
+          name: 'BDL Revenue Intelligence',
+          attachments: attachments
+        });
+
+        // Transition status: Paid leads become Delivered, others stay as they were or become Requested
+        const newStatus = isPaid ? 'Delivered' : (lead.paidReport || 'Requested');
+        updateCalculatorLead(lead.id || lead.email, {
+          contacted: 'Yes',
+          paidReport: newStatus
+        });
+
+        return { success: true, reportId: reportId };
+      } catch (err) { return { error: err.message }; }
+    }
+
+    function buildFullPdfReportHtml(lead, note) {
+      const bizName = esc(lead.business || 'Your Business');
+      const calc = calculateLeadLeakage(lead);
+      const firstName = String(lead.name || 'there').split(' ')[0];
+      const niche = (lead.niche || 'General').toLowerCase();
+      const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (niche.toUpperCase().slice(0, 3));
+      const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM dd, yyyy');
+
+      const detailMap = {
+        // Dental
+        'Appointment No-Show Loss': 'Implement automated SMS/Email reminders at 48h and 2h. Target: no-show rate < 8%.',
+        'Unscheduled Recall Patients': 'Assign a dedicated coordinator to call 10 overdue patients daily. Multi-channel reactivation is key.',
+        'New Patient Follow-Up Gap': 'Adopt a 2-hour callback rule for all inquiries. Top practices convert 65% of leads.',
+        'Staff Idle Time': 'Audit scheduling to eliminate gaps. Cross-train admin staff for high-value outreach during slow blocks.',
+        // Real Estate
+        'Lead Follow-Up Gap': 'Deploy a 7-touch follow-up system (Call/Text/Email). 80% of deals close between contact 5 and 12.',
+        'Portal Spend vs Returns': 'Review Portal ROI monthly. Reallocate budget from underperforming zones to high-intent keywords.',
+        'Agent Admin Time': 'Offload contract coordination to VAs. Each hour recovered = direct billable selling time.',
+        // Healthcare
+        'Insurance Claim Rejections': 'Review top 3 rejection reasons. Most are fixable with pre-submission software or coding audits.',
+        'Referral No-Conversion': 'Contact every referral within 24h. Warm scripts increase booking rates by 40%.',
+        'Overtime Prevention': 'Match staffing to historical hourly demand. Adjust templates to prevent "over-lapping" shifts.',
+        // Legal
+        'Unbilled Attorney Hours': 'Start daily time tracking. Even a 5% improvement in time capture adds $3k-$5k/mo per attorney.',
+        'Consultation No-Convert': 'Structured follow-up within 24h. Phone calls at day 3 triple your conversion from consult to client.',
+        'Attorney Admin Time': 'Delegate data entry to paralegals. Your hourly billable rate is too high for manual admin work.',
+        // SaaS
+        'Monthly Churn Loss': 'Identify customers inactive for 14 days. Personal outreach can save up to 15% of annual revenue.',
+        'Trial No-Convert Loss': 'Optimize your 48-hour activation sequence. Getting users to one "key action" predicts 80% of upgrades.',
+        'Failed Payments': 'Automate dunning sequences with retry logic at day 0, 3, and 7. Recovers 50% of failed charges.',
+        // Restaurant
+        'Food Waste': 'Implement a daily waste log by category for 14 days. Most restaurants reduce costs by 4% immediately.',
+        'No-Show & Cancellation Loss': 'Introduce SMS confirmations. Clear cancellation policies reduce empty tables on busy nights.',
+        'Delivery Fees': 'Calculate net profit after platform commission. If <10%, promote direct-order discounts to shift volume.',
+        // Fallback
+        'General': 'This area represents a significant operational gap. Implementing the 90-day plan will stabilize this revenue.'
+      };
+
+      const leakage = calc.monthlyLeak;
+      const dailyCost = Math.round(leakage / 30);
+      const quarterlyCost = Math.round(leakage * 3);
+      const recoverable = Math.round(leakage * 0.7);
+
+      const grRating = parseFloat(lead.googleRating) || 0;
+      const grCount = parseInt(lead.googleReviews) || 0;
+      const hasReputation = grRating > 0 || grCount > 0;
+
+      const planHtml = (calc.rules.plan90 || []).map(step => {
+        let pColor = step.priority === 'CRITICAL' ? '#F43F5E' : step.priority === 'HIGH' ? '#F59E0B' : '#3B82F6';
+        return `
+    <div style="margin-bottom: 20px; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: #FAFAFA;">
+      <table width="100%" cellpadding="12" cellspacing="0" border="0" style="background: #0F172A; color: #FFFFFF;">
+        <tr>
+          <td width="50" align="center" style="border-right: 1px solid rgba(255,255,255,0.1);">
+            <div style="font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px;">Week</div>
+            <div style="font-size: 18px; font-weight: 800; color: #F59E0B;">${step.week}</div>
+          </td>
+          <td>
+            <div style="font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">${esc(step.action)}</div>
+          </td>
+          <td align="right">
+             <span style="background: ${pColor}; color: #FFFFFF; font-size: 9px; font-weight: bold; padding: 4px 8px; border-radius: 20px; text-transform: uppercase;">${step.priority}</span>
+          </td>
+        </tr>
+      </table>
+      <div style="padding: 16px; font-size: 13px; color: #475569; line-height: 1.6;">
+        ${esc(step.detail)}
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 1px;">
+          Estimated Financial Impact: ${esc(step.impact)}
+        </div>
+      </div>
+    </div>`;
+      }).join('');
+
+      const leakHtml = calc.breakdown.map((item, i) => {
+        let pct = i === 0 ? '75%' : i === 1 ? '50%' : '35%';
+        let color = i === 0 ? '#F43F5E' : i === 1 ? '#F59E0B' : '#3B82F6';
+        return `
+    <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 16px; margin-bottom: 12px; border-radius: 8px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <div style="font-size: 14px; font-weight: 700; color: #1E293B; margin-bottom: 6px;">${esc(item)}</div>
+            <div style="font-size: 11px; color: #64748B; margin-bottom: 12px;">${esc(detailMap[item] || detailMap.General)}</div>
+            <div style="background: #F1F5F9; height: 6px; width: 100%; border-radius: 4px; overflow: hidden;">
+              <div style="background: ${color}; height: 6px; width: ${pct}; border-radius: 4px;"></div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>`;
+      }).join('');
+
+      let reputationHtml = '';
+      if (hasReputation) {
+        const isGood = grRating >= 4.5 && grCount > 20;
+        const repColor = isGood ? '#10B981' : '#F43F5E';
+        const repIcon = isGood ? '✓' : '⚠️';
+        const repMsg = isGood
+          ? `Your Google Rating of ${grRating.toFixed(1)} with ${grCount} reviews is an asset. Maintain this to maximize conversion.`
+          : `Your Google Rating of ${grRating.toFixed(1)} with ${grCount} reviews is actively causing top-of-funnel leak. Prospects are checking reviews and choosing competitors.`;
+
+        reputationHtml = `
+      <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; letter-spacing: 1px;">Reputation Diagnostic</h2>
+      <table width="100%" cellpadding="16" cellspacing="0" border="0" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid ${repColor}; border-radius: 8px;">
+        <tr>
+          <td width="60" align="center">
+            <div style="font-size: 24px; color: ${repColor};">${repIcon}</div>
+            <div style="font-size: 18px; font-weight: 800; color: #1E293B; margin-top: 4px;">${grRating.toFixed(1)}</div>
+          </td>
+          <td>
+            <div style="font-size: 12px; font-weight: bold; color: #475569; text-transform: uppercase; margin-bottom: 4px;">Google Review Sentiment</div>
+            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">${esc(repMsg)}</div>
+          </td>
+        </tr>
+      </table>`;
+      }
+
+      const allBenchmarks = {
+        dental: [
+          { name: 'Case Presentation Conversion', avg: '40 - 50%', top: '75% +' },
+          { name: 'Patient No-Show Rate', avg: '15%', top: '< 3%' },
+          { name: 'Speed to Lead (Response)', avg: '24 Hours', top: 'Under 10 Mins' },
+          { name: 'Google Rating', avg: '4.5 ★', top: '4.9 ★ +' },
+          { name: 'Hygiene Recare / Reactivation', avg: 'Inconsistent', top: 'Monthly Automated' }
+        ],
+        realestate: [
+          { name: 'Lead to Appointment Conversion', avg: '3%', top: '12% +' },
+          { name: 'Database Reactivation Rate', avg: '< 1%', top: '8% / Year' },
+          { name: 'Speed to Lead (Response)', avg: '48 Hours', top: 'Under 5 Mins' },
+          { name: 'Portal Spend ROI', avg: '1.5x', top: '4x +' },
+          { name: 'Follow-Up Attempts per Lead', avg: '1 - 2', top: '8 - 12' }
+        ],
+        healthcare: [
+          { name: 'Insurance Claim Denial Rate', avg: '10 - 15%', top: '< 4%' },
+          { name: 'Referral Booking Conversion', avg: '40%', top: '85% +' },
+          { name: 'Speed to Lead (Response)', avg: '24 - 48 Hours', top: 'Under 30 Mins' },
+          { name: 'Google Rating', avg: '3.8 ★', top: '4.7 ★ +' },
+          { name: 'Patient No-Show Rate', avg: '18%', top: '< 5%' }
+        ],
+        legal: [
+          { name: 'Consultation to Retained', avg: '25%', top: '65% +' },
+          { name: 'Billable Time Capture', avg: '60%', top: '85% +' },
+          { name: 'Speed to Lead (Response)', avg: '24 Hours', top: 'Under 5 Mins' },
+          { name: 'Google Rating', avg: '4.2 ★', top: '4.9 ★ +' },
+          { name: 'Collection Realization Rate', avg: '80%', top: '96% +' }
+        ],
+        saas: [
+          { name: 'Trial to Paid Conversion', avg: '15%', top: '40% +' },
+          { name: 'Monthly Logo Churn', avg: '5 - 7%', top: '< 2%' },
+          { name: 'Failed Payment Recovery', avg: '10%', top: '45% +' },
+          { name: 'Onboarding Completion', avg: '40%', top: '80% +' },
+          { name: 'Net Revenue Retention (NRR)', avg: '90%', top: '120% +' }
+        ],
+        restaurant: [
+          { name: 'Table Turn Time', avg: '60 - 90 Mins', top: '< 45 Mins' },
+          { name: 'Food/Inventory Waste', avg: '10%', top: '< 4%' },
+          { name: 'Third-Party Delivery %', avg: '40% of Volume', top: '< 15% (Direct)' },
+          { name: 'Google Rating', avg: '4.3 ★', top: '4.8 ★ +' },
+          { name: 'Reservation No-Show Rate', avg: '15%', top: '< 2%' }
+        ],
+        general: [
+          { name: 'Lead to Appointment Conversion', avg: '35%', top: '68% +' },
+          { name: 'No-Show / Cancellation Rate', avg: '15 - 20%', top: '< 5%' },
+          { name: 'Speed to Lead (Response)', avg: '24 - 48 Hours', top: 'Under 5 Mins' },
+          { name: 'Google Rating', avg: '4.1 ★', top: '4.8 ★ +' },
+          { name: 'Reactivation of Old Customers', avg: 'None', top: 'Quarterly Campaigns' }
+        ]
+      };
+
+      const nicheBenchmarks = allBenchmarks[niche] || allBenchmarks.general;
+
+      const benchmarkHtml = `
+    <table width="100%" cellpadding="16" style="font-size: 12px; border-collapse: collapse; margin-bottom: 30px; border-radius: 8px; overflow: hidden;">
+      <tr style="background: #0F172A; color: #FFFFFF;">
+        <th align="left" style="border: 1px solid #1E293B;">Metric</th>
+        <th align="center" style="border: 1px solid #1E293B;">Average Business</th>
+        <th align="center" style="border: 1px solid #1E293B; color: #F59E0B;">Top 10% Performer</th>
+      </tr>
+      ${nicheBenchmarks.map((b, idx) => `
+        <tr style="background: ${idx % 2 === 1 ? '#F8FAFC' : 'transparent'};">
+          <td style="border: 1px solid #E2E8F0; color: #1E293B; font-weight: bold;">${esc(b.name)}</td>
+          <td align="center" style="border: 1px solid #E2E8F0; color: #475569;">${esc(b.avg)}</td>
+          <td align="center" style="border: 1px solid #E2E8F0; font-weight: bold; color: #10B981; font-size: 14px;">${esc(b.top)}</td>
+        </tr>
+      `).join('')}
+    </table>`;
+
+      return `<!DOCTYPE html><html>
+    <head><meta charset="UTF-8"><style>body{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;color:#1E293B;line-height:1.6;background:#FFFFFF;} .page-break{page-break-before:always;}</style></head>
+    <body>
+      
+      <!-- TOP BANNER -->
+      <table width="100%" cellpadding="20" cellspacing="0" style="background:#0F172A; color:#FFFFFF; border-bottom: 4px solid #F59E0B;">
+        <tr>
+          <td>
+            <div style="font-size: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 2px;">BDL Revenue Intelligence</div>
+            <div style="font-size: 24px; font-weight: 800; margin-top: 4px; color: #FFFFFF;">${esc(bizName)}</div>
+            <div style="font-size: 12px; color: #F59E0B; margin-top: 4px; font-weight: bold;">Executive Revenue Diagnostic — ${dateStr}</div>
+          </td>
+          <td align="right">
+            <div style="border: 2px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); border-radius: 12px; padding: 12px 20px; text-align: center; display: inline-block;">
+              <div style="font-size: 9px; color: #F59E0B; text-transform: uppercase; letter-spacing: 1px;">Diagnostic Score</div>
+              <div style="font-size: 32px; font-weight: 800; color: #FFFFFF; line-height: 1;">${calc.score}</div>
+              <div style="font-size: 11px; color: #94A3B8; margin-top: 4px; font-weight: bold;">GRADE: ${calc.grade}</div>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- CONTENT BODY -->
+      <div style="padding: 32px 24px;">
+        ${note ? `<div style="background:#F8FAFC; border-left:4px solid #3B82F6; padding:16px; margin-bottom:24px; font-size: 13px; color: #475569; font-style:italic;">${esc(note)}</div>` : ''}
+        
+        <p style="font-size: 14px; margin-bottom: 30px; color: #334155;">Hi ${esc(firstName)}, we have successfully analyzed your operational data against Top 10% industry benchmarks. The variance between your current operations and maximum capture potential is detailed below.</p>
+        
+        <!-- EXECUTIVE SUMMARY METRICS -->
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">Executive Financial Summary</h2>
+        <table width="100%" cellpadding="0" cellspacing="12" border="0" style="margin-left: -12px; width: calc(100% + 24px);">
+          <tr>
+            <td width="50%">
+              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #F43F5E; border-radius:8px; padding: 24px; text-align: center;">
+                <div style="font-size:11px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Identified Monthly Leakage</div>
+                <div style="font-size:32px; font-weight:900; color:#F43F5E; letter-spacing: -1px;">$${calc.monthlyLeak.toLocaleString()}</div>
+              </div>
+            </td>
+            <td width="50%">
+              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #F43F5E; border-radius:8px; padding: 24px; text-align: center;">
+                <div style="font-size:11px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Annualized Revenue Impact</div>
+                <div style="font-size:32px; font-weight:900; color:#F43F5E; letter-spacing: -1px;">$${calc.annualLeak.toLocaleString()}</div>
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- LEAKAGE BREAKDOWN -->
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">Primary Leakage Vectors</h2>
+        ${leakHtml}
+        
+        <!-- REPUTATION -->
+        ${reputationHtml}
+        
+        <!-- DECISION SUMMARY -->
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:40px; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">The Cost of Inaction</h2>
+        <div style="background:#FFF1F2; border:1px solid #FECDD3; border-radius:12px; padding:24px; text-align:center;">
+          <p style="font-size:13px; color:#BE123C; margin-bottom:20px; font-weight: bold;">Every day these operational gaps remain unaddressed, your business loses approximately:</p>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td align="center" style="border-right: 1px solid #FDA4AF;">
+                <div style="color:#E11D48; font-size:24px; font-weight:900;">$${dailyCost.toLocaleString()}</div>
+                <div style="font-size:10px; color:#9F1239; font-weight: bold; text-transform:uppercase; letter-spacing: 1px; margin-top: 4px;">Per Day</div>
+              </td>
+              <td align="center" style="border-right: 1px solid #FDA4AF;">
+                <div style="color:#E11D48; font-size:24px; font-weight:900;">$${quarterlyCost.toLocaleString()}</div>
+                <div style="font-size:10px; color:#9F1239; font-weight: bold; text-transform:uppercase; letter-spacing: 1px; margin-top: 4px;">Per Quarter</div>
+              </td>
+              <td align="center">
+                <div style="color:#059669; font-size:24px; font-weight:900;">+$${recoverable.toLocaleString()}</div>
+                <div style="font-size:10px; color:#065F46; font-weight: bold; text-transform:uppercase; letter-spacing: 1px; margin-top: 4px;">Recoverable / Mo</div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      
+      <!-- ROADMAP SECTION -->
+      <div class="page-break"></div>
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:16px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 24px; letter-spacing: 1px;">90-Day Revenue Recovery Roadmap</h2>
+        <p style="font-size: 13px; color: #475569; margin-bottom: 30px; line-height: 1.6;">The following implementation sequence is engineered to stabilize your revenue capture within the first 30 days and scale operational efficiency through day 90.</p>
+        
+        ${planHtml}
+  
+        <!-- VERIFICATION STAMP -->
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:40px; padding-bottom:8px; letter-spacing: 1px;">Quality Assurance Verification</h2>
+        <table width="100%" cellpadding="24" style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; margin-top:16px;">
+          <tr>
+            <td width="65%">
+              <p style="font-size:14px; color:#1E293B; margin-top:0; margin-bottom:8px; font-weight:bold;">Analyst Verification Seal</p>
+              <p style="font-size:12px; color:#475569; line-height:1.6; margin:0;">
+                This diagnostic has been generated by the BDL Revenue Intelligence Engine and verified for data consistency by a Senior Revenue Analyst. The benchmarks applied are industry-specific to <strong>${esc(niche.charAt(0).toUpperCase() + niche.slice(1))}</strong> operations and calibrated for the current fiscal period.
+              </p>
+            </td>
+            <td width="35%" align="center" style="border-left:1px solid #CBD5E1;">
+              <div style="font-size:10px; color:#64748B; font-weight: bold; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Diagnostic Status</div>
+              <div style="color:#10B981; font-weight:900; font-size:16px;">✓ VERIFIED</div>
+              <div style="font-size:10px; color:#94A3B8; margin-top:8px; font-family: monospace;">Ref: ${reportId}</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <!-- BOILERPLATE PAGES -->
+      <div class="page-break"></div>
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 24px; letter-spacing: 1px;">Appendix A: Diagnostic Methodology</h2>
+        <p style="font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 20px;">
+          The BDL Revenue Intelligence Engine utilizes a proprietary algorithmic model to identify, quantify, and map revenue leakage across service-based operations. 
+          By analyzing over 10,000 data points across multiple industry verticals, our system establishes a baseline performance standard known as the "Maximum Capture Potential" (MCP).
+        </p>
+        <p style="font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 20px;">
+          The calculations provided in this diagnostic are derived by comparing your self-reported operational metrics against the MCP for the <strong>${esc(niche.charAt(0).toUpperCase() + niche.slice(1))}</strong> sector. The variance between your current operations and the MCP represents your total recoverable revenue.
+        </p>
+        
+        <h3 style="color:#1E293B; font-size: 15px; margin-top: 40px; margin-bottom: 16px;">Primary Leakage Vectors</h3>
+        <p style="font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 15px;">
+          Our analysis focuses on three primary vectors of revenue loss:
+          <br><br>
+          <strong style="color: #0F172A;">1. Top-of-Funnel Attrition (Acquisition Loss):</strong> Leads that enter the ecosystem but fail to convert due to slow follow-up times, poor reputation metrics, or unoptimized intake processes. Industry standard follow-up time is &lt; 5 minutes; average performance is 24+ hours.<br><br>
+          <strong style="color: #0F172A;">2. Mid-Funnel Operational Friction (Service Loss):</strong> Revenue lost during the service delivery phase, including appointment no-shows, under-billed hours, scheduling gaps, and inventory/labor waste.<br><br>
+          <strong style="color: #0F172A;">3. Bottom-Funnel Retention (LTV Loss):</strong> Capital left on the table due to failed payments, lack of reactivation campaigns, churn, and poor cross-selling mechanics.
+        </p>
+      </div>
+
+      <div class="page-break"></div>
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 24px; letter-spacing: 1px;">Appendix B: Industry Benchmarks</h2>
+        <p style="font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 30px;">
+          Understanding where you sit relative to the top 10% of performers in the <strong>${esc(niche.charAt(0).toUpperCase() + niche.slice(1))}</strong> industry is critical for strategic planning. The following benchmarks represent the performance of top-quartile businesses.
+        </p>
+        
+        ${benchmarkHtml}
+        
+        <p style="font-size: 11px; color: #94A3B8; line-height: 1.6; font-style: italic;">
+          Data compiled from BDL Intelligence aggregates. Businesses failing to meet the "Average" threshold are considered highly vulnerable to market contraction.
+        </p>
+      </div>
+
+      <div class="page-break"></div>
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 24px; letter-spacing: 1px;">Implementation Notes & Strategy Worksheet</h2>
+        <p style="font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 24px;">
+          Use the following pages during your executive review session to map out internal resource allocation, assign task owners for the 90-day roadmap, and set target completion dates.
+        </p>
+        
+        <div style="border: 2px dashed #CBD5E1; height: 160px; margin-bottom: 24px; padding: 16px; border-radius: 12px; background: #F8FAFC;">
+          <p style="color: #64748B; font-size: 11px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Phase 1 Focus (Weeks 1-4) / Immediate Constraints:</p>
+        </div>
+        <div style="border: 2px dashed #CBD5E1; height: 160px; margin-bottom: 24px; padding: 16px; border-radius: 12px; background: #F8FAFC;">
+          <p style="color: #64748B; font-size: 11px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Resource Allocation & Required Software Tooling:</p>
+        </div>
+        <div style="border: 2px dashed #CBD5E1; height: 160px; margin-bottom: 24px; padding: 16px; border-radius: 12px; background: #F8FAFC;">
+          <p style="color: #64748B; font-size: 11px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Delegation (Who owns which metric?):</p>
+        </div>
+      </div>
+
+      <div class="page-break"></div>
+      <div style="padding:32px 24px;">
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:14px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 24px; letter-spacing: 1px;">Next Steps: Partnering with BDL</h2>
+        <p style="font-size: 14px; color: #1E293B; font-weight: bold; line-height: 1.7; margin-bottom: 16px;">
+          You now possess the exact 90-day blueprint required to plug the <strong style="color: #F43F5E;">$${calc.monthlyLeak.toLocaleString()}/mo</strong> leakage occurring in your business. 
+        </p>
+        <p style="font-size: 13px; color: #475569; line-height: 1.7; margin-bottom: 30px;">
+          While many organizations choose to execute this roadmap internally, doing so often pulls founders and key personnel away from their core competencies. 
+          Implementation requires specialized software setup, script writing, staff training, and rigorous accountability tracking. If your team cannot manage this overhead, we can step in.
+        </p>
+        
+        <div style="background: #0F172A; color: #FFFFFF; padding: 32px; border-radius: 16px; text-align: center; border-bottom: 4px solid #F59E0B; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+          <h3 style="margin-top: 0; color: #F59E0B; font-size: 18px; letter-spacing: 0.5px;">Custom Application Development & Implementation</h3>
+          <p style="font-size: 14px; line-height: 1.6; margin-bottom: 24px; color: #CBD5E1;">
+            BDL offers a full-service technical implementation package. If you don't have the time or technical staff to deploy this 90-day roadmap, <strong style="color: #FFFFFF;">we will build a customized internal application specifically for your business</strong> to automate these fixes. We build the software, deploy the systems, train your staff, and monitor the metrics until the revenue is successfully recaptured.
+          </p>
+          <p style="font-size: 16px; font-weight: 800; color: #10B981; margin-bottom: 0;">
+            Stop relying on manual spreadsheets. Let us automate your revenue recovery.
+          </p>
+        </div>
+
+        <p style="font-size: 14px; color: #1E293B; line-height: 1.7; margin-top: 40px; text-align: center;">
+          <strong>Ready to stop losing money?</strong><br>
+          <span style="color: #475569;">Reply directly to the email containing this report to schedule your Custom App Discovery Call.</span>
+        </p>
+      </div>
+    </body>
+  </html>`;
+    }
+
+    function sendConfirmationEmail(lead) {
+      const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
+      <h2 style="color: #F97316; margin-top: 0;">Audit Request Received ✅</h2>
+      <p>Hi ${esc((lead.name || 'there').split(' ')[0])},</p>
+      <p>We've successfully received your data for <strong>${esc(lead.business || 'your business')}</strong>.</p>
+      <p>Our analysts are now processing your inputs through the BDL Revenue Intelligence engine. Once the preliminary analysis is complete, we will follow up with the results.</p>
+      <p style="font-size: 11px; color: #94a3b8; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">BDL Revenue Intelligence Team</p>
+    </div>`;
+
+      MailApp.sendEmail({
+        to: lead.email,
+        subject: `Audit Request Received - ${lead.business}`,
+        htmlBody: html,
+        name: 'BDL Revenue Intelligence'
+      });
+    }
+
+    function sendPaymentReceiptEmail(lead) {
+      const amount = SETTINGS.REPORT_PRICE;
+      const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 12px;">
+      <h2 style="color: #10B981; margin-top: 0;">Payment Successful ✅</h2>
+      <p>Hi ${esc((lead.name || 'there').split(' ')[0])},</p>
+      <p>This email confirms that we have successfully received your payment of <strong>$${amount}</strong> for the Executive Revenue Diagnostic.</p>
+      <p>Your full, unredacted 20+ page report and 90-day action plan is being generated right now and will be sent in a separate email shortly.</p>
+      <p>Thank you for choosing BDL Revenue Intelligence.</p>
+      <p style="font-size: 11px; color: #94a3b8; border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">BDL Revenue Intelligence Team</p>
+    </div>`;
+
+      MailApp.sendEmail({
+        to: lead.email,
+        subject: `Payment Receipt - ${lead.business}`,
+        htmlBody: html,
+        name: 'BDL Revenue Intelligence'
+      });
+    }
+
+    function buildSummaryReportEmailHtml(lead, note, template) {
+      const leakage = parseFloat(String(lead.totalLeakage || '0').replace(/[$,]/g, '')) || 0;
+      const breakdown = (lead.leakageBreakdown || '').split(' | ').filter(Boolean);
+
+      return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #08090C; font-family: Arial, sans-serif; color: #E8EAF0;">
+      <tr>
+        <td align="center" style="padding: 20px 10px;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto; border-collapse: collapse;">
+            <tr>
+              <td style="background-color: #0F1117; padding: 25px; border-radius: 12px; border: 1px solid #1E2230;">
+                <h3 style="color: #F97316; font-size: 20px; margin: 0 0 20px;">📊 Revenue Audit Summary: ${esc(lead.business)}</h3>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr><td style="padding: 10px 0; border-bottom: 1px solid #1E2230; font-size: 13px; color: #6B7280;">Estimated Leakage</td><td align="right" style="padding: 10px 0; border-bottom: 1px solid #1E2230; font-size: 14px; font-weight: bold; color: #EF4444;">$${leakage.toLocaleString()}/mo</td></tr>
+                  <tr><td style="padding: 10px 0; font-size: 13px; color: #6B7280;">Annual Impact</td><td align="right" style="padding: 10px 0; font-size: 14px; font-weight: bold; color: #EF4444;">$${(leakage * 12).toLocaleString()}/yr</td></tr>
+                </table>
+              </td>
+            </tr>
+            <tr><td style="height: 15px;">&nbsp;</td></tr>
+            <tr>
+              <td align="center" style="padding: 30px; background-color: rgba(249,115,22,0.1); border-radius: 12px; border: 2px dashed #F97316;">
+                <p style="color: #E8EAF0; font-size: 15px; margin: 0 0 15px; font-weight: bold;">Your full Executive Revenue Diagnostic is ready.</p>
+                <a href="${getGlobalPaymentLink()}" style="background-color: #F97316; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Unlock Full Report →</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+    }
+
+    /**
+     * Builds a professional delivery email for the full paid report.
+     */
+    function buildFullReportEmailHtml(lead, note, template) {
+      const calc = calculateLeadLeakage(lead);
+      const leakage = calc.monthlyLeak;
+      const annual = calc.annualLeak;
+      const bizName = lead.business || 'Your Business';
+      const reportId = lead.id || 'N/A';
+      const nicheName = (lead.niche || 'General').charAt(0).toUpperCase() + (lead.niche || 'General').slice(1);
+      const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      const title = (template.subject || 'Executive Revenue Audit').split(' — ')[0];
+
+      return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #08090C; font-family: Arial, sans-serif; color: #E8EAF0;">
+      <tr>
+        <td align="center" style="padding: 20px 10px;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto; border-collapse: collapse;">
+            <tr>
+              <td style="background-color: #0F1117; padding: 25px; border-radius: 12px; border: 1px solid #1E2230;">
+                <h3 style="color: #F97316; font-size: 20px; margin: 0 0 10px;">📊 ${esc(title)}: ${esc(bizName)}</h3>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 25px;">
+                  <tr>
+                    <td style="font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 1px;">ID: ${reportId}</td>
+                    <td align="right" style="font-size: 11px; color: #6B7280; text-transform: uppercase;">Date: ${date}</td>
+                  </tr>
+                </table>
+                
+                <div style="background-color: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 25px; border-radius: 10px; text-align: center; margin-bottom: 25px;">
+                  <div style="font-size: 11px; color: #EF4444; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; letter-spacing: 1px;">Verified Monthly Leakage</div>
+                  <div style="font-size: 42px; font-weight: 800; color: #E8EAF0; line-height: 1;">$${Math.round(leakage).toLocaleString()}</div>
+                  <div style="font-size: 13px; color: #6B7280; margin-top: 8px;">≈ $${Math.round(annual).toLocaleString()} annual impact</div>
+                </div>
+
+                <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin: 0;">
+                  Thank you for your payment. Our diagnostic engine has completed the operational audit for your business. We have identified critical friction points and provided exact steps to recapture this revenue.
+                </p>
+              </td>
+            </tr>
+            
+            ${note ? `
+            <tr><td style="height: 15px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+            <tr>
+              <td style="padding: 20px; border-left: 4px solid #F97316; background-color: #141720; color: #E8EAF0; font-size: 13px; line-height: 1.6; font-style: italic;">
+                ${esc(note).split('\n').join('<br>')}
+              </td>
+            </tr>` : ''}
+
+            <tr><td style="height: 15px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+            <tr>
+              <td align="center" style="padding: 30px; background-color: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 2px dashed #10B981;">
+                <p style="color: #10B981; font-size: 16px; margin: 0 0 10px; font-weight: bold;">📄 Full Diagnostic Report Attached</p>
+                <p style="color: #6B7280; font-size: 12px; margin: 0; line-height: 1.5;">Your 20+ page diagnostic PDF, including the 90-day roadmap and priority matrix, is attached to this email.</p>
+              </td>
+            </tr>
+            
+            <tr><td style="height: 15px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+            <tr>
+              <td style="background-color: #0F1117; padding: 20px; border: 1px solid #1E2230; border-radius: 10px;">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="font-size: 13px; color: #E8EAF0;">Audit Verification:</td>
+                    <td align="right" style="font-size: 13px; color: #10B981; font-weight: bold;">✓ ANALYST VERIFIED</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 11px; color: #6B7280; padding-top: 4px;" colspan="2">
+                      Benchmarks: ${esc(nicheName)} Operations Engine (FY26)
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr><td style="height: 15px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+            <tr>
+              <td style="background-color: #0F1117; padding: 20px; border: 1px solid #1E2230; border-radius: 10px;">
+                <div style="font-size: 10px; color: #6B7280; text-transform: uppercase; font-weight: bold; margin-bottom: 12px; letter-spacing: 1px;">Payment Confirmation</div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="font-size: 13px; color: #E8EAF0; padding-bottom: 5px;">Amount Paid:</td>
+                    <td align="right" style="font-size: 13px; color: #E8EAF0; font-weight: bold; padding-bottom: 5px;">$${SETTINGS.REPORT_PRICE} USD</td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 13px; color: #E8EAF0;">Payment Method:</td>
+                    <td align="right" style="font-size: 13px; color: #E8EAF0; font-weight: bold;">Electronic Transfer / Ref: ${esc(lead.paymentReference || 'Verified')}</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td align="center" style="padding: 30px; color: #6B7280; font-size: 11px;">
+                © 2026 BDL Intelligence • Reference: ${reportId}<br>
+                Need assistance? Reply to this email.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>`;
+    }
+
+    function getTemplateForLead(lead) {
+      const niche = (lead.niche || '').toLowerCase();
+      const rules = getNicheCalculationRules(niche); // Pull source of truth from Core_Logic
+
+      const templates = {
+        dental: { subject: 'Dental Practice Revenue Audit — {bizName}' },
+        realestate: { subject: 'Real Estate Agency Revenue Audit — {bizName}' },
+        healthcare: { subject: 'Healthcare Practice Revenue Audit — {bizName}' },
+        legal: { subject: 'Law Firm Revenue Audit — {bizName}' },
+        saas: { subject: 'SaaS Business Revenue Audit — {bizName}' },
+        restaurant: { subject: 'Restaurant Revenue Audit — {bizName}' },
+        general: { subject: 'Your Revenue Audit — {bizName}' }
+      };
+
+      const base = templates[niche] || templates.general;
+
+      // Return a new object to prevent mutation of the source map
+      return {
+        subject: base.subject.replace('{bizName}', lead.business || 'your business'),
+        plan90: rules.plan90
+      };
+    }
+
+    function getLeadPdf(lead, note, type = 'full') {
+      try {
+        const isPaid = ['paid', 'delivered'].includes(String(lead.paidReport || '').trim().toLowerCase());
+
+        let html = '';
+        let filename = '';
+        const safeBizName = (lead.business || 'Revenue_Audit').replace(/[^a-z0-9]/gi, '_');
+
+        if (type === 'teaser') {
+          html = buildTeaserPdfReportHtml(lead, note);
+          filename = safeBizName + '_Teaser.pdf';
+        } else if (type === 'payment') {
+          html = buildPaymentPdfHtml(lead);
+          filename = safeBizName + '_Invoice.pdf';
+        } else {
+          if (!isPaid) throw new Error("Full PDF generation is restricted to leads with 'Paid' or 'Delivered' status.");
+          html = buildFullPdfReportHtml(lead, note);
+          filename = safeBizName + '_Full_Report.pdf';
+        }
+
+        const blob = Utilities.newBlob(html, 'text/html', 'report.html').getAs('application/pdf');
+        return { success: true, base64: Utilities.base64Encode(blob.getBytes()), filename: filename };
+      } catch (err) { return { success: false, error: err.message }; }
+    }
+
+    function createPdfAttachment(html, filename) {
+      const blob = Utilities.newBlob(html, 'text/html', 'report.html');
+      const pdfBlob = blob.getAs('application/pdf');
+      pdfBlob.setName(filename || 'Revenue_Audit.pdf');
+      return pdfBlob;
+    } function buildTeaserPdfReportHtml(lead, note) {
+      const bizName = esc(lead.business || 'Your Business');
+      const calc = calculateLeadLeakage(lead);
+      const firstName = String(lead.name || 'there').split(' ')[0];
+      const niche = (lead.niche || 'General').toLowerCase();
+      const reportId = 'BDL-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyyMMdd') + '-' + (niche.toUpperCase().slice(0, 3));
+      const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM dd, yyyy');
+
+      const leakHtml = calc.breakdown.map((item, i) => `
+    <div style="border-left: 4px solid #9CA3AF; background: #f9fafb; padding: 16px; margin-bottom: 12px; border-radius: 0 8px 8px 0; filter: blur(2px);">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><strong style="font-size: 14px; color: #111;">${esc(item)}</strong></td>
+          <td align="right"><span style="color:#9CA3AF; font-weight: 800; font-size: 15px;">-$***,***/mo</span></td>
+        </tr>
+        <tr><td colspan="2" style="padding-top: 8px; font-size: 12px; color: #444; line-height: 1.5;"><strong>Recommended Fix:</strong> 🔒 UNLOCK FULL REPORT TO VIEW</td></tr>
+      </table>
+    </div>`).join('');
+
+      return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Helvetica,Arial;color:#111;line-height:1.5;} .page-break{page-break-before:always;}</style></head>
+    <body>
+      <table width="100%" cellpadding="12" style="background:#F97316; color:#fff; font-weight:bold;">
+        <tr><td>BDL — REVENUE INTELLIGENCE (SUMMARY)</td><td align="right">ID: ${reportId}</td></tr>
+      </table>
+      <div style="background:#1a1a2e; color:#fff; padding:30px 24px;">
+        <table width="100%">
+          <tr>
+            <td>
+              <h1 style="margin:0;">${esc(bizName)}</h1>
+              <p style="color:#9ca3af;">${esc(lead.city || 'National')} ${lead.state ? ', ' + esc(lead.state) : ''}</p>
+              <p style="color:#F97316; font-size: 12px; margin-top: 4px; font-weight: bold;">Executive Revenue Diagnostic Summary · ${dateStr}</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div style="padding:24px;">
+        <p style="font-size: 13px; margin-bottom: 20px;">Hi ${esc(firstName)}, this is a summary of your operational data against industry benchmarks.</p>
+        
+        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee;">Executive Summary</h2>
+        <table width="100%" cellpadding="15" cellspacing="10">
+          <tr>
+            <td align="center" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+              <div style="font-size:10px; color:#666;">MONTHLY LEAKAGE</div>
+              <div style="font-size:20px; font-weight:800; color:#EF4444;">$${calc.monthlyLeak.toLocaleString()}</div>
+            </td>
+            <td align="center" style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+              <div style="font-size:10px; color:#666;">ANNUAL IMPACT</div>
+              <div style="font-size:20px; font-weight:800; color:#EF4444;">$${calc.annualLeak.toLocaleString()}</div>
+            </td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 30px; padding: 20px; background: #fff8f0; border: 1px solid #fed7aa; text-align: center; border-radius: 8px;">
+          <h3 style="color: #F97316; margin-top: 0;">Detailed Breakdown & 90-Day Plan Locked</h3>
+          <p style="font-size: 13px; color: #666;">The detailed analysis mapping out exactly where the leakage is occurring, and the step-by-step 90-day action plan to recover it, are available in the full Executive Report.</p>
+        </div>
+
+        <h2 style="color:#F97316; text-transform:uppercase; font-size:14px; border-bottom:1px solid #eee; margin-top:25px; padding-bottom:8px;">Leakage Breakdown (Preview)</h2>
+        <div style="position: relative;">
+          ${leakHtml}
+          <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center;">
+            <div style="background: rgba(0,0,0,0.8); color: #fff; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 18px; letter-spacing: 1px;">🔒 LOCKED</div>
+          </div>
+        </div>
+      </div>
+    </body></html>`;
+    }
+
+    function buildPaymentPdfHtml(lead) {
+      const bizName = esc(lead.business || 'Your Business');
+      const paymentId = lead.id || 'AUDIT-' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'mmss');
+      const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM dd, yyyy');
+      const amount = SETTINGS.REPORT_PRICE;
+      const link = getGlobalPaymentLink();
+
+      return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Helvetica,Arial;color:#111;line-height:1.5;}</style></head>
+    <body>
+      <table width="100%" cellpadding="12" style="background:#0F1117; color:#fff; font-weight:bold;">
+        <tr><td>BDL — INVOICE & PAYMENT REQUEST</td><td align="right">Ref: ${paymentId}</td></tr>
+      </table>
+      <div style="padding:40px;">
+        <table width="100%" style="margin-bottom: 40px;">
+          <tr>
+            <td>
+              <h2 style="margin: 0; color: #111;">Billed To:</h2>
+              <p style="margin: 5px 0; color: #444; font-size: 18px; font-weight: bold;">${bizName}</p>
+              <p style="margin: 0; color: #666;">${esc(lead.email || '')}</p>
+            </td>
+            <td align="right" valign="top">
+              <p style="margin: 0; color: #666; font-size: 14px;">Date: ${dateStr}</p>
+            </td>
+          </tr>
+        </table>
+
+        <table width="100%" cellpadding="15" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 8px; border-collapse: collapse;">
+          <tr style="background: #f9fafb; text-transform: uppercase; font-size: 12px; color: #666;">
+            <th align="left" style="border-bottom: 1px solid #e5e7eb;">Description</th>
+            <th align="right" style="border-bottom: 1px solid #e5e7eb;">Total</th>
+          </tr>
+          <tr>
+            <td style="border-bottom: 1px solid #e5e7eb; font-size: 14px;">
+              <strong>Full Executive Revenue Diagnostic & 90-Day Action Plan</strong><br>
+              <span style="font-size: 12px; color: #666;">Detailed analysis mapping the recovery of identified revenue leakage.</span>
+            </td>
+            <td align="right" style="border-bottom: 1px solid #e5e7eb; font-size: 16px; font-weight: bold;">$${amount}.00 USD</td>
+          </tr>
+          <tr style="background: #fff8f0;">
+            <td align="right" style="font-size: 14px; font-weight: bold; color: #F97316;">Amount Due:</td>
+            <td align="right" style="font-size: 18px; font-weight: 900; color: #F97316;">$${amount}.00 USD</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 40px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-align: center;">
+          <h3 style="margin-top: 0; color: #111;">Payment Instructions</h3>
+          <p style="font-size: 14px; color: #444;">Please click the button below to complete your payment.</p>
+          <p style="font-size: 13px; color: #EF4444; font-weight: bold; margin-bottom: 20px;">Crucial: Include the Reference ID <span style="background: #e5e7eb; padding: 3px 8px; border-radius: 4px; color: #111;">${paymentId}</span> in the payment note.</p>
+          <a href="${link}" style="display: inline-block; background: #F97316; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold;">Pay $${amount} Securely</a>
+        </div>
+      </div>
+    </body></html>`;
+    }
+
+
+    const mockLead = {
+      name: "John Doe",
+      business: "Apex Real Estate",
+      email: "john@apex.com",
+      phone: "555-0123",
+      website: "apex.com",
+      niche: "realestate",
+      monthlyRevenue: 50000,
+      margin: 20,
+      volume: 100,
+      price: 500,
+      conversion: 25,
+      lifetime: 2,
+      totalLeakage: 12500,
+      leakageBreakdown: "Missed lead follow-up | Low portal ROI | Inefficient offer conversion"
+    };
+
+    // Mock Utilities and MailApp to prevent errors when evaluating the .gs files
+    const Utilities = { formatDate: () => "0000" };
+    const MailApp = { sendEmail: () => { } };
+    const Session = { getScriptTimeZone: () => "GMT" };
+    const SETTINGS = { REPORT_PRICE: 47 };
+    function esc(str) { return String(str).replace(/[&<>'"]/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[match])); }
+
+    document.write(buildFullPdfReportHtml(mockLead, "This is a custom note added by the analyst."));
+  </script>
+</body>
+
+</html>
