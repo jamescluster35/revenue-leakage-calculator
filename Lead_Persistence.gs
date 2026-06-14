@@ -161,6 +161,7 @@ function saveCalculatorLead(lead) {
             `*Business:* ${lead.business || '—'}\n` +
             `*Niche:* ${lead.niche || '—'}\n` +
             `*Contact:* ${lead.name || '—'} (${lead.email})\n` +
+            (lead.jobTitle ? `*Job Title:* ${lead.jobTitle}\n` : '') +
             `*Phone:* ${lead.phone || '—'}\n` +
             `*Est. Leakage:* $${Number(lead.totalLeakage || 0).toLocaleString()}/mo`;
     } else {

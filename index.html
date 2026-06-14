@@ -234,8 +234,26 @@ input, select, textarea, button {
 .success-box h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--status-success);margin-bottom:10px;}
 .success-box p{font-size:13px;color:var(--text-secondary);line-height:1.7;}
 .disclaimer{font-size:11px;color:var(--text-secondary);text-align:center;margin-top:12px;line-height:1.5;padding:10px;background:var(--surface-secondary);border-radius:8px;}
+/* Results disclaimer block */
+.results-disclaimer{background:hsla(var(--status-warning-h), var(--status-warning-s), var(--status-warning-l), 0.06);border:1px solid hsla(var(--status-warning-h), var(--status-warning-s), var(--status-warning-l), 0.25);border-radius:10px;padding:14px 16px;margin:14px 0;}
+.results-disclaimer .rd-header{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--status-warning);margin-bottom:8px;letter-spacing:0.02em;}
+.results-disclaimer .rd-body{font-size:11px;color:var(--text-secondary);line-height:1.7;}
+.results-disclaimer .rd-body strong{color:var(--text-primary);}
+/* Methodology toggle */
+.method-box{background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:12px;margin:12px 0;overflow:hidden;}
+.method-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;font-size:12px;font-weight:600;color:var(--text-secondary);transition:color .15s;}
+.method-toggle:hover{color:var(--text-primary);}
+.method-toggle .mt-icon{font-size:14px;transition:transform .25s;}
+.method-toggle.open .mt-icon{transform:rotate(180deg);}
+.method-content{display:none;padding:0 16px 16px;}
+.method-content.open{display:block;}
+.method-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-default);font-size:12px;color:var(--text-secondary);line-height:1.6;}
+.method-row:last-child{border-bottom:none;padding-bottom:0;}
+.method-row .mr-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.method-row strong{color:var(--text-primary);display:block;margin-bottom:2px;}
 footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--text-secondary);border-top:1px solid var(--border-default);margin-top:20px;}
 footer a{color:var(--brand-primary);text-decoration:none;}
+.footer-legal{font-size:10px;color:var(--text-secondary);opacity:0.6;margin-top:8px;line-height:1.6;max-width:560px;margin-left:auto;margin-right:auto;}
 @media(max-width:480px){.hdr{padding:32px 16px 0;}.main{padding:0 16px 60px;}}
 </style>
 <style>
@@ -371,18 +389,6 @@ footer a{color:var(--brand-primary);text-decoration:none;}
           <label>State / Province</label>
           <select id="biz_state" class="has-custom-arrow">
             <option value="">Select state</option>
-            <optgroup label="USA — States">
-            <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
-            </optgroup>
-            <optgroup label="Canada — Provinces">
-            <option>AB — Alberta</option><option>BC — British Columbia</option><option>MB — Manitoba</option><option>NB — New Brunswick</option><option>NL — Newfoundland</option><option>NS — Nova Scotia</option><option>NT — Northwest Territories</option><option>NU — Nunavut</option><option>ON — Ontario</option><option>PE — Prince Edward Island</option><option>QC — Quebec</option><option>SK — Saskatchewan</option><option>YT — Yukon</option>
-            </optgroup>
-            <optgroup label="Australia — States">
-            <option>NSW — New South Wales</option><option>VIC — Victoria</option><option>QLD — Queensland</option><option>WA — Western Australia</option><option>SA — South Australia</option><option>TAS — Tasmania</option><option>ACT — Australian Capital Territory</option><option>NT — Northern Territory</option>
-            </optgroup>
-            <optgroup label="UK — Regions">
-            <option>England</option><option>Scotland</option><option>Wales</option><option>Northern Ireland</option><option>Greater London</option>
-            </optgroup>
           </select>
         </div>
         <div class="field">
@@ -529,7 +535,46 @@ footer a{color:var(--brand-primary);text-decoration:none;}
       </div>
     </div>
 
-    <div class="disclaimer">⚠ This is an estimate based on your inputs and general industry benchmarks. Actual figures may vary. A personalised audit will provide accurate analysis specific to your business.</div>
+    <!-- Estimate Disclaimer -->
+    <div class="results-disclaimer">
+      <div class="rd-header">⚠️ Important — Please Read</div>
+      <div class="rd-body">
+        All figures shown are <strong>illustrative estimates only</strong>, calculated from the numbers you entered and publicly available industry benchmarks. They are <strong>not a guarantee of revenue recovery</strong> and do not constitute financial, legal, or business advice. Actual results will vary based on your specific circumstances, market conditions, and execution.
+        <br><br>
+        This tool is intended solely to help identify <strong>potential areas for improvement</strong> — not to make promises. A full personalised audit will give you a more accurate, business-specific analysis.
+      </div>
+    </div>
+
+    <!-- Methodology Transparency Box -->
+    <div class="method-box">
+      <div class="method-toggle" id="method-toggle-btn" onclick="toggleMethodology(this)">
+        <span>📐 How We Calculate This Estimate</span>
+        <span class="mt-icon">▾</span>
+      </div>
+      <div class="method-content" id="method-content-panel">
+        <div class="method-row">
+          <span class="mr-icon">📊</span>
+          <div><strong>Industry Benchmarks</strong>Each leakage percentage is derived from publicly available research and widely-cited industry studies (e.g. dental no-show averages of 10–15%, SaaS churn benchmarks from OpenView, restaurant food waste reports from the USDA). These are generalised averages — not specific to your business.</div>
+        </div>
+        <div class="method-row">
+          <span class="mr-icon">🔢</span>
+          <div><strong>Conservative Multiplier (40% reduction)</strong>To avoid overestimation, all calculated figures are reduced by 40% before being shown to you. This means the numbers you see are already on the conservative side of the range.</div>
+        </div>
+        <div class="method-row">
+          <span class="mr-icon">📝</span>
+          <div><strong>Your Inputs Matter</strong>The estimate is only as accurate as the numbers you provided. If your monthly revenue, staff count, or other figures are approximate, the output will also be approximate.</div>
+        </div>
+        <div class="method-row">
+          <span class="mr-icon">🌍</span>
+          <div><strong>Regional Variation</strong>Industry averages can vary significantly by country, city, and market. Benchmark data is primarily sourced from USA and UK markets. If your business operates in a different market, actual figures may differ.</div>
+        </div>
+        <div class="method-row">
+          <span class="mr-icon">🔒</span>
+          <div><strong>No Guarantees</strong>This calculator does not promise any specific outcome. Revenue recovery depends entirely on the actions taken by the business owner and their team. BDL provides analytical tools and recommendations — results depend on implementation.</div>
+        </div>
+      </div>
+    </div>
+
 
     <div style="margin:14px 0 8px;font-size:11px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">📊 Top Leakage Area (Free Preview)</div>
     <div id="free-item"></div>
@@ -561,6 +606,7 @@ footer a{color:var(--brand-primary);text-decoration:none;}
       <h3>Almost there — tell us where to send it</h3>
       <p>Fill in your details and we'll reach out within a few hours to confirm your audit and payment.</p>
       <div class="field"><label>Your full name</label><input type="text" id="lead_name" placeholder="Your full name"></div>
+      <div class="field"><label>Job title <span style="color:var(--mu);font-weight:400;">(optional)</span></label><input type="text" id="lead_title" placeholder="e.g. Owner, Marketing Director"></div>
       <div class="field"><label>Business email</label><input type="email" id="lead_email" placeholder="Your business email"></div>
       <div class="field">
         <label>Phone number</label>
@@ -592,7 +638,10 @@ footer a{color:var(--brand-primary);text-decoration:none;}
 
 </div>
 
-<footer><p id="footer-txt">© 2026 BDL · Revenue Audit Service · USA &amp; Canada</p></footer>
+<footer>
+  <p id="footer-txt">© 2026 BDL · Revenue Audit Service · USA &amp; Canada</p>
+  <p class="footer-legal">All revenue leakage estimates produced by this tool are for informational purposes only and are based on generalised industry benchmarks. They do not constitute financial, legal, tax, or business advice. BDL makes no representation or warranty, express or implied, as to the accuracy or completeness of any figures presented. Past performance is not indicative of future results. Use of this tool is subject to our terms of service.</p>
+</footer>
 
 <script>
 // ── Country & Currency ───────────────────────────────────
@@ -603,6 +652,12 @@ var CURRENCIES = {
   'Canada': '$',
   'UK': '£',
   'Australia': '$'
+};
+var SUBDIVISIONS = {
+  'USA': ["AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"],
+  'Canada': ["AB — Alberta","BC — British Columbia","MB — Manitoba","NB — New Brunswick","NL — Newfoundland","NS — Nova Scotia","NT — Northwest Territories","NU — Nunavut","ON — Ontario","PE — Prince Edward Island","QC — Quebec","SK — Saskatchewan","YT — Yukon"],
+  'UK': ["England","Scotland","Wales","Northern Ireland","Greater London"],
+  'Australia': ["NSW — New South Wales","VIC — Victoria","QLD — Queensland","WA — Western Australia","SA — South Australia","TAS — Tasmania","ACT — Australian Capital Territory","NT — Northern Territory"]
 };
 
 function setCountry(val){
@@ -623,19 +678,32 @@ function setCountry(val){
 
   var select = document.getElementById('biz_state');
   if(select){
-    var groups = select.getElementsByTagName('optgroup');
-    var anyVisible = false;
-    for(var i=0; i<groups.length; i++){
-      var isMatch = (val === 'USA' && groups[i].label.indexOf('USA') > -1) || 
-                    (val === 'Canada' && groups[i].label.indexOf('Canada') > -1) ||
-                    (val === 'UK' && groups[i].label.indexOf('UK') > -1) ||
-                    (val === 'Australia' && groups[i].label.indexOf('Australia') > -1);
-      groups[i].style.display = isMatch ? '' : 'none';
-      if(isMatch) anyVisible = true;
+    select.innerHTML = ''; // Clear previous options
+    
+    var list = SUBDIVISIONS[val] || [];
+    if(list.length > 0) {
+      var placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = val === 'UK' ? 'Select region' : (val === 'Canada' ? 'Select province' : 'Select state');
+      select.appendChild(placeholder);
+      
+      list.forEach(function(item) {
+        var opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
+      select.disabled = false;
+      select.parentElement.style.opacity = '1';
+    } else {
+      var placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'N/A';
+      select.appendChild(placeholder);
+      select.disabled = true;
+      select.parentElement.style.opacity = '0.4';
     }
     select.value = ''; // Reset selection when country changes
-    select.disabled = !anyVisible;
-    select.parentElement.style.opacity = anyVisible ? '1' : '0.4';
   }
 }
 
@@ -726,6 +794,16 @@ window.addEventListener('DOMContentLoaded',function(){
 });
 
 var pageLoadTime = Date.now(); // Record page load time
+
+// ── Methodology toggle ────────────────────────────────────
+function toggleMethodology(btn) {
+  var panel = document.getElementById('method-content-panel');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+}
+
 // ── State ─────────────────────────────────────────────────
 var S={
   niche:'',gr:-1,respond:'',social:'',
@@ -994,7 +1072,9 @@ function goStep2(){
   if(!document.getElementById('biz_city').value.trim()){alert('Please enter your city');return;}
   if(!document.getElementById('biz_zip').value.trim()){alert('Please enter your ZIP / postal code');return;}
   if(!document.getElementById('monthly_revenue').value){alert('Please enter your approximate monthly revenue');return;}
+  if(!_leadSessionId) _leadSessionId = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
   gStep(2);
+  _saveLead('New', null, null, null, null, null, 'Step 1 Completed');
 }
 function goStep3(){
   var def=NF[S.niche];
@@ -1139,7 +1219,7 @@ async function runCalc() {
   gStep(4);
   setTimeout(function(){document.querySelectorAll('.fi-fill').forEach(function(b){b.style.width=b.dataset.w+'%';});},300);
   // Save to sheet silently
-  _saveLead('New');
+  _saveLead('New', null, null, null, null, null, 'Step 3 Completed');
 }
 
 function showAuditForm(){
@@ -1151,6 +1231,7 @@ function showAuditForm(){
 // ── Submit audit request ──────────────────────────────────
 async function submitAuditRequest(){
   var name=document.getElementById('lead_name').value.trim();
+  var jobTitle=document.getElementById('lead_title').value.trim();
   var email=document.getElementById('lead_email').value.trim();
   var phoneInputEl=document.getElementById('lead_phone');
   var phone=phoneInputEl.value.trim();
@@ -1164,7 +1245,7 @@ async function submitAuditRequest(){
   btn.textContent='Submitting...';
 
   _saveLead('Requested',name,email,phone,
-    document.getElementById('lead_website').value);
+    document.getElementById('lead_website').value, jobTitle);
 
   await new Promise(function(r){setTimeout(r,1000);});
   document.getElementById('audit-form').style.display='none';
@@ -1176,10 +1257,8 @@ async function submitAuditRequest(){
 // ── Save to Google Sheets ─────────────────────────────────
 var _saveInProgress = false;
 var SHEET_URL = 'https://script.google.com/macros/s/AKfycbyr6dtV_hWaHuLcNCmHsxAz4v5c4_ItEjrKvIVWEX50_PM3weha9TA4L1wCN_0EFNXaUQ/exec';
-function _saveLead(status,name,email,phone,website){
-  if(_saveInProgress && status === 'New') return; // Only allow one 'New' save per refresh
-  _saveInProgress = true;
-  var tops=S.res.items.slice(0,3).map(function(i){return i.l;}).join(' | ');
+function _saveLead(status,name,email,phone,website,jobTitle,lastStep){
+  var tops = (S.res && S.res.items) ? S.res.items.slice(0,3).map(function(i){return i.l;}).join(' | ') : '';
   var pCode = status === 'Requested' ? document.getElementById('lead_phone_code').value : document.getElementById('biz_phone_code').value;
   var pNum = status === 'Requested' ? document.getElementById('lead_phone').value : document.getElementById('biz_phone').value;
   var fullPhone = pCode + ' ' + pNum.replace(/[^\d\s\-()]/g,'');
@@ -1197,52 +1276,64 @@ function _saveLead(status,name,email,phone,website){
       });
     });
   }
-  fetch(SHEET_URL,{
-    method:'POST',
-    body:JSON.stringify({
-      action:'saveCalculatorLead',
-      lead:{
-        id:_leadSessionId,
-        date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
-        name:name||'',
-        email:email||'',
-        phone:fullPhone,
-        business:document.getElementById('biz_name').value,
-        niche:S.niche,
-        street:document.getElementById('biz_street').value||'',
-        city:document.getElementById('biz_city').value,
-        state:document.getElementById('biz_state').value,
-        zip:document.getElementById('biz_zip').value||'',
-        country:_country,
-        website:website||(document.getElementById('biz_website')&&document.getElementById('biz_website').value)||'', // Ensure biz_website is correctly retrieved
-        monthlyRevenue:document.getElementById('monthly_revenue').value.replace(/[$,]/g,''), // Remove $ and ,
-        employees:document.getElementById('num_employees').value||'',
-        googleRating:S.gr,
-        googleReviews:(document.getElementById('google_reviews')||{}).value||0,
-        totalLeakage:Math.round(S.res.total),
-        annualLeakage:Math.round(S.res.total*12),
-        leakageBreakdown:tops,
-        platforms:'',
-        paidReport:status==='Requested'?'Requested':'No',
-        calculationInputs: JSON.stringify(calculationInputs), // Store detailed inputs as JSON string
-        reportRequestDate:status==='Requested'?new Date().toLocaleDateString('en-US'):'',
-        contacted:'No', // Default to No, updated by backend on email send
-        notes:status==='Requested'?'Audit requested — follow up to confirm and send payment link':'',
-        userAgent: navigator.userAgent,
-        timeOnPage: timeOnPage + 's'
-      }
-    }),
-    mode: 'cors'
-  })
-  .then(res => res.json())
-  .then(data => {
-    if(data.error) console.error('Backend Error:', data.error);
-    _saveInProgress = false;
-  })
-  .catch(err => {
-    console.error('Network/CORS Error:', err);
-    _saveInProgress = false;
-  });
+  setTimeout(function() {
+    fetch(SHEET_URL,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'saveCalculatorLead',
+        lead:{
+          id:_leadSessionId,
+          date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+          timestamp:new Date().toISOString(),
+          visitorTime:(function(){
+            try {
+              return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' (' + Intl.DateTimeFormat().resolvedOptions().timeZone + ')';
+            } catch(e) {
+              return new Date().toLocaleTimeString();
+            }
+          })(),
+          lastActiveStep:lastStep||'',
+          name:name||'',
+          jobTitle:jobTitle||'',
+          email:email||'',
+          phone:fullPhone,
+          business:document.getElementById('biz_name').value,
+          niche:S.niche,
+          street:document.getElementById('biz_street').value||'',
+          city:document.getElementById('biz_city').value,
+          state:document.getElementById('biz_state').value,
+          zip:document.getElementById('biz_zip').value||'',
+          country:_country,
+          website:website||(document.getElementById('biz_website')&&document.getElementById('biz_website').value)||'', // Ensure biz_website is correctly retrieved
+          monthlyRevenue:document.getElementById('monthly_revenue').value.replace(/[$,]/g,''), // Remove $ and ,
+          employees:document.getElementById('num_employees').value||'',
+          googleRating:S.gr||'',
+          googleReviews:(document.getElementById('google_reviews')||{}).value||0,
+          totalLeakage:S.res?Math.round(S.res.total):0,
+          annualLeakage:S.res?Math.round(S.res.total*12):0,
+          leakageBreakdown:tops,
+          platforms:'',
+          paidReport:status==='Requested'?'Requested':'No',
+          calculationInputs: JSON.stringify(calculationInputs), // Store detailed inputs as JSON string
+          reportRequestDate:status==='Requested'?new Date().toLocaleDateString('en-US'):'',
+          contacted:'No', // Default to No, updated by backend on email send
+          notes:status==='Requested'?'Audit requested — follow up to confirm and send payment link':'',
+          userAgent: navigator.userAgent,
+          timeOnPage: timeOnPage + 's'
+        }
+      }),
+      mode: 'cors'
+    })
+    .then(res => res.json())
+    .then(data => {
+      if(data.error) console.error('Backend Error:', data.error);
+      _saveInProgress = false;
+    })
+    .catch(err => {
+      console.error('Network/CORS Error:', err);
+      _saveInProgress = false;
+    });
+  }, 100);
 }
 
 /**

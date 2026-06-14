@@ -1242,7 +1242,11 @@ function openViewModal(i){
   document.getElementById('view-biz-info').innerHTML = [
     ['ID',          l.id||'—'],
     ['Date',        l.date||'—'],
+    ['Timestamp',   l.timestamp ? new Date(l.timestamp).toLocaleString() : '—'],
+    ['Visitor Time', l.visitorTime||'—'],
+    ['Funnel Stage', l.lastActiveStep||'—'],
     ['Name',        l.name||'—'],
+    ['Job Title',   l.jobTitle||'—'],
     ['Email',       l.email||'—'],
     ['Phone',       l.phone||'—'],
     ['Business',    l.business||'—'],

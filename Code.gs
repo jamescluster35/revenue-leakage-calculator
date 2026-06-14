@@ -16,7 +16,7 @@ const SHEETS = {
   CLIENTS: "Clients",
   VERIFIED: "Verified Payments" // Added for clarity
 };
-const DEFAULT_CALC_LEAD_HEADERS = ['id','date','name','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage'];
+const DEFAULT_CALC_LEAD_HEADERS = ['id','date','timestamp','visitorTime','lastActiveStep','name','jobTitle','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage'];
 const DEFAULT_VERIFIED_HEADERS = ['Reference', 'Email', 'Business', 'Niche', 'Leakage', 'Amount', 'Date', 'Status'];
 
 const DEFAULT_TRACKER_HEADERS = ['Tracker ID', 'Data'];
@@ -149,11 +149,12 @@ function handleRequest(e) {
     'getLeadPdf': (data) => getLeadPdf(data.lead, data.note, data.pdfType),
     
     // Tracker Actions
-    'getTrackerData': (data) => getTracker(data.trackerId),
+    'getTrackerData': (data) => getTracker(data.trackerId, data.email),
     'saveTrackerData': (data) => saveTracker(data.trackerId, data.tracker),
 
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,
+    'inspectSpreadsheet': inspectSpreadsheet,
   };
 
   try {
@@ -193,34 +194,22 @@ function getTracker(trackerId) {
     }
   }
 
-  if (!lead) return jsonResponse({ error: 'Tracker not found' });
+  if (!lead) return { error: 'Tracker not found' };
 
-  // Engagement alert to admin
-  try {
-    const adminEmail = SETTINGS.ADMIN_EMAIL; 
-    const adminDashboardUrl = SETTINGS.ADMIN_DASHBOARD_URL;
-    const subject = "👀 Tracker Viewed: " + (lead.business || "Unknown Business");
-    const body = `The 90-day action tracker for ${lead.business} (${lead.email}) has just been viewed.\n\n` +
-                 `View Time: ${new Date().toLocaleString()}\n\n` +
-                 `View Lead in Admin: ${adminDashboardUrl}?search=${encodeURIComponent(lead.email)}`;
-    
-    MailApp.sendEmail(adminEmail, subject, body);
-  } catch (e) {
-    Logger.log("Tracker notification error: " + e.toString()); // Log error if notification fails
-  }
-
-  // Get Saved Progress
-  const progressData = trackerSheet.getDataRange().getValues();
-  let tracker = {};
-  for (let row of progressData) {
-    if (row[0] == trackerId) {
-      try { tracker = JSON.parse(row[1]); } catch(e) {}
-      break;
+  // ── EMAIL VERIFICATION GATE ──────────────────────────
+  // If an email is provided, verify it matches the lead on record.
+  // This prevents anyone who guesses a tracker ID from seeing another client's data.
+  if (trackerId && arguments[1]) {
+    const submittedEmail = String(arguments[1]).trim().toLowerCase();
+    const leadEmail = String(lead.email || '').trim().toLowerCase();
+    if (submittedEmail !== leadEmail) {
+      return { error: 'Tracker not found' }; // Generic error — don't reveal the ID is valid
     }
   }
- 
-  return jsonResponse({ success: true, lead: lead, tracker: tracker });
-}
+  // ─────────────────────────────────────────────────────
+
+  // Engagement alert to admin
+  try {\r\n    const adminEmail = SETTINGS.ADMIN_EMAIL; \r\n    const adminDashboardUrl = SETTINGS.ADMIN_DASHBOARD_URL;\r\n    const subject = "👀 Tracker Viewed: " + (lead.business || "Unknown Business");\r\n    const body = `The 90-day action tracker for ${lead.business} (${lead.email}) has just been viewed.\n\n` +\r\n                 `View Time: ${new Date().toLocaleString()}\n\n` +\r\n                 `View Lead in Admin: ${adminDashboardUrl}?search=${encodeURIComponent(lead.email)}`;\r\n    \r\n    MailApp.sendEmail(adminEmail, subject, body);\r\n  } catch (e) {\r\n    Logger.log("Tracker notification error: " + e.toString());\r\n  }\r\n\r\n  // Get Saved Progress\r\n  const progressData = trackerSheet.getDataRange().getValues();\r\n  let tracker = {};\r\n  for (let row of progressData) {\r\n    if (row[0] == trackerId) {\r\n      try { tracker = JSON.parse(row[1]); } catch(e) {}\r\n      break;\r\n    }\r\n  }\r\n \r\n  return { success: true, lead: lead, tracker: tracker };\r\n}
 
 // ── CRM Tab Operations ────────────────────────────────
 
@@ -560,4 +549,128 @@ function dailyBackupToDrive() {
   } catch (e) {
     console.error("Daily backup failed: " + e.toString());
   }
+}
+
+function inspectSpreadsheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) return { success: false, error: 'No active spreadsheet found' };
+  
+  const activeTabs = [
+    SHEETS.CALC_LEADS,
+    SHEETS.DELETED,
+    SHEETS.VERIFIED,
+    SHEETS.TRACKER,
+    SHEETS.LOGS,
+    SHEETS.CONFIG
+  ];
+  
+  const legacyTabs = [
+    SHEETS.LEADS,
+    SHEETS.ARCHIVED,
+    SHEETS.CLIENTS
+  ];
+  
+  const sheets = ss.getSheets();
+  const sheetNames = sheets.map(s => s.getName());
+  
+  const results = {
+    alignedTabs: [],
+    createdTabs: [],
+    unwantedTabs: [],
+    legacyTabsFound: []
+  };
+
+  // 1. Align active tabs
+  const calcHeaders = DEFAULT_CALC_LEAD_HEADERS;
+  const verifiedHeaders = DEFAULT_VERIFIED_HEADERS;
+  const trackerHeaders = DEFAULT_TRACKER_HEADERS;
+  const logsHeaders = ['Timestamp', 'Action', 'Key Attempted', 'Method'];
+
+  const tabConfigs = [
+    { name: SHEETS.CALC_LEADS, headers: calcHeaders },
+    { name: SHEETS.DELETED, headers: calcHeaders },
+    { name: SHEETS.VERIFIED, headers: verifiedHeaders },
+    { name: SHEETS.TRACKER, headers: trackerHeaders },
+    { name: SHEETS.LOGS, headers: logsHeaders }
+  ];
+
+  tabConfigs.forEach(conf => {
+    let sheet = ss.getSheetByName(conf.name);
+    if (!sheet) {
+      sheet = ss.insertSheet(conf.name);
+      if (conf.headers && conf.headers.length > 0) {
+        sheet.getRange(1, 1, 1, conf.headers.length).setValues([conf.headers]);
+        sheet.setFrozenRows(1);
+      }
+      results.createdTabs.push(conf.name);
+    } else {
+      let missingHeaders = [];
+      if (conf.headers && conf.headers.length > 0) {
+        const existingHeaders = sheet.getLastColumn() > 0 
+          ? sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).trim())
+          : [];
+        missingHeaders = conf.headers.filter(h => !existingHeaders.includes(h));
+        if (missingHeaders.length > 0) {
+          sheet.getRange(1, existingHeaders.length + 1, 1, missingHeaders.length).setValues([missingHeaders]);
+        }
+      }
+      results.alignedTabs.push({ name: conf.name, added: missingHeaders });
+    }
+  });
+
+  // Ensure Config sheet exists
+  let configSheet = ss.getSheetByName(SHEETS.CONFIG);
+  if (!configSheet) {
+    configSheet = ss.insertSheet(SHEETS.CONFIG);
+    results.createdTabs.push(SHEETS.CONFIG);
+  }
+
+  // 2. Identify unwanted tabs
+  const standardTabs = [
+    ...activeTabs,
+    "Test Results",
+    "CRM Schema Report"
+  ];
+
+  sheetNames.forEach(name => {
+    if (!standardTabs.includes(name)) {
+      if (legacyTabs.includes(name)) {
+        results.legacyTabsFound.push(name);
+      } else {
+        results.unwantedTabs.push(name);
+      }
+    }
+  });
+
+  // 3. Write a summary report in the spreadsheet
+  let reportSheet = ss.getSheetByName("CRM Schema Report");
+  if (!reportSheet) {
+    reportSheet = ss.insertSheet("CRM Schema Report");
+  }
+  reportSheet.clear();
+  reportSheet.setFrozenRows(1);
+  reportSheet.getRange(1, 1, 1, 3).setValues([["Category", "Details", "Action Taken / Status"]]).setFontWeight("bold");
+
+  const reportRows = [];
+  reportRows.push(["Active Tabs Aligned", results.alignedTabs.map(t => `${t.name} (added: ${t.added.join(', ') || 'none'})`).join('\n'), "Verified & Aligned"]);
+  if (results.createdTabs.length > 0) {
+    reportRows.push(["Missing Active Tabs Created", results.createdTabs.join(', '), "Created successfully"]);
+  } else {
+    reportRows.push(["Missing Active Tabs Created", "None", "All active tabs are present"]);
+  }
+  if (results.legacyTabsFound.length > 0) {
+    reportRows.push(["Legacy CRM Tabs Found", results.legacyTabsFound.join(', '), "Legacy (unwanted) tabs from old system. You can delete these manually if you do not need their history."]);
+  }
+  if (results.unwantedTabs.length > 0) {
+    reportRows.push(["Unwanted / Unknown Tabs Found", results.unwantedTabs.join(', '), "Unknown tab. Verify if you want to keep or delete these."]);
+  }
+
+  reportSheet.getRange(2, 1, reportRows.length, 3).setValues(reportRows);
+  reportSheet.autoResizeColumns(1, 3);
+
+  return {
+    success: true,
+    message: "Inspection & alignment complete. A detailed report tab 'CRM Schema Report' has been added/updated in your spreadsheet.",
+    details: results
+  };
 }

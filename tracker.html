@@ -65,12 +65,35 @@ footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);margin
 <body>
 
 <div class="container">
-  
+
+  <!-- EMAIL GATE -->
+  <div id="email-gate" style="display:none;">
+    <div class="header">
+      <h1>📈 90-Day Action Tracker</h1>
+      <p style="margin-bottom:24px;">Enter the email address you used when completing your revenue audit to access your personal tracker.</p>
+      <div style="max-width:360px;margin:0 auto;">
+        <input type="email" id="gate-email" placeholder="your@email.com"
+          style="width:100%;padding:14px 16px;background:#141720;border:1.5px solid #1E2230;border-radius:10px;color:#E8EAF0;font-size:15px;font-family:inherit;margin-bottom:12px;box-sizing:border-box;outline:none;"
+          onkeydown="if(event.key==='Enter')verifyEmail()"
+          onfocus="this.style.borderColor='#F97316'" onblur="this.style.borderColor='#1E2230'">
+        <button onclick="verifyEmail()" id="gate-btn"
+          style="width:100%;padding:14px;background:#F97316;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;"
+          onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+          Access My Tracker →
+        </button>
+        <div id="gate-error" style="margin-top:12px;color:#EF4444;font-size:13px;display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Tracker (hidden until verified) -->
+  <div id="tracker-main" style="display:none;">
+
   <!-- Header -->
   <div class="header" id="header">
     <h1>📈 90-Day Action Tracker</h1>
     <p>Track your progress and watch your revenue leakage shrink</p>
-    <div class="biz-name" id="biz-name">Loading...</div>
+    <div class="biz-name" id="biz-name"></div>
     <div class="biz-meta" id="biz-meta"></div>
   </div>
 
@@ -127,10 +150,12 @@ footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);margin
     <button class="cta-btn" onclick="contactSupport()">Get Implementation Support →</button>
   </div>
 
+  </div><!-- /tracker-main -->
+
 </div>
 
 <footer>
-  <p>BDL — Revenue Audit Service · <a href="mailto:james@bdl.com" style="color:var(--or);text-decoration:none;">james@bdl.com</a></p>
+  <p>BDL — Revenue Audit Service · <a href="mailto:jamescluster35@gmail.com" style="color:var(--or);text-decoration:none;">jamescluster35@gmail.com</a></p>
 </footer>
 
 <script>
@@ -140,40 +165,76 @@ const TrackerApp = {
   },
   state: {
     id: new URL(window.location.href).searchParams.get('id') || new URL(window.location.href).hash.slice(1),
+    email: null,
     lead: null,
     tracker: null
   }
 };
 
-async function initTracker(){
+// Show email gate on load
+function initTracker(){
   if(!TrackerApp.state.id){
-    showError('No tracker ID provided. Check your email link.');
+    document.getElementById('email-gate').style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('gate-error').textContent = 'Invalid tracker link. Please check your email for the correct link.';
+    document.getElementById('gate-error').style.display = 'block';
+    document.getElementById('gate-btn').disabled = true;
     return;
   }
-  
+  // Show gate
+  document.getElementById('email-gate').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+  setTimeout(() => document.getElementById('gate-email').focus(), 100);
+}
+
+// Called when client clicks "Access My Tracker"
+async function verifyEmail(){
+  const email = document.getElementById('gate-email').value.trim();
+  const errEl = document.getElementById('gate-error');
+  const btn = document.getElementById('gate-btn');
+
+  if(!email || !email.includes('@')){
+    errEl.textContent = 'Please enter a valid email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'Verifying...';
+  btn.disabled = true;
+  errEl.style.display = 'none';
+
   try {
     const res = await fetch(TrackerApp.config.SHEET_URL, {
       method: 'POST',
-      body: JSON.stringify({action: 'getTrackerData', trackerId: TrackerApp.state.id})
+      body: JSON.stringify({action: 'getTrackerData', trackerId: TrackerApp.state.id, email: email})
     });
     const data = await res.json();
-    
-    if(data.error) {
-      showError('Tracker not found. ' + data.error);
+
+    if(data.error || !data.success){
+      errEl.textContent = 'Email not found for this tracker. Please check the email you used during your audit.';
+      errEl.style.display = 'block';
+      btn.textContent = 'Access My Tracker →';
+      btn.disabled = false;
       return;
     }
-    
+
+    // Verified — store and show tracker
+    TrackerApp.state.email = email;
     TrackerApp.state.lead = data.lead;
     TrackerApp.state.tracker = data.tracker || {};
-    
-    document.getElementById('loading').style.display = 'none';
+
+    document.getElementById('email-gate').style.display = 'none';
+    document.getElementById('tracker-main').style.display = 'block';
     document.getElementById('progress-section').style.display = 'block';
     document.getElementById('actions-section').style.display = 'block';
     document.getElementById('cta-section').style.display = 'block';
-    
+
     renderTracker();
-  } catch(err) {
-    showError('Failed to load tracker: ' + err.message);
+  } catch(err){
+    errEl.textContent = 'Connection error. Please try again.';
+    errEl.style.display = 'block';
+    btn.textContent = 'Access My Tracker →';
+    btn.disabled = false;
   }
 }
 
@@ -323,7 +384,7 @@ async function saveProgress(){
 function contactSupport(){
   const subject = 'Implementation Support Request - ' + (TrackerApp.state.lead?.business || 'Business');
   const body = 'Hi,\n\nI need help implementing my 90-day action plan.\n\nBusiness: ' + (TrackerApp.state.lead?.business || '') + '\nEmail: ' + (TrackerApp.state.lead?.email || '');
-  window.location.href = 'mailto:james@bdl.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.location.href = 'mailto:jamescluster35@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 }
 
 function esc(s){
