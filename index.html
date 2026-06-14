@@ -68,6 +68,9 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--surface-background);color:var(--text-primary);font-family:'DM Sans',-apple-system,sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}
+input, select, textarea, button {
+  font-family: inherit;
+}
 .hdr{text-align:center;padding:48px 20px 0;}
 .logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:28px;}
 .logo-dot{width:10px;height:10px;background:var(--brand-primary);border-radius:50%;}
@@ -368,28 +371,28 @@ footer a{color:var(--brand-primary);text-decoration:none;}
           <label>State / Province</label>
           <select id="biz_state" class="has-custom-arrow">
             <option value="">Select state</option>
-            <optgroup label="🇺🇸 USA — States">
+            <optgroup label="USA — States">
             <option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>WV</option><option>WI</option><option>WY</option>
             </optgroup>
-            <optgroup label="🇨🇦 Canada — Provinces">
+            <optgroup label="Canada — Provinces">
             <option>AB — Alberta</option><option>BC — British Columbia</option><option>MB — Manitoba</option><option>NB — New Brunswick</option><option>NL — Newfoundland</option><option>NS — Nova Scotia</option><option>NT — Northwest Territories</option><option>NU — Nunavut</option><option>ON — Ontario</option><option>PE — Prince Edward Island</option><option>QC — Quebec</option><option>SK — Saskatchewan</option><option>YT — Yukon</option>
             </optgroup>
-            <optgroup label="🇦🇺 Australia — States">
+            <optgroup label="Australia — States">
             <option>NSW — New South Wales</option><option>VIC — Victoria</option><option>QLD — Queensland</option><option>WA — Western Australia</option><option>SA — South Australia</option><option>TAS — Tasmania</option><option>ACT — Australian Capital Territory</option><option>NT — Northern Territory</option>
             </optgroup>
-            <optgroup label="🇬🇧 UK — Regions">
+            <optgroup label="UK — Regions">
             <option>England</option><option>Scotland</option><option>Wales</option><option>Northern Ireland</option><option>Greater London</option>
             </optgroup>
           </select>
         </div>
         <div class="field">
           <label>Country</label>
-          <div class="choices" id="country-choices">
-            <div class="choice on" onclick="setCountry(this,'USA')" data-c="USA">🇺🇸 USA</div>
-            <div class="choice" onclick="setCountry(this,'Canada')" data-c="Canada">🇨🇦 Canada</div>
-            <div class="choice" onclick="setCountry(this,'UK')" data-c="UK">🇬🇧 UK</div>
-            <div class="choice" onclick="setCountry(this,'Australia')" data-c="Australia">🇦🇺 Australia</div>
-          </div>
+          <select id="biz_country" class="has-custom-arrow" onchange="setCountry(this.value)">
+            <option value="USA">USA</option>
+            <option value="Canada">Canada</option>
+            <option value="UK">United Kingdom (UK)</option>
+            <option value="Australia">Australia</option>
+          </select>
         </div>
       </div>
 
@@ -602,11 +605,15 @@ var CURRENCIES = {
   'Australia': '$'
 };
 
-function setCountry(el, val){
+function setCountry(val){
   _country = val;
   _symbol = CURRENCIES[val] || '$';
-  document.querySelectorAll('#country-choices .choice').forEach(function(b){b.classList.remove('on');});
-  el.classList.add('on');
+  
+  var countryDropdown = document.getElementById('biz_country');
+  if(countryDropdown && countryDropdown.value !== val) {
+    countryDropdown.value = val;
+  }
+  
   formatCurrencyInput(document.getElementById('monthly_revenue'));
 
   // Update phone code selectors and trigger their validation
@@ -715,8 +722,7 @@ window.addEventListener('load', function() {
 window.addEventListener('DOMContentLoaded',function(){
   var ft=document.getElementById('footer-txt');
   if(ft)ft.innerHTML='© 2026 BDL · Revenue Audit Service · <a href="mailto:'+_em+'" style="color:var(--or);">'+_em+'</a>';
-  var def = document.querySelector('#country-choices .choice.on');
-  if(def) setCountry(def, 'USA');
+  setCountry('USA');
 });
 
 var pageLoadTime = Date.now(); // Record page load time
