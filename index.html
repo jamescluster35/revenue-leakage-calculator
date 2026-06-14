@@ -374,6 +374,12 @@ footer a{color:var(--brand-primary);text-decoration:none;}
             <optgroup label="🇨🇦 Canada — Provinces">
             <option>AB — Alberta</option><option>BC — British Columbia</option><option>MB — Manitoba</option><option>NB — New Brunswick</option><option>NL — Newfoundland</option><option>NS — Nova Scotia</option><option>NT — Northwest Territories</option><option>NU — Nunavut</option><option>ON — Ontario</option><option>PE — Prince Edward Island</option><option>QC — Quebec</option><option>SK — Saskatchewan</option><option>YT — Yukon</option>
             </optgroup>
+            <optgroup label="🇦🇺 Australia — States">
+            <option>NSW — New South Wales</option><option>VIC — Victoria</option><option>QLD — Queensland</option><option>WA — Western Australia</option><option>SA — South Australia</option><option>TAS — Tasmania</option><option>ACT — Australian Capital Territory</option><option>NT — Northern Territory</option>
+            </optgroup>
+            <optgroup label="🇬🇧 UK — Regions">
+            <option>England</option><option>Scotland</option><option>Wales</option><option>Northern Ireland</option><option>Greater London</option>
+            </optgroup>
           </select>
         </div>
         <div class="field">
@@ -613,7 +619,10 @@ function setCountry(el, val){
     var groups = select.getElementsByTagName('optgroup');
     var anyVisible = false;
     for(var i=0; i<groups.length; i++){
-      var isMatch = (val === 'USA' && groups[i].label.indexOf('USA') > -1) || (val === 'Canada' && groups[i].label.indexOf('Canada') > -1);
+      var isMatch = (val === 'USA' && groups[i].label.indexOf('USA') > -1) || 
+                    (val === 'Canada' && groups[i].label.indexOf('Canada') > -1) ||
+                    (val === 'UK' && groups[i].label.indexOf('UK') > -1) ||
+                    (val === 'Australia' && groups[i].label.indexOf('Australia') > -1);
       groups[i].style.display = isMatch ? '' : 'none';
       if(isMatch) anyVisible = true;
     }
