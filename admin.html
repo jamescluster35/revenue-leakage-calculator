@@ -394,8 +394,8 @@ button, input, select, textarea {
       <div class="mc-foot-right">
         <button class="btn-primary" onclick="copyTrackerLink()" style="background:var(--mu);">Copy Link</button>
         <button class="btn-primary" id="dl-pdf-btn" onclick="downloadPdf()" style="background:var(--bl);">Download PDF</button>
-        <button class="btn-primary" onclick="closeModal('view-modal');sendPaymentRequest();" style="background:var(--bl);">Payment Link</button>
-        <button class="btn-primary" onclick="sendFollowUp()" style="background:#10B981;">Follow-up</button>
+        <button class="btn-primary" onclick="sendPaymentRequest(this)" style="background:var(--bl);">Payment Link</button>
+        <button class="btn-primary" onclick="sendFollowUp(this)" style="background:#10B981;">Follow-up</button>
         <button class="btn-success" id="send-btn" onclick="sendReport()">Send Report</button>
         <button class="btn-secondary" onclick="closeModal('view-modal')">Close</button>
       </div>
@@ -1384,36 +1384,43 @@ async function doDelete(){
   } catch(e){ showToast('Error deleting lead: '+e.message,true); }
 }
 
-async function sendReport(){
-  var email = document.getElementById('send-email').value.trim();
-  var note  = document.getElementById('send-note').value.trim();
+async function sendReport(btnElement, idx){
+  var lead = (idx !== undefined && idx !== null) ? AdminApp.state.leads[idx] : AdminApp.state.current;
+  if(!lead){showToast('No lead selected',true);return;}
+  
+  var email = (idx !== undefined && idx !== null) ? (lead.email || '').trim() : document.getElementById('send-email').value.trim();
+  var note  = (idx !== undefined && idx !== null) ? '' : document.getElementById('send-note').value.trim();
+  
   if(!email||!email.includes('@')){showToast('Please enter a valid email',true);return;}
-  if(!AdminApp.state.current){showToast('No lead selected',true);return;}
-  var btn = document.getElementById('send-btn');
+  
+  var btn = btnElement || document.getElementById('send-btn');
+  var origTxt = btn.innerHTML;
   btn.innerHTML = '<div class="spin" style="width:16px;height:16px;border-width:2px;"></div> Sending...';
   btn.disabled = true;
   try{
-    var template = getTemplateForLead(AdminApp.state.current);
-    var isPaid = /paid|delivered/i.test(String(AdminApp.state.current.paidReport||''));
-    var subject = isPaid ? buildEmailSubject(AdminApp.state.current, template) : 'Revenue Audit Summary — '+(AdminApp.state.current.business||'Your Business');
+    var template = getTemplateForLead(lead);
+    var isPaid = /paid|delivered/i.test(String(lead.paidReport||''));
+    var subject = isPaid ? buildEmailSubject(lead, template) : 'Revenue Audit Summary — '+(lead.business||'Your Business');
     var res  = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
       action:'generateAndSendReport',
       key:AdminApp.state.auth,
-      lead:AdminApp.state.current,
+      lead:lead,
       email:email,
       note:note,
-      subject:subject // Subject is still useful for backend to use if it wants
+      subject:subject
     })});
     var data = await res.json();
     if(data.success){
       showToast(isPaid ? '✅ Report sent to '+email : '✅ Summary sent to '+email);
-      closeModal('view-modal');
+      if(!btnElement) {
+        closeModal('view-modal');
+      }
       loadLeads();
     } else {
       showToast('Error: '+(data.error||'Check Apps Script'),true);
     }
   } catch(e){ showToast('Failed — check Apps Script URL',true); }
-  btn.innerHTML = (AdminApp.state.current.paidReport==='Paid' || AdminApp.state.current.paidReport==='Delivered') ? 'Send Report' : 'Send Summary';
+  btn.innerHTML = origTxt;
   btn.disabled = false;
 }
 
@@ -1428,10 +1435,16 @@ function clearNote(){
   updateNoteCount();
 }
 
-async function sendFollowUp(){
+async function sendFollowUp(btn){
   if(!AdminApp.state.current||!AdminApp.state.current.email){showToast('No lead selected',true);return;}
   var isPaid = /paid|delivered/i.test(String(AdminApp.state.current.paidReport||''));
   if(!isPaid){showToast('Follow-up only sent after paid report. Send report first.',true);return;}
+  var origTxt = '';
+  if(btn) {
+    origTxt = btn.innerHTML;
+    btn.innerHTML = '<div class="spin" style="width:12px;height:12px;border-width:2px;margin-right:4px;"></div> Sending...';
+    btn.disabled = true;
+  }
   try{
     var res = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
       action:'sendFollowUpEmails',
@@ -1440,11 +1453,19 @@ async function sendFollowUp(){
       email:AdminApp.state.current.email
     })});
     var data = await res.json();
-    showToast('✅ Follow-up email sent to '+AdminApp.state.current.email);
-    closeModal('view-modal');
-    loadLeads();
+    if(data.success){
+      showToast('✅ Follow-up email sent to '+AdminApp.state.current.email);
+      closeModal('view-modal');
+      loadLeads();
+    } else {
+      showToast('Error: '+(data.error||'Check Apps Script'),true);
+    }
   } catch(e){ 
     showToast('Error sending follow-up: '+e.message,true); 
+  }
+  if(btn) {
+    btn.innerHTML = origTxt;
+    btn.disabled = false;
   }
 }
 
@@ -1499,15 +1520,21 @@ function renderVerifiedTable(rows){
       '<td><div class="ab-gap">'+
         '<button class="ab ab-orange" onclick="openViewModal('+i+')">Send</button>'+ 
         '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+ 
-        '<button class="ab ab-green" onclick="sendReport('+i+')">Resend Report</button>'+
+        '<button class="ab ab-green" onclick="sendReport(this, '+i+')">Resend Report</button>'+
       '</div></td>'+ 
     '</tr>';
   }).join('');
 }
 
-async function sendPaymentRequest(){
+async function sendPaymentRequest(btn){
   if(!AdminApp.state.current||!AdminApp.state.current.email){showToast('No lead selected',true);return;}
   var wiseLink = ''; // Will fall back to Config sheet on backend
+  var origTxt = '';
+  if(btn) {
+    origTxt = btn.innerHTML;
+    btn.innerHTML = '<div class="spin" style="width:12px;height:12px;border-width:2px;margin-right:4px;"></div> Sending...';
+    btn.disabled = true;
+  }
   try{
     var res  = await fetch(AdminApp.config.SHEET_URL,{method:'POST',body:JSON.stringify({
       action:'sendPaymentRequestEmail',
@@ -1517,9 +1544,17 @@ async function sendPaymentRequest(){
       wiseLink:wiseLink
     })});
     var data = await res.json();
-    if(data.success){showToast('✅ Payment request sent to '+AdminApp.state.current.email);}
+    if(data.success){
+      showToast('✅ Payment request sent to '+AdminApp.state.current.email);
+      closeModal('view-modal');
+      loadLeads();
+    }
     else{showToast('Error: '+(data.error||'Check Apps Script'),true);}
   }catch(e){showToast('Failed: '+e.message,true);}
+  if(btn) {
+    btn.innerHTML = origTxt;
+    btn.disabled = false;
+  }
 }
 
 function copyTrackerLink() {
