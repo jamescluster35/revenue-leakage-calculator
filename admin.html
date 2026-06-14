@@ -368,6 +368,10 @@ button, input, select, textarea {
           <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Raw Calculation Inputs</div>
           <div id="view-calc-inputs-display" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:200px;overflow-y:auto;"></div>
         </div>
+        <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;">
+          <div style="font-size:10px;color:var(--or);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;">Submission History for this Client</div>
+          <div id="view-client-history" style="max-height:150px; overflow-y:auto; padding-right:4px;"></div>
+        </div>
       </div>
       <div id="view-summary-container" style="display:none; margin-bottom:20px;"></div>
 
@@ -1286,6 +1290,28 @@ function openViewModal(i){
     }
   } else {
     calcInputsDisplayDiv.innerHTML = '<div style="color:var(--mu);">No calculation inputs recorded.</div>';
+  }
+
+  // Populate Client History
+  var historyDiv = document.getElementById('view-client-history');
+  if (historyDiv) {
+    var historyLeads = AdminApp.state.leads.filter(function(lead) {
+      return lead.email && l.email && lead.email.toLowerCase().trim() === l.email.toLowerCase().trim() && lead.id !== l.id;
+    });
+    if (historyLeads.length > 0) {
+      var historyHtml = historyLeads.map(function(hl) {
+        return `<div class="irow" style="border-bottom: 1px dashed var(--border); padding: 8px 0; align-items: center;">
+          <span style="font-weight: 500;">${esc(hl.date || '—')} (${esc(hl.niche || '—')})</span>
+          <span style="color:var(--mu); font-size:11px; text-align:right;">
+            Leakage: <span style="color:var(--rd); font-weight: 600;">$${Number(hl.totalLeakage||0).toLocaleString()}</span> | 
+            Status: <span style="font-weight:600; color:var(--or);">${esc(hl.paidReport || 'New')}</span>
+          </span>
+        </div>`;
+      }).join('');
+      historyDiv.innerHTML = historyHtml;
+    } else {
+      historyDiv.innerHTML = '<div style="color:var(--mu); font-style: italic; font-size: 11px; padding: 4px 0;">No prior submission history found for this client.</div>';
+    }
   }
 
   document.getElementById('view-modal').classList.add('open');

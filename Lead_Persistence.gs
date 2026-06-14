@@ -105,6 +105,26 @@ function saveCalculatorLead(lead) {
   const sheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS);
   if (!lead.id) lead.id = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase(); 
 
+  // Spam & Rate Limit Protection
+  if (lead.email) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) {
+      return { error: 'Invalid email address.' };
+    }
+    if (lead.business && lead.business.trim().length < 2) {
+      return { error: 'Invalid business name.' };
+    }
+    const emailKey = 'rl_' + String(lead.email).toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const cache = CacheService.getScriptCache();
+    const lastTime = cache.get(emailKey);
+    if (lastTime) {
+      const elapsed = Date.now() - Number(lastTime);
+      if (elapsed < 30000) { // 30s throttle
+        return { error: 'Rate limit exceeded. Please wait a few seconds before resubmitting.' };
+      }
+    }
+    cache.put(emailKey, String(Date.now()), 60); // Store for 1 minute
+  }
+
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
   const idCol = headers.indexOf('id');
@@ -114,7 +134,6 @@ function saveCalculatorLead(lead) {
   let rowIndex = -1;
   for (let i = 1; i < data.length; i++) {
     if (lead.id && String(data[i][idCol]||'').trim() === String(lead.id)) { rowIndex = i + 1; break; }
-    if (lead.email && String(data[i][emailCol]||'').trim().toLowerCase() === String(lead.email).toLowerCase()) { rowIndex = i + 1; break; }
   }
 
   const rowValues = headers.map(h => {
