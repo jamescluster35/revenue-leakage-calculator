@@ -12,12 +12,8 @@ function runAllBackendTests() {
     testEscaping,
     testNicheRuleRetrieval,
     testLeakageCalculationLogic,
-<<<<<<< HEAD
     testLeakageCalculationMissingRevenue, // New test case
-    testGenerateAndSendReportEmptyLead, 
-=======
     testGenerateAndSendReportEmptyLead,
->>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
     testLeakageBenchmarkDefaulting,
     testPdfGenerationForAllNiches,
     testGetOrCreateSheetAppendsHeaders
@@ -74,7 +70,6 @@ function testLeakageCalculationLogic() {
   if (result.score === undefined) throw new Error("Health score generation missing.");
 }
 
-<<<<<<< HEAD
 /**
  * Verifies that calculateLeadLeakage correctly handles missing monthlyRevenue.
  */
@@ -93,26 +88,6 @@ function testLeakageCalculationMissingRevenue() {
   if (result.grade !== 'Needs Attention') throw new Error(`Default grade for missing revenue should be 'Needs Attention', got ${result.grade}`);
 }
 
-/**
- * Verifies that calculateLeadLeakage correctly handles missing monthlyRevenue.
- */
-function testLeakageCalculationMissingRevenue() {
-  const lead = {
-    monthlyRevenue: "", // Missing revenue
-    niche: 'general',
-    totalLeakage: 0 // Force calculation from revenue, which is 0
-  };
-
-  const result = calculateLeadLeakage(lead);
-
-  if (result.revenue !== 0) throw new Error(`Revenue should be 0, got ${result.revenue}`);
-  if (result.monthlyLeak !== 0) throw new Error(`Monthly leakage should be 0 when revenue and totalLeakage are 0, got ${result.monthlyLeak}`);
-  if (result.score !== 70) throw new Error(`Default score for missing revenue should be 70, got ${result.score}`); // 100 - (0.25 * 120) = 70
-  if (result.grade !== 'Needs Attention') throw new Error(`Default grade for missing revenue should be 'Needs Attention', got ${result.grade}`);
-}
-
-=======
->>>>>>> ba777e33fb73f769fbe38b1b5f9c172c93497715
 function testGenerateAndSendReportEmptyLead() {
   const lead = {};
   const toEmail = "test@example.com";
