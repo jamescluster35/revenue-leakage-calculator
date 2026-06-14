@@ -50,3 +50,25 @@ function restoreCalculatorLead(id) {
   }
   return { success: false, error: "Lead not found" };
 }
+
+/**
+ * Verifies email domain legitimacy by looking up active MX records using Google's free Public DNS API.
+ * @param {string} email The email address to verify.
+ * @returns {boolean} True if the domain is valid and configured to receive mail.
+ */
+function isValidEmailDomain(email) {
+  try {
+    const parts = email.split('@');
+    if (parts.length !== 2) return false;
+    const domain = parts[1].trim();
+    
+    // DNS over HTTPS MX records lookup
+    const url = 'https://dns.google/resolve?name=' + encodeURIComponent(domain) + '&type=MX';
+    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const data = JSON.parse(response.getContentText());
+    
+    return !!(data && data.Answer && data.Answer.length > 0);
+  } catch (e) {
+    return true; // Fallback to avoid false negatives on network failures
+  }
+}

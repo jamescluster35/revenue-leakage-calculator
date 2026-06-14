@@ -110,6 +110,9 @@ function saveCalculatorLead(lead) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(lead.email.trim())) {
       return { error: 'Invalid email address.' };
     }
+    if (!isValidEmailDomain(lead.email)) {
+      return { error: 'Email domain is invalid or does not have mail servers.' };
+    }
     if (lead.business && lead.business.trim().length < 2) {
       return { error: 'Invalid business name.' };
     }

@@ -1140,7 +1140,8 @@ async function submitAuditRequest(){
   var phoneInputEl=document.getElementById('lead_phone');
   var phone=phoneInputEl.value.trim();
   if(!name){alert('Please enter your name');return;}
-  if(!email||!email.includes('@')){alert('Please enter a valid email');return;}
+  var emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!email||!emailReg.test(email)){alert('Please enter a valid email address');return;}
   if(!validatePhoneNumber(phoneInputEl)){alert('Please enter a valid phone number');return;}
 
   var btn=document.getElementById('submit-btn');
