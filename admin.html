@@ -199,19 +199,19 @@ button, input, select, textarea {
       <div class="topbar-name">BDL Admin</div>
     </div>
     <div class="topbar-right">
-      <button class="tbtn" onclick="loadLeads()">↻ Refresh</button>
+      <button class="tbtn" onclick="loadLeads()">Refresh</button>
       <button class="tbtn-out" onclick="doLogout()">Sign out</button>
     </div>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
-    <div class="tab active" onclick="switchTab('requests',this)">📋 Audit Requests <span class="tab-badge" id="req-count">0</span></div>
-    <div class="tab" onclick="switchTab('all',this)">👥 All Leads <span class="tab-badge" id="all-count" style="background:var(--mu)">0</span></div>
-    <div class="tab" onclick="switchTab('verified',this)">✅ Verified Payments <span class="tab-badge" id="paid-count" style="background:var(--gn)">0</span></div>
-    <div class="tab" onclick="switchTab('deleted',this)">🗑 Deleted</div>
-    <div class="tab" onclick="switchTab('templates',this)">✉️ Email Templates</div>
-    <div class="tab" onclick="switchTab('preview',this)">📄 Report Preview</div>
+    <div class="tab active" onclick="switchTab('requests',this)">Audit Requests <span class="tab-badge" id="req-count">0</span></div>
+    <div class="tab" onclick="switchTab('all',this)">All Leads <span class="tab-badge" id="all-count" style="background:var(--mu)">0</span></div>
+    <div class="tab" onclick="switchTab('verified',this)">Verified Payments <span class="tab-badge" id="paid-count" style="background:var(--gn)">0</span></div>
+    <div class="tab" onclick="switchTab('deleted',this)">Deleted</div>
+    <div class="tab" onclick="switchTab('templates',this)">Email Templates</div>
+    <div class="tab" onclick="switchTab('preview',this)">Report Preview</div>
   </div>
 
   <div class="content">
@@ -308,7 +308,7 @@ button, input, select, textarea {
           <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Report Preview</div>
           <div style="font-size:13px;color:var(--mu);">This is how the report looks when sent to a client. Data is automatically filled from their calculator submission.</div>
         </div>
-        <button class="tbtn" onclick="renderReportPreview()" style="white-space:nowrap; color:var(--or);">↻ Refresh Preview</button>
+        <button class="tbtn" onclick="renderReportPreview()" style="white-space:nowrap; color:var(--or);">Refresh Preview</button>
       </div>
       <div id="report-preview-content"></div>
     </div>
@@ -390,13 +390,13 @@ button, input, select, textarea {
       </div>
     </div>
     <div class="mc-foot mc-foot-split">
-      <button class="btn-danger" onclick="confirmDelete()">🗑 Delete</button>
+      <button class="btn-danger" onclick="confirmDelete()">Delete</button>
       <div class="mc-foot-right">
-        <button class="btn-primary" onclick="copyTrackerLink()" style="background:var(--mu);">🔗 Copy Link</button>
-        <button class="btn-primary" id="dl-pdf-btn" onclick="downloadPdf()" style="background:var(--bl);">📄 PDF</button>
-        <button class="btn-primary" onclick="closeModal('view-modal');sendPaymentRequest();" style="background:var(--bl);">💳 Payment Link</button>
-        <button class="btn-primary" onclick="sendFollowUp()" style="background:#10B981;">📨 Follow-up</button>
-        <button class="btn-success" id="send-btn" onclick="sendReport()">📧 Send Report</button>
+        <button class="btn-primary" onclick="copyTrackerLink()" style="background:var(--mu);">Copy Link</button>
+        <button class="btn-primary" id="dl-pdf-btn" onclick="downloadPdf()" style="background:var(--bl);">Download PDF</button>
+        <button class="btn-primary" onclick="closeModal('view-modal');sendPaymentRequest();" style="background:var(--bl);">Payment Link</button>
+        <button class="btn-primary" onclick="sendFollowUp()" style="background:#10B981;">Follow-up</button>
+        <button class="btn-success" id="send-btn" onclick="sendReport()">Send Report</button>
         <button class="btn-secondary" onclick="closeModal('view-modal')">Close</button>
       </div>
     </div>
@@ -419,7 +419,7 @@ button, input, select, textarea {
     </div>
     <div class="mc-foot">
       <button class="btn-secondary" onclick="closeModal('paid-modal')">Cancel</button>
-      <button class="btn-success" onclick="confirmPaid()">Confirm Payment ✓</button>
+      <button class="btn-success" onclick="confirmPaid()">Confirm Payment</button>
     </div>
   </div>
 </div>
@@ -709,7 +709,7 @@ function renderDeletedTable() {
       '<td>' + esc(l.niche) + '</td>' +
       '<td>$' + Number(l.totalLeakage).toLocaleString() + '</td>' +
       '<td>' + esc(l.date) + '</td>' +
-      '<td><button class="ab ab-orange" onclick="restoreLead(\'' + l.id + '\')">↩ Restore</button></td>' +
+      '<td><button class="ab ab-orange" onclick="restoreLead(\'' + l.id + '\')">Restore</button></td>' +
       '</tr>';
   }).join('');
 }
@@ -1180,11 +1180,11 @@ function renderTable(tbodyId, rows, isReqs){
         '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+
         '<td>'+getStatusBadge(l)+'</td>'+
         '<td><div class="ab-gap">'+
-          (!l.paidReport || l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+
-          (l.paidReport==='Payment Pending'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">✓ Paid</button>':'')+ // Allow marking as paid from pending
-          (l.paidReport==='Paid'?'<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>':'')+
+          (!l.paidReport || l.paidReport==='Requested'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">Paid</button>':'')+
+          (l.paidReport==='Payment Pending'?'<button class="ab ab-green" onclick="openPaidModal('+i+')">Paid</button>':'')+ // Allow marking as paid from pending
+          (l.paidReport==='Paid'?'<button class="ab ab-orange" onclick="openViewModal('+i+')">Send</button>':'')+
           '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
-          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
+          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">Delete</button>'+
         '</div></td>'+
       '</tr>';
     }).join('');
@@ -1200,7 +1200,7 @@ function renderTable(tbodyId, rows, isReqs){
         '<td>'+getStatusBadge(l)+'</td>'+
         '<td><div class="ab-gap">'+
           '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+
-          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">🗑</button>'+
+          '<button class="ab ab-red" onclick="openDeleteModal('+i+')">Delete</button>'+
         '</div></td>'+
       '</tr>';
     }).join('');
@@ -1232,7 +1232,7 @@ function openViewModal(i){
   document.getElementById('summary-toggle').checked = false;
   toggleQuickSummary();
   var sendBtn = document.getElementById('send-btn');
-  sendBtn.textContent = (l.paidReport==='Paid' || l.paidReport==='Delivered') ? '📧 Send Report' : '📧 Send Summary';
+  sendBtn.textContent = (l.paidReport==='Paid' || l.paidReport==='Delivered') ? 'Send Report' : 'Send Summary';
 
   // Business info
   document.getElementById('view-biz-info').innerHTML = [
@@ -1413,7 +1413,7 @@ async function sendReport(){
       showToast('Error: '+(data.error||'Check Apps Script'),true);
     }
   } catch(e){ showToast('Failed — check Apps Script URL',true); }
-  btn.innerHTML = (AdminApp.state.current.paidReport==='Paid' || AdminApp.state.current.paidReport==='Delivered') ? '📧 Send Report' : '📧 Send Summary';
+  btn.innerHTML = (AdminApp.state.current.paidReport==='Paid' || AdminApp.state.current.paidReport==='Delivered') ? 'Send Report' : 'Send Summary';
   btn.disabled = false;
 }
 
@@ -1497,9 +1497,9 @@ function renderVerifiedTable(rows){
       '<td style="color:var(--mu);font-size:12px;">'+esc(l.paymentReference||'—')+'</td>'+ 
       '<td style="color:var(--mu);font-size:12px;">'+esc(l.date||'—')+'</td>'+ 
       '<td><div class="ab-gap">'+
-        '<button class="ab ab-orange" onclick="openViewModal('+i+')">📧 Send</button>'+ 
+        '<button class="ab ab-orange" onclick="openViewModal('+i+')">Send</button>'+ 
         '<button class="ab ab-blue" onclick="openViewModal('+i+')">View</button>'+ 
-        '<button class="ab ab-green" onclick="sendReport('+i+')">↻ Resend Report</button>'+
+        '<button class="ab ab-green" onclick="sendReport('+i+')">Resend Report</button>'+
       '</div></td>'+ 
     '</tr>';
   }).join('');
