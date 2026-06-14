@@ -793,3 +793,45 @@ function buildPaymentPdfHtml(lead) {
       </div>
     </body></html>`;
 }
+
+function sendAdminNotificationEmail(lead, isRequested) {
+  try {
+    const adminEmail = SETTINGS.ADMIN_EMAIL;
+    const adminDashboardUrl = SETTINGS.ADMIN_DASHBOARD_URL;
+    const subject = isRequested 
+      ? `🔥 New Audit Request: ${lead.business || 'Unknown'}` 
+      : `📊 New Calculator Lead: ${lead.business || 'Unknown'}`;
+    const body = `Hi Admin,\n\n` +
+                 (isRequested 
+                   ? `A new paid revenue audit has been requested!\n\n` 
+                   : `A new user completed a calculator submission.\n\n`) +
+                 `Business: ${lead.business || '—'}\n` +
+                 `Niche: ${lead.niche || '—'}\n` +
+                 `Contact Name: ${lead.name || '—'}\n` +
+                 `Email: ${lead.email || '—'}\n` +
+                 `Phone: ${lead.phone || '—'}\n` +
+                 `Estimated Monthly Leakage: $${Number(lead.totalLeakage || 0).toLocaleString()}\n\n` +
+                 `View Lead in Admin Dashboard: ${adminDashboardUrl}?search=${encodeURIComponent(lead.email)}`;
+    
+    MailApp.sendEmail(adminEmail, subject, body);
+  } catch (e) {
+    Logger.log("Admin notification email failed: " + e.toString());
+  }
+}
+
+function sendGoogleChatNotification(text) {
+  try {
+    const sheet = getConfigSheet();
+    if (!sheet) return;
+    const webhookUrl = String(sheet.getRange('A4').getValue()).trim();
+    if (!webhookUrl || !webhookUrl.startsWith("http")) return;
+    
+    UrlFetchApp.fetch(webhookUrl, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ text: text })
+    });
+  } catch (e) {
+    Logger.log("Google Chat notification failed: " + e.toString());
+  }
+}

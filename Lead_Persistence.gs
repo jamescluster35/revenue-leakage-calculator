@@ -126,6 +126,29 @@ function saveCalculatorLead(lead) {
   if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
   else sheet.appendRow(rowValues);
 
+  if (lead.email) {
+    const isRequested = lead.paidReport === 'Requested';
+    
+    // 1. Email notification to Admin
+    sendAdminNotificationEmail(lead, isRequested);
+    
+    // 2. Google Chat notification
+    let msg = "";
+    if (isRequested) {
+      msg = `🔥 *New Audit Request Received*\n` +
+            `*Business:* ${lead.business || '—'}\n` +
+            `*Niche:* ${lead.niche || '—'}\n` +
+            `*Contact:* ${lead.name || '—'} (${lead.email})\n` +
+            `*Phone:* ${lead.phone || '—'}\n` +
+            `*Est. Leakage:* $${Number(lead.totalLeakage || 0).toLocaleString()}/mo`;
+    } else {
+      msg = `📊 *New Calculator Submission*\n` +
+            `*Business:* ${lead.business || '—'} (${lead.niche || '—'})\n` +
+            `*Est. Leakage:* $${Number(lead.totalLeakage || 0).toLocaleString()}/mo`;
+    }
+    sendGoogleChatNotification(msg);
+  }
+
   if (lead.email && lead.paidReport === 'Requested') { lead.paidReport = 'Payment Pending'; sendConfirmationEmail(lead); }
   return { success: true };
 }
