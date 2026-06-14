@@ -819,19 +819,28 @@ function sendAdminNotificationEmail(lead, isRequested) {
   }
 }
 
-function sendGoogleChatNotification(text) {
+function sendWebhookNotification(text) {
   try {
     const sheet = getConfigSheet();
     if (!sheet) return;
     const webhookUrl = String(sheet.getRange('A4').getValue()).trim();
     if (!webhookUrl || !webhookUrl.startsWith("http")) return;
     
+    let payload = {};
+    if (webhookUrl.includes("discord.com")) {
+      // Discord uses 'content'
+      payload = { content: text };
+    } else {
+      // Google Chat and Slack use 'text'
+      payload = { text: text };
+    }
+    
     UrlFetchApp.fetch(webhookUrl, {
       method: "post",
       contentType: "application/json",
-      payload: JSON.stringify({ text: text })
+      payload: JSON.stringify(payload)
     });
   } catch (e) {
-    Logger.log("Google Chat notification failed: " + e.toString());
+    Logger.log("Webhook notification failed: " + e.toString());
   }
 }

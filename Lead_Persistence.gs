@@ -146,7 +146,7 @@ function saveCalculatorLead(lead) {
             `*Business:* ${lead.business || '—'} (${lead.niche || '—'})\n` +
             `*Est. Leakage:* $${Number(lead.totalLeakage || 0).toLocaleString()}/mo`;
     }
-    sendGoogleChatNotification(msg);
+    sendWebhookNotification(msg);
   }
 
   if (lead.email && lead.paidReport === 'Requested') { lead.paidReport = 'Payment Pending'; sendConfirmationEmail(lead); }
