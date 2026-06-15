@@ -150,7 +150,7 @@ function handleRequest(e) {
     
     // Tracker Actions
     'getTrackerData': (data) => getTracker(data.trackerId, data.email),
-    'saveTrackerData': (data) => saveTracker(data.trackerId, data.tracker),
+    'saveTrackerData': (data) => saveTracker(data.trackerId, data.tracker, data.email),
 
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,
@@ -178,7 +178,7 @@ function handleRequest(e) {
  * @param {string} trackerId The ID of the tracker (usually the lead's ID).
  * @returns {object} A JSON response containing success status, lead data, and tracker data, or an error message.
  */
-function getTracker(trackerId) {
+function getTracker(trackerId, submittedEmail) {
   const leadSheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS); // Use utility function
   const trackerSheet = getOrCreateSheet(SHEETS.TRACKER, DEFAULT_TRACKER_HEADERS);
   
@@ -199,17 +199,41 @@ function getTracker(trackerId) {
   // ── EMAIL VERIFICATION GATE ──────────────────────────
   // If an email is provided, verify it matches the lead on record.
   // This prevents anyone who guesses a tracker ID from seeing another client's data.
-  if (trackerId && arguments[1]) {
-    const submittedEmail = String(arguments[1]).trim().toLowerCase();
+  if (trackerId && submittedEmail) {
+    const inputEmail = String(submittedEmail).trim().toLowerCase();
     const leadEmail = String(lead.email || '').trim().toLowerCase();
-    if (submittedEmail !== leadEmail) {
+    if (inputEmail !== leadEmail) {
       return { error: 'Tracker not found' }; // Generic error — don't reveal the ID is valid
     }
   }
   // ─────────────────────────────────────────────────────
 
   // Engagement alert to admin
-  try {\r\n    const adminEmail = SETTINGS.ADMIN_EMAIL; \r\n    const adminDashboardUrl = SETTINGS.ADMIN_DASHBOARD_URL;\r\n    const subject = "👀 Tracker Viewed: " + (lead.business || "Unknown Business");\r\n    const body = `The 90-day action tracker for ${lead.business} (${lead.email}) has just been viewed.\n\n` +\r\n                 `View Time: ${new Date().toLocaleString()}\n\n` +\r\n                 `View Lead in Admin: ${adminDashboardUrl}?search=${encodeURIComponent(lead.email)}`;\r\n    \r\n    MailApp.sendEmail(adminEmail, subject, body);\r\n  } catch (e) {\r\n    Logger.log("Tracker notification error: " + e.toString());\r\n  }\r\n\r\n  // Get Saved Progress\r\n  const progressData = trackerSheet.getDataRange().getValues();\r\n  let tracker = {};\r\n  for (let row of progressData) {\r\n    if (row[0] == trackerId) {\r\n      try { tracker = JSON.parse(row[1]); } catch(e) {}\r\n      break;\r\n    }\r\n  }\r\n \r\n  return { success: true, lead: lead, tracker: tracker };\r\n}
+  try {
+    const adminEmail = SETTINGS.ADMIN_EMAIL; 
+    const adminDashboardUrl = SETTINGS.ADMIN_DASHBOARD_URL;
+    const subject = "👀 Tracker Viewed: " + (lead.business || "Unknown Business");
+    const body = `The 90-day action tracker for ${lead.business} (${lead.email}) has just been viewed.\n\n` +
+                 `View Time: ${new Date().toLocaleString()}\n\n` +
+                 `View Lead in Admin: ${adminDashboardUrl}?search=${encodeURIComponent(lead.email)}`;
+    
+    MailApp.sendEmail(adminEmail, subject, body);
+  } catch (e) {
+    Logger.log("Tracker notification error: " + e.toString());
+  }
+
+  // Get Saved Progress
+  const progressData = trackerSheet.getDataRange().getValues();
+  let tracker = {};
+  for (let row of progressData) {
+    if (row[0] == trackerId) {
+      try { tracker = JSON.parse(row[1]); } catch(e) {}
+      break;
+    }
+  }
+ 
+  return { success: true, lead: lead, tracker: tracker };
+}
 
 // ── CRM Tab Operations ────────────────────────────────
 
@@ -218,8 +242,34 @@ function getTracker(trackerId) {
  * If the tracker ID exists, its data is updated; otherwise, a new entry is appended.
  * @param {string} trackerId The ID of the tracker.
  * @param {object} tracker The tracker data object to save.
+ * @param {string} submittedEmail The email address used to verify the request.
  */
-function saveTracker(trackerId, tracker) {
+function saveTracker(trackerId, tracker, submittedEmail) {
+  // First, verify the email belongs to the trackerId
+  const leadSheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS);
+  const leads = leadSheet.getDataRange().getValues();
+  const headers = leads.shift();
+  let lead = null;
+  for (let row of leads) {
+    if (row[0] == trackerId) {
+      lead = {};
+      headers.forEach((h, i) => lead[h] = row[i]);
+      break;
+    }
+  }
+
+  if (!lead) return { error: 'Tracker not found' };
+
+  if (submittedEmail) {
+    const inputEmail = String(submittedEmail).trim().toLowerCase();
+    const leadEmail = String(lead.email || '').trim().toLowerCase();
+    if (inputEmail !== leadEmail) {
+      return { error: 'Tracker not found' };
+    }
+  } else {
+    return { error: 'Email verification required' };
+  }
+
   const sheet = getOrCreateSheet(SHEETS.TRACKER, DEFAULT_TRACKER_HEADERS); // Use utility function
   const data = sheet.getDataRange().getValues(); // Re-fetch data after potential header creation
   const stringified = JSON.stringify(tracker);

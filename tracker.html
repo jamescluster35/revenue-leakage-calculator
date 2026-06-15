@@ -372,7 +372,8 @@ async function saveProgress(){
       body: JSON.stringify({
         action: 'saveTrackerData',
         trackerId: TrackerApp.state.id,
-        tracker: TrackerApp.state.tracker
+        tracker: TrackerApp.state.tracker,
+        email: TrackerApp.state.email
       })
     });
     renderTracker();
