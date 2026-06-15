@@ -114,7 +114,8 @@ function handleRequest(e) {
   const protectedActions = [
     'getAll', 'moveLead', 'deleteLead', 'archiveLead', 'promoteClient', 'restoreLead',
     'getCalculatorLeads', 'updateCalculatorLead', 'markPaymentPaid', 'deleteCalculatorLead', 
-    'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'dailyBackupToDrive'
+    'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'dailyBackupToDrive',
+    'setupRemindersTrigger', 'sendFollowUpReminders'
   ];
 
   if (protectedActions.includes(action) && authKey !== getAdminPassword()) {
@@ -162,6 +163,8 @@ function handleRequest(e) {
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,
     'inspectSpreadsheet': inspectSpreadsheet,
+    'setupRemindersTrigger': setupRemindersTrigger,
+    'sendFollowUpReminders': (data) => sendFollowUpReminders(),
   };
 
   try {
@@ -731,3 +734,128 @@ function inspectSpreadsheet() {
     details: results
   };
 }
+
+/**
+ * Daily Follow-Up Reminders
+ * Scans the Leads sheet for follow-up dates that are today or in the past
+ * and posts alerts to Google Chat webhook and emails the user.
+ */
+function sendFollowUpReminders() {
+  try {
+    const leads = getTabData(SHEETS.LEADS);
+    if (!leads || leads.length === 0) {
+      Logger.log("No leads found in Leads sheet.");
+      return { success: true, message: "No leads found" };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const overdueLeads = leads.filter(lead => {
+      if (!lead.followUpDate) return false;
+      const fDate = new Date(lead.followUpDate);
+      if (isNaN(fDate.getTime())) return false;
+      fDate.setHours(0, 0, 0, 0);
+      
+      // Keep active stages, and those that are due/overdue
+      return fDate <= today && lead.status !== 'Closed' && lead.status !== 'Cold';
+    });
+
+    if (overdueLeads.length === 0) {
+      Logger.log("No overdue follow-up leads today.");
+      return { success: true, message: "No overdue leads" };
+    }
+
+    // Build Chat notification and Email HTML
+    let chatMsg = `⏰ *Daily CRM Follow-up Reminders (${overdueLeads.length} Lead(s) Due)*\n\n`;
+    let emailHtml = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #08090C; color: #E8EAF0; border-radius: 16px;">
+      <div style="text-align: center; padding: 20px 0;">
+        <div style="color: #F97316; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase;">BDL CRM REMINDERS</div>
+      </div>
+      <div style="background: #0F1117; border: 1px solid #1E2230; border-radius: 12px; padding: 32px;">
+        <h2 style="color: #fff; margin-top: 0; font-size: 22px;">Daily Follow-up Reminders</h2>
+        <p style="color: #9CA3AF; line-height: 1.6; font-size: 14px;">The following leads are due or overdue for a follow-up action today:</p>
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px;">
+    `;
+
+    overdueLeads.forEach((lead, index) => {
+      const contact = lead.contact || lead.name || 'Unknown Contact';
+      const company = lead.company || lead.business || 'Unknown Company';
+      const dateStr = lead.followUpDate;
+      const notes = lead.notes || 'No notes available';
+      const status = lead.status || 'New';
+      const niche = lead.niche || '—';
+
+      chatMsg += `• *${index + 1}. ${contact}* (${company})\n` +
+                 `  - *Niche:* ${niche} | *Status:* ${status}\n` +
+                 `  - *Due Date:* ${dateStr}\n` +
+                 `  - *Notes:* ${notes}\n\n`;
+
+      emailHtml += `
+        <tr>
+          <td style="background-color: #141720; border: 1px solid #1E2230; padding: 20px; border-radius: 10px; margin-bottom: 15px; display: block;">
+            <div style="font-size: 16px; font-weight: bold; color: #F97316; margin-bottom: 4px;">${index + 1}. ${esc(contact)}</div>
+            <div style="font-size: 14px; color: #E8EAF0; margin-bottom: 8px;"><strong>Company:</strong> ${esc(company)}</div>
+            <div style="font-size: 13px; color: #9CA3AF; margin-bottom: 4px;"><strong>Niche:</strong> ${esc(niche)} | <strong>Status:</strong> ${esc(status)}</div>
+            <div style="font-size: 13px; color: #9CA3AF; margin-bottom: 8px;"><strong>Due Date:</strong> ${esc(dateStr)}</div>
+            <div style="font-size: 13px; color: #9CA3AF; border-top: 1px solid #1E2230; padding-top: 8px;"><strong>Notes:</strong> ${esc(notes)}</div>
+          </td>
+        </tr>
+        <tr><td style="height: 12px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+      `;
+    });
+
+    emailHtml += `
+        </table>
+        <div style="margin-top: 24px; text-align: center;">
+          <a href="${SETTINGS.ADMIN_DASHBOARD_URL}" style="display: inline-block; background: #F97316; color: #fff; text-align: center; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">Open CRM Admin Portal →</a>
+        </div>
+      </div>
+      <p style="text-align: center; font-size: 11px; color: #4B5563; margin-top: 20px;">BDL Revenue Intelligence • Automated Reminder</p>
+    </div>
+    `;
+
+    // Send email to admin
+    const adminEmail = SETTINGS.ADMIN_EMAIL;
+    MailApp.sendEmail({
+      to: adminEmail,
+      subject: `⏰ Daily Follow-up Reminders: ${overdueLeads.length} Lead(s) Due`,
+      htmlBody: emailHtml,
+      name: 'BDL CRM Reminders'
+    });
+
+    // Send Chat webhook notification
+    sendWebhookNotification(chatMsg);
+
+    return { success: true, message: `Follow-up reminders sent for ${overdueLeads.length} leads` };
+  } catch (e) {
+    Logger.log("Error in sendFollowUpReminders: " + e.toString());
+    return { error: e.toString() };
+  }
+}
+
+/**
+ * Registers/re-creates the daily time-driven trigger at 9 AM.
+ */
+function setupRemindersTrigger() {
+  try {
+    const triggerName = 'sendFollowUpReminders';
+    const triggers = ScriptApp.getProjectTriggers();
+    for (let trigger of triggers) {
+      if (trigger.getHandlerFunction() === triggerName) {
+        ScriptApp.deleteTrigger(trigger);
+      }
+    }
+    ScriptApp.newTrigger(triggerName)
+      .timeBased()
+      .everyDays(1)
+      .atHour(9)
+      .create();
+    Logger.log("Trigger created for sendFollowUpReminders at 9 AM daily.");
+    return { success: true, message: "Trigger created for 9 AM daily" };
+  } catch (e) {
+    return { error: e.toString() };
+  }
+}
+
