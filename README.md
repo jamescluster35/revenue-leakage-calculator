@@ -100,3 +100,13 @@ To compile a fresh preview of the interactive client PDF report layout inside `p
 ```powershell
 ./scripts/build_sample.ps1
 ```
+
+---
+
+## ⏰ Daily Follow-Up Reminders Trigger
+The system includes an automated follow-up check (`sendFollowUpReminders` inside `Code.gs`) that runs at 9:00 AM daily. It filters leads with a due follow-up date and alerts you via:
+* **Email:** An HTML summary digest sent to `jamescluster35@gmail.com`.
+* **Webhook:** An alert posted to the Google Chat Webhook URL (configured in the Google Sheets `Config` sheet cell A4).
+
+To set up or refresh the daily time-driven trigger, click the **Setup Daily 9 AM Trigger** button inside the CRM's **Prospect Finder** page, or execute `setupRemindersTrigger()` directly from the Google Apps Script editor.
+
