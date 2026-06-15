@@ -1592,7 +1592,7 @@ function copyTrackerLink() {
     showToast('No lead ID available', true);
     return;
   }
-  var baseUrl = window.location.href.split('admin.html')[0];
+  var baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
   var trackerUrl = baseUrl + 'tracker.html?id=' + encodeURIComponent(AdminApp.state.current.id);
   navigator.clipboard.writeText(trackerUrl).then(function() {
     showToast('✅ Tracker link copied to clipboard');
