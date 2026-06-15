@@ -1,6 +1,6 @@
 # 📈 Revenue Audit & 90-Day Tracker System
 
-This project is a hybrid revenue diagnostic tool and client-tracking CRM built for **BDL Revenue Intelligence**. It is composed of a serverless Google Apps Script API backend, an offline administrator management panel, and a client-facing web frontend.
+This project is a hybrid revenue diagnostic tool and client-tracking CRM built for **BDL Revenue Intelligence**. It is composed of a serverless Google Apps Script API backend, an administrator management panel, and a client-facing web frontend.
 
 ---
 
@@ -13,7 +13,6 @@ calculator/
 ├── .clasp.json          # Clasp Google Script configuration (Private)
 ├── .claspignore         # Ignores HTML/Tests during push (Private)
 ├── .git/                # Version control configuration (Private)
-├── admin.html           # Administrator Dashboard (Private / Offline)
 ├── appsscript.json      # Apps Script configuration (Private)
 ├── Code.gs              # Backend Script router and endpoint logic (Private)
 ├── Core_Logic.gs        # Core business calculation engine (Private)
@@ -24,6 +23,7 @@ calculator/
 ├── public/              # PUBLIC SITE ROOT (Hosted on Cloudflare Pages)
 │   ├── index.html       # Public Revenue Leakage Calculator (Client View)
 │   ├── tracker.html     # Secure 90-Day Progress Tracker (Client View)
+│   ├── admin_portal_bdl.html # Secure Online Admin Dashboard (Secret Admin URL)
 │   └── sample_report.html # Live interactive diagnostic report template
 │
 ├── tests/               # Local developer test suites
@@ -52,8 +52,8 @@ To keep your proprietary calculations, spreadsheets, and database endpoints 100%
    All `.gs` files run exclusively on Google's cloud servers. The browser only interacts with the Web App URL via JSON API payloads, meaning the client never sees the calculations or database credentials.
 2. **Private GitHub Repository:** 
    Maintain this GitHub repository as **Private**. Cloudflare Pages integrates securely with private repositories to deploy frontend updates automatically without exposing code to search engines or the public.
-3. **Frontend Isolation (`/public` directory):** 
-   Only the files inside the `/public` folder are hosted on the web. The root-level administrative panel (`admin.html`) is kept offline and cannot be loaded by public web visitors.
+3. **Admin Dashboard Security:** 
+   Your admin dashboard is renamed to `admin_portal_bdl.html` (Security by Obscurity). It fetches no data directly. Instead, it queries Google Apps Script on the fly and is fully blocked until your Google Sheets `Config` sheet Cell A1 password check passes.
 
 ---
 
@@ -65,7 +65,11 @@ When setting up your Cloudflare Pages project pointing to this private GitHub re
 * **Build Command:** Leave blank
 * **Root Directory (or Output Directory):** Set to `public` (or `/public`)
 
-This ensures that only the files in the `/public` folder (`index.html`, `tracker.html`, `sample_report.html`) are live at `audit.dataconnectmail.com`.
+This ensures that all four frontend files are hosted under your custom domain `audit.dataconnectmail.com`:
+* **Calculator:** `https://audit.dataconnectmail.com`
+* **Tracker:** `https://audit.dataconnectmail.com/tracker.html`
+* **Admin Panel:** `https://audit.dataconnectmail.com/admin_portal_bdl.html`
+* **Sample Report:** `https://audit.dataconnectmail.com/sample_report.html`
 
 ### 2. Google Apps Script Backend (API Hosting)
 To push changes to the backend API:
@@ -96,6 +100,3 @@ To compile a fresh preview of the interactive client PDF report layout inside `p
 ```powershell
 ./scripts/build_sample.ps1
 ```
-
-### Run Administrator Dashboard
-Double-click `admin.html` in your local file explorer to run the CRM control panel offline. It connects securely to your active Google Web App endpoint.
