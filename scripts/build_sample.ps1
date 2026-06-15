@@ -1,5 +1,5 @@
-$core = Get-Content -Path "Core_Logic.gs" -Raw
-$templates = Get-Content -Path "Email_PDF_Templates.gs" -Raw
+$core = Get-Content -Path "$PSScriptRoot\..\Core_Logic.gs" -Raw
+$templates = Get-Content -Path "$PSScriptRoot\..\Email_PDF_Templates.gs" -Raw
 
 $htmlTop = @"
 <!DOCTYPE html>
@@ -45,4 +45,4 @@ document.write(buildFullPdfReportHtml(mockLead, "This is a custom note added by 
 "@
 
 $result = $htmlTop + "`n" + $core + "`n" + $templates + "`n" + $htmlBottom
-Set-Content -Path "sample_report.html" -Value $result
+Set-Content -Path "$PSScriptRoot\..\public\sample_report.html" -Value $result

@@ -21,4 +21,4 @@ jobs:
           node-version: '20'
 
       - name: Execute Test Suite
-        run: node unit_tests.js
+        run: node tests/unit_tests.js

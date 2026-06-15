@@ -1,56 +1,101 @@
-# Revenue Audit Calculator (Google Apps Script)
+# 📈 Revenue Audit & 90-Day Tracker System
 
-This project is a revenue audit and lead management calculator built to run on Google Apps Script. It serves both as a frontend tool to calculate potential revenue leakage for different business niches and a backend CRM system powered by Google Sheets.
+This project is a hybrid revenue diagnostic tool and client-tracking CRM built for **BDL Revenue Intelligence**. It is composed of a serverless Google Apps Script API backend, an offline administrator management panel, and a client-facing web frontend.
 
-## 📂 Project Structure
+---
 
-### Backend (Google Apps Script - `.gs`)
-- **`Code.gs`**: The main entry point for the Apps Script Web App. It handles the `doGet` and `doPost` requests and routes them to the appropriate functions.
-- **`Core_Logic.gs`**: Contains the core business logic, including the revenue leakage calculations for various niches (Dental, Real Estate, SaaS, Restaurant).
-- **`Lead_Persistence.gs`**: Handles all interactions with the Google Sheets "database" (saving new leads, moving leads between tabs, updating statuses).
-- **`Email_PDF_Templates.gs`**: Handles the generation of PDF reports and the logic for sending out automated confirmation or follow-up emails via `MailApp`.
-- **`Helpers.gs`**: Miscellaneous utility and helper functions.
-- **`Tests.gs`**: Native Google Apps Script test functions that can be run directly within the Apps Script editor.
+## 📁 Project Directory Layout
 
-### Frontend (HTML/JS/CSS)
-- **`index.html`**: The main client-facing revenue calculator interface.
-- **`admin.html`**: An admin dashboard view for managing leads, tracking metrics, and processing client status.
-- **`tracker.html`**: An additional view likely used for tracking outreach or sales pipeline stages.
-- **`sample_report.html`**: An HTML template used to generate the final PDF report sent to clients.
+The repository has been structured to isolate development test blocks, legacy scratch tools, and public client interfaces:
 
-### Local Testing & CI/CD
-- **`unit_tests.js`**: A standalone Node.js file containing unit tests for the core calculation logic. It can be run locally without deploying to Apps Script.
-- **`unit-tests.yml`**: A GitHub Actions workflow configuration that automatically runs `unit_tests.js` on pushes or pull requests to the main branch.
-
-### Other
-- **`Checkcode.txt`**: A backup or consolidated text file containing a snapshot of the backend Google Apps Script logic.
-
-## 🚀 How to Run & Deploy
-
-### Local Unit Tests
-To verify the core calculation logic locally, ensure you have [Node.js](https://nodejs.org/) installed, then run:
-```bash
-node unit_tests.js
+```
+calculator/
+├── .clasp.json          # Clasp Google Script configuration (Private)
+├── .claspignore         # Ignores HTML/Tests during push (Private)
+├── .git/                # Version control configuration (Private)
+├── admin.html           # Administrator Dashboard (Private / Offline)
+├── appsscript.json      # Apps Script configuration (Private)
+├── Code.gs              # Backend Script router and endpoint logic (Private)
+├── Core_Logic.gs        # Core business calculation engine (Private)
+├── Email_PDF_Templates.gs # PDF generation and transactional email templates (Private)
+├── Helpers.gs           # General GAS utility functions (Private)
+├── Tests.gs             # Native Google Apps Script test suite (Private)
+│
+├── public/              # PUBLIC SITE ROOT (Hosted on Cloudflare Pages)
+│   ├── index.html       # Public Revenue Leakage Calculator (Client View)
+│   ├── tracker.html     # Secure 90-Day Progress Tracker (Client View)
+│   └── sample_report.html # Live interactive diagnostic report template
+│
+├── tests/               # Local developer test suites
+│   └── unit_tests.js    # Local Node.js test runner for calculations
+│
+├── scripts/             # Local build and development scripts
+│   ├── build_sample.ps1 # Compiles Core_Logic and Templates into sample_report.html
+│   └── legacy/          # Archived scratch files and history snippets
+│       ├── Checkcode.txt
+│       ├── fix.ps1
+│       ├── fix.py
+│       ├── fix_link.py
+│       ├── fix_receipt.py
+│       ├── remove_lines.py
+│       └── splice.ps1
+└── README.md            # System Reference Documentation
 ```
 
-### Deploying to Google Apps Script
-Because this relies on Google Sheets (`SpreadsheetApp`) and Google Mail (`MailApp`), it must be hosted as a Google Apps Script Web App.
+---
 
-#### Prerequisites
-Your linked Google Sheet must contain the following tabs for the backend to function correctly:
-- `Leads`
-- `Archived`
-- `Deleted`
-- `Clients`
-- `Calculator Leads`
-- `Config` (Cell A1 should contain your admin password)
+## 🔒 Security Architecture (Hiding Code & Logic)
 
-#### Deployment Steps (Using `clasp`)
-1. Install clasp globally: `npm install -g @google/clasp`
-2. Log in to your Google Account: `clasp login`
-3. Initialize the project: `clasp create --type standalone --title "Revenue Calculator"`
-4. Push the code: `clasp push`
-5. Open the project in your browser: `clasp open`
-6. In the Apps Script editor, click **Deploy > New deployment**, select **Web app**, configure access permissions, and click **Deploy**.
+To keep your proprietary calculations, spreadsheets, and database endpoints 100% confidential and hidden from the public eye:
 
-Alternatively, you can manually copy and paste the `.gs` and `.html` files into a script bound to a Google Sheet via **Extensions > Apps Script**.
+1. **Server-Side Execution (GAS):** 
+   All `.gs` files run exclusively on Google's cloud servers. The browser only interacts with the Web App URL via JSON API payloads, meaning the client never sees the calculations or database credentials.
+2. **Private GitHub Repository:** 
+   Maintain this GitHub repository as **Private**. Cloudflare Pages integrates securely with private repositories to deploy frontend updates automatically without exposing code to search engines or the public.
+3. **Frontend Isolation (`/public` directory):** 
+   Only the files inside the `/public` folder are hosted on the web. The root-level administrative panel (`admin.html`) is kept offline and cannot be loaded by public web visitors.
+
+---
+
+## 🚀 Deployment Instructions
+
+### 1. Cloudflare Pages (Frontend Hosting)
+When setting up your Cloudflare Pages project pointing to this private GitHub repository:
+* **Framework Preset:** None (Static site)
+* **Build Command:** Leave blank
+* **Root Directory (or Output Directory):** Set to `public` (or `/public`)
+
+This ensures that only the files in the `/public` folder (`index.html`, `tracker.html`, `sample_report.html`) are live at `audit.dataconnectmail.com`.
+
+### 2. Google Apps Script Backend (API Hosting)
+To push changes to the backend API:
+1. Ensure Clasp is installed and authenticated:
+   ```bash
+   npm install -g @google/clasp
+   clasp login
+   ```
+2. Push script code using the force flag:
+   ```bash
+   clasp push --force
+   ```
+   *(Note: The `.claspignore` rules will automatically prevent any html files, tests, or local scripts from uploading to Google Apps Script).*
+3. **IMPORTANT:** After pushing, you must open the script editor, click **Deploy > Manage Deployments**, edit your active deployment, select **New Version**, and click **Deploy** to make backend changes live.
+
+---
+
+## 🛠️ Developer Utility Commands
+
+### Run Local Unit Tests
+To verify calculation formulas quickly without pushing to Google Sheets:
+```bash
+node tests/unit_tests.js
+```
+
+### Build Sample Report
+To compile a fresh preview of the interactive client PDF report layout inside `public/sample_report.html`, run this script from the project root:
+```powershell
+./scripts/build_sample.ps1
+```
+
+### Run Administrator Dashboard
+Double-click `admin.html` in your local file explorer to run the CRM control panel offline. It connects securely to your active Google Web App endpoint.
