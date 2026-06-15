@@ -304,3 +304,59 @@ function getLeadByIdentifier(identifier) {
   }
   return null;
 }
+
+// ── Templates CRUD ─────────────────────────────────────────────────────────
+
+function getTemplates() {
+  const sheet = getOrCreateSheet(SHEETS.TEMPLATES, DEFAULT_TEMPLATE_HEADERS);
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return { success: true, templates: [] };
+  const headers = rows[0];
+  const templates = rows.slice(1).map(row => {
+    const t = {};
+    headers.forEach((h, i) => { t[h] = row[i] === undefined ? '' : String(row[i]); });
+    return t;
+  }).filter(t => t.id && t.id !== '');
+  return { success: true, templates };
+}
+
+function saveTemplate(template) {
+  const sheet = getOrCreateSheet(SHEETS.TEMPLATES, DEFAULT_TEMPLATE_HEADERS);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idCol = headers.indexOf('id');
+
+  // Generate id if new
+  if (!template.id) {
+    template.id = 'tpl-' + Date.now().toString(36);
+    template.createdAt = new Date().toISOString();
+  }
+
+  const rowValues = DEFAULT_TEMPLATE_HEADERS.map(h => template[h] !== undefined ? template[h] : '');
+
+  // Check if exists → update in place
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]) === String(template.id)) {
+      sheet.getRange(i + 1, 1, 1, rowValues.length).setValues([rowValues]);
+      return { success: true, id: template.id };
+    }
+  }
+
+  // New row
+  sheet.appendRow(rowValues);
+  return { success: true, id: template.id };
+}
+
+function deleteTemplate(id) {
+  const sheet = getOrCreateSheet(SHEETS.TEMPLATES, DEFAULT_TEMPLATE_HEADERS);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idCol = headers.indexOf('id');
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { error: 'Template not found: ' + id };
+}

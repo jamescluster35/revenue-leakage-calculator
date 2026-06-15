@@ -14,8 +14,10 @@ const SHEETS = {
   ARCHIVED: "Archived",
   DELETED: "Deleted",
   CLIENTS: "Clients",
-  VERIFIED: "Verified Payments" // Added for clarity
+  VERIFIED: "Verified Payments",
+  TEMPLATES: "Templates"
 };
+const DEFAULT_TEMPLATE_HEADERS = ['id', 'name', 'niche', 'type', 'subject', 'body', 'createdAt'];
 const DEFAULT_CALC_LEAD_HEADERS = ['id','date','timestamp','visitorTime','lastActiveStep','name','jobTitle','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage'];
 const DEFAULT_VERIFIED_HEADERS = ['Reference', 'Email', 'Business', 'Niche', 'Leakage', 'Amount', 'Date', 'Status'];
 
@@ -151,6 +153,11 @@ function handleRequest(e) {
     // Tracker Actions
     'getTrackerData': (data) => getTracker(data.trackerId, data.email),
     'saveTrackerData': (data) => saveTracker(data.trackerId, data.tracker, data.email),
+
+    // Template Actions
+    'getTemplates':    getTemplates,
+    'saveTemplate':    (data) => saveTemplate(data.template),
+    'deleteTemplate':  (data) => deleteTemplate(data.id),
 
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,
