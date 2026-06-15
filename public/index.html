@@ -1361,6 +1361,37 @@ const CalculatorTester = {
     console.groupEnd();
   }
 };
+
+// DevTools Protection (Blocks F12, Ctrl+Shift+I/J/C, Ctrl+U, Ctrl+S & opens debugger trap)
+(function() {
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12') {
+      e.preventDefault();
+      return false;
+    }
+    if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) {
+      e.preventDefault();
+      return false;
+    }
+    if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+      e.preventDefault();
+      return false;
+    }
+    if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+  
+  // Debugger trap to pause inspection if DevTools is opened
+  setInterval(function() {
+    (function() {
+      return false;
+    }
+    .constructor('debugger')
+    .call());
+  }, 1000);
+})();
 </script>
 </body>
 </html>
