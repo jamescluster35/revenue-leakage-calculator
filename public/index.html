@@ -93,17 +93,22 @@ input, select, textarea, button {
 .plabel{font-size:11px;color:var(--text-secondary);text-align:center;line-height:1.3;}
 .ps.active .plabel{color:var(--brand-primary);}
 .main{max-width:620px;margin:0 auto;padding:0 20px 80px;}
-.step{display:none;}
-.step.active{display:block;}
+.step{display:none;opacity:0;transform:translateY(16px);}
+.step.active{display:block;animation:stepFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;}
+@keyframes stepFadeIn{
+  from{opacity:0;transform:translateY(16px);}
+  to{opacity:1;transform:translateY(0);}
+}
 .sh{margin-bottom:24px;}
 .sh h2{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:6px;}
 .sh p{font-size:14px;color:var(--text-secondary);line-height:1.5;}
 .ng{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
 @media(max-width:580px){.ng{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:414px){.ng{grid-template-columns:1fr; gap:10px;}}
-.nc{position:relative;border:1.5px solid var(--border-default);border-radius:14px;padding:24px 12px;text-align:center;cursor:pointer;transition:all .2s ease;background:var(--surface-primary);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.nc:hover{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.05);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
-.nc.sel{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);}
+.nc{position:relative;border:1.5px solid var(--border-default);border-radius:14px;padding:24px 12px;text-align:center;cursor:pointer;transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);background:var(--surface-primary);min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.nc:hover{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.05);transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,0.25), 0 0 16px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);}
+.nc.sel{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.12);box-shadow:0 0 20px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.25);transform:translateY(-1px);}
+.nc:active{transform:translateY(0) scale(0.98);}
 .nc .ic{font-size:48px;margin-bottom:12px;transition:transform .2s ease;}
 .nc:hover .ic{transform:scale(1.1);}
 .nc .lb{font-size:15px;font-weight:800;font-family:'Syne',sans-serif;}
@@ -150,9 +155,10 @@ input, select, textarea, button {
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(max-width:400px){.fr{grid-template-columns:1fr;}}
 .choices{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
-.choice{padding:10px 14px;border:1.5px solid var(--border-default);border-radius:10px;background:var(--surface-secondary);color:var(--text-secondary);font-size:14px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
-.choice:hover{border-color:var(--brand-primary);}
-.choice.on{border-color:var(--brand-primary);color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);font-weight:600;}
+.choice{padding:10px 14px;border:1.5px solid var(--border-default);border-radius:10px;background:var(--surface-secondary);color:var(--text-secondary);font-size:14px;cursor:pointer;transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);font-family:'DM Sans',sans-serif;}
+.choice:hover{border-color:var(--brand-primary);color:var(--text-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.05);transform:translateY(-1.5px);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.choice.on{border-color:var(--brand-primary);color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.12);font-weight:600;box-shadow:0 0 14px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.2);transform:translateY(-0.5px);}
+.choice:active{transform:translateY(0) scale(0.97);}
 .sr{display:flex;gap:6px;flex-wrap:wrap;}
 .star{padding:8px 13px;border:1.5px solid var(--border-default);border-radius:10px;font-size:14px;cursor:pointer;transition:all .15s;background:var(--surface-secondary);color:var(--text-primary);}
 .star:hover,.star.on{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);color:var(--brand-primary);}
@@ -168,9 +174,9 @@ input, select, textarea, button {
 }
 
 .pl{display:flex;flex-direction:column;gap:8px;}
-.pc{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border-default);border-radius:10px;cursor:pointer;transition:all .15s;background:var(--surface-secondary);}
-.pc:hover{border-color:var(--brand-primary);}
-.pc.on{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.08);}
+.pc{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--border-default);border-radius:10px;cursor:pointer;transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);background:var(--surface-secondary);}
+.pc:hover{border-color:var(--brand-primary);transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.15);}
+.pc.on{border-color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.1);box-shadow:0 0 16px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.2);transform:translateY(-0.5px);}
 .pc .pi{font-size:20px;}
 .pc .pinfo{flex:1;}
 .pc .pn{font-size:14px;font-weight:600;}
@@ -178,11 +184,12 @@ input, select, textarea, button {
 .pc .cb{width:20px;height:20px;border:1.5px solid var(--border-default);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
 .pc.on .cb{background:var(--brand-primary);border-color:var(--brand-primary);color:#fff;}
 .nb{display:flex;gap:10px;margin-top:24px;}
-.bn{flex:1;background:var(--brand-primary);color:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;}
-.bn{flex:1;background:var(--brand-primary);color:#fff;border:none;border-radius:12px;padding:18px 24px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;box-shadow:0 4px 12px rgba(249,115,22,0.25);}
-.bn:hover{opacity:.9;}
-.bb{background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:12px;padding:18px 24px;font-size:16px;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;white-space:nowrap;}
-.bb:hover{color:var(--text-primary);}
+.bn{flex:1;background:var(--brand-primary);color:#fff;border:none;border-radius:12px;padding:18px 24px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);box-shadow:0 4px 14px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.3);}
+.bn:hover{opacity:1;transform:translateY(-2px);box-shadow:0 6px 20px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.45);}
+.bn:active{transform:translateY(-0.5px) scale(0.98);}
+.bb{background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:12px;padding:18px 24px;font-size:16px;cursor:pointer;color:var(--text-secondary);font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);}
+.bb:hover{border-color:var(--brand-primary);color:var(--brand-primary);background:hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.03);transform:translateY(-1px);}
+.bb:active{transform:translateY(0) scale(0.99);}
 .ib{background:hsla(var(--status-info-h), var(--status-info-s), var(--status-info-l), 0.08);border:1px solid hsla(var(--status-info-h), var(--status-info-s), var(--status-info-l), 0.2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;}
 .ib strong{color:var(--bl);}
 .nerr{background:hsla(var(--status-error-h), var(--status-error-s), var(--status-error-l), 0.1);border:1px solid hsla(var(--status-error-h), var(--status-error-s), var(--status-error-l), 0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--status-error);margin-bottom:14px;display:none;}
@@ -192,8 +199,8 @@ input, select, textarea, button {
 .cmsg{font-size:14px;color:var(--text-secondary);}
 .cprog{max-width:300px;margin:20px auto 0;height:3px;background:var(--border-default);border-radius:2px;overflow:hidden;}
 .cpfill{height:100%;background:linear-gradient(90deg,var(--brand-primary-dark),var(--brand-primary));border-radius:2px;transition:width .8s ease;width:0%;}
-.res-head{text-align:center;padding:36px 20px;background:var(--surface-primary);border:1.5px solid var(--border-default);border-radius:14px;margin-bottom:14px;position:relative;overflow:hidden;}
-.res-head::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:250px;height:250px;background:radial-gradient(circle,hsla(var(--status-error-h), var(--status-error-s), var(--status-error-l), 0.15) 0%,transparent 70%);pointer-events:none;}
+.res-head{text-align:center;padding:36px 20px;background:var(--surface-primary);border:1.5px solid hsla(var(--status-error-h), var(--status-error-s), var(--status-error-l), 0.3);border-radius:14px;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(0, 0, 0, 0.25), 0 0 40px hsla(var(--status-error-h), var(--status-error-s), var(--status-error-l), 0.05);}
+.res-head::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:250px;height:250px;background:radial-gradient(circle,hsla(var(--status-error-h), var(--status-error-s), var(--status-error-l), 0.22) 0%,transparent 75%);pointer-events:none;}
 .res-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;}
 .res-total{font-family:'Syne',sans-serif;font-size:clamp(44px,12vw,72px);font-weight:800;color:var(--status-error);letter-spacing:-2px;line-height:1;margin-bottom:10px;}
 .res-annual{font-size:14px;color:var(--text-secondary);}
@@ -825,96 +832,96 @@ var BENCH={
 var NF={
   dental:{title:'Your Dental Practice — Quick Questions',secs:[
     {t:'📅 Appointments',f:[
-      {id:'slots',l:'How many patients do you see on a typical day?',p:'10',type:'num'},
-      {id:'nshow_v',l:'Out of every 10 appointments, how many don\'t show up?',type:'choice',opts:['1 in 10','2 in 10','3 in 10','4+ in 10'],vals:[10,20,30,40]},
-      {id:'aval',l:'Average appointment value? ($)',p:'180',type:'num'},
-      {id:'recalls',l:'Patients overdue for checkup but not rebooked this month?',p:'20',type:'num'},
+      {id:'slots',l:'How many patients do you see on a typical day?',p:'10',type:'num',h:'Average dental practices see 8–15 patients per chair/day.'},
+      {id:'nshow_v',l:'Out of every 10 appointments, how many don\'t show up?',type:'choice',opts:['1 in 10','2 in 10','3 in 10','4+ in 10'],vals:[10,20,30,40],h:'Industry average no-show rate is between 10% and 15%.'},
+      {id:'aval',l:'Average appointment value? ($)',p:'180',type:'num',h:'Standard cleaning/x-rays are ~$150–$250.'},
+      {id:'recalls',l:'Patients overdue for checkup but not rebooked this month?',p:'20',type:'num',h:'Overdue hygiene patients who haven\'t booked an appointment yet.'},
     ]},
     {t:'📞 New Patient Inquiries',f:[
-      {id:'leads',l:'New patient calls or inquiries per month?',p:'30',type:'num'},
-      {id:'fup_v',l:'Does your team follow up on every inquiry?',type:'choice',opts:['Yes always','Most of the time','About half','Rarely'],vals:[90,70,50,20]},
-      {id:'tval',l:'Average new patient treatment value? ($)',p:'500',type:'num'},
+      {id:'leads',l:'New patient calls or inquiries per month?',p:'30',type:'num',h:'Total phone inquiries or website booking requests.'},
+      {id:'fup_v',l:'Does your team follow up on every inquiry?',type:'choice',opts:['Yes always','Most of the time','About half','Rarely'],vals:[90,70,50,20],h:'Prompt follow-ups increase patient acquisition rates by 40%.'},
+      {id:'tval',l:'Average new patient treatment value? ($)',p:'500',type:'num',h:'Initial comprehensive treatment plan value (national average is $500–$800).'},
     ]},
     {t:'👥 Staff & Tools',f:[
-      {id:'staff',l:'Number of paid staff?',p:'5',type:'num'},
-      {id:'srate',l:'Average hourly pay? ($)',p:'20',type:'num'},
-      {id:'tspend',l:'Monthly software spend? ($)',p:'400',type:'num'},
+      {id:'staff',l:'Number of paid staff?',p:'5',type:'num',h:'Receptionists, assistants, hygienists, and office managers.'},
+      {id:'srate',l:'Average hourly pay? ($)',p:'20',type:'num',h:'Average clinical/admin hourly wage.'},
+      {id:'tspend',l:'Monthly software spend? ($)',p:'400',type:'num',h:'PMS subscriptions, imaging, patient marketing systems, etc.'},
     ]}
   ], estimatePct: 0.11},
   realestate:{title:'Your Real Estate Business — Quick Questions',secs:[
     {t:'🏠 Leads & Deals',f:[
-      {id:'leads',l:'New leads per month?',p:'100',type:'num'},
-      {id:'fup_v',l:'How well does your team follow up on leads?',type:'choice',opts:['Very well','Decent','About once','Rarely'],vals:[80,50,25,10]},
-      {id:'comm',l:'Average commission per deal? ($)',p:'8000',type:'num'},
-      {id:'crate_v',l:'Out of 10 leads, how many close?',type:'choice',opts:['3+','1-2','Less than 1'],vals:[25,15,5]},
+      {id:'leads',l:'New leads per month?',p:'100',type:'num',h:'Total buyer/seller inquiries from website, portals, or referrals.'},
+      {id:'fup_v',l:'How well does your team follow up on leads?',type:'choice',opts:['Very well','Decent','About once','Rarely'],vals:[80,50,25,10],h:'80% of deals require 5+ follow-up attempts to convert.'},
+      {id:'comm',l:'Average commission per deal? ($)',p:'8000',type:'num',h:'Your typical gross commission earned per transaction.'},
+      {id:'crate_v',l:'Out of 10 leads, how many close?',type:'choice',opts:['3+','1-2','Less than 1'],vals:[25,15,5],h:'Typical close rate on general online/portal real estate leads.'},
     ]},
     {t:'🌐 Portal & Admin Costs',f:[
-      {id:'pfees',l:'Monthly portal spend — Zillow, Realtor.com etc. ($)',p:'2000',type:'num'},
-      {id:'pdeals',l:'Deals from portals last month?',p:'1',type:'num'},
-      {id:'agents',l:'Number of agents?',p:'10',type:'num'},
-      {id:'ahrs_v',l:'Hours per week agents spend on admin instead of selling?',type:'choice',opts:['Under 2 hrs','2-4 hrs','Half their day','Most of day'],vals:[8,16,24,32]},
-      {id:'arate',l:'Average hourly value of agent time? ($)',p:'75',type:'num'},
-    ]}]
-  , estimatePct: 0.08},
+      {id:'pfees',l:'Monthly portal spend — Zillow, Realtor.com etc. ($)',p:'2000',type:'num',h:'Monthly budget spent on third-party lead generation portals.'},
+      {id:'pdeals',l:'Deals from portals last month?',p:'1',type:'num',h:'Closed transactions originating directly from portals last month.'},
+      {id:'agents',l:'Number of agents?',p:'10',type:'num',h:'Licensed agents working in your office or team.'},
+      {id:'ahrs_v',l:'Hours per week agents spend on admin instead of selling?',type:'choice',opts:['Under 2 hrs','2-4 hrs','Half their day','Most of day'],vals:[8,16,24,32],h:'Time spent by agents on non-revenue generating administrative tasks.'},
+      {id:'arate',l:'Average hourly value of agent time? ($)',p:'75',type:'num',h:'Estimated worth of an active agent\'s sales hour.'},
+    ]}
+  ], estimatePct: 0.08},
   healthcare:{title:'Your Healthcare Practice — Quick Questions',secs:[
     {t:'📅 Appointments & Billing',f:[
-      {id:'appts',l:'Patients per day?',p:'20',type:'num'},
-      {id:'nshow_v',l:'Out of 10 appointments, how many no-show?',type:'choice',opts:['1 in 10','2 in 10','3 in 10','4+ in 10'],vals:[10,20,30,40]},
-      {id:'aval',l:'Average appointment value? ($)',p:'150',type:'num'},
-      {id:'claims',l:'Insurance claims per month?',p:'150',type:'num'},
-      {id:'reject_v',l:'Out of 10 claims, how many get rejected?',type:'choice',opts:['Less than 1','1-2','3-4','5+'],vals:[5,15,30,50]},
-      {id:'cval',l:'Average claim value? ($)',p:'200',type:'num'},
+      {id:'appts',l:'Patients per day?',p:'20',type:'num',h:'Average daily patient visits across all providers.'},
+      {id:'nshow_v',l:'Out of 10 appointments, how many no-show?',type:'choice',opts:['1 in 10','2 in 10','3 in 10','4+ in 10'],vals:[10,20,30,40],h:'Standard healthcare no-show rates hover around 8%–12%.'},
+      {id:'aval',l:'Average appointment value? ($)',p:'150',type:'num',h:'Typical visit value (insurance reimbursement + copay).'},
+      {id:'claims',l:'Insurance claims per month?',p:'150',type:'num',h:'Total insurance claims filed per month.'},
+      {id:'reject_v',l:'Out of 10 claims, how many get rejected?',type:'choice',opts:['Less than 1','1-2','3-4','5+'],vals:[5,15,30,50],h:'National average claim denial rate is 5%–10%.'},
+      {id:'cval',l:'Average claim value? ($)',p:'200',type:'num',h:'Average value of a billed insurance claim.'},
     ]},
     {t:'🤝 Referrals & Staff',f:[
-      {id:'refs',l:'Referrals received per month?',p:'40',type:'num'},
-      {id:'rconv_v',l:'Out of 10 referrals, how many book?',type:'choice',opts:['8-10','5-7','3-4','Less than 3'],vals:[90,60,35,20]},
-      {id:'pval',l:'Average patient visit value? ($)',p:'150',type:'num'},
-      {id:'staff',l:'Number of staff?',p:'6',type:'num'},
-      {id:'srate',l:'Average hourly pay? ($)',p:'25',type:'num'},
+      {id:'refs',l:'Referrals received per month?',p:'40',type:'num',h:'Total external patient referrals received.'},
+      {id:'rconv_v',l:'Out of 10 referrals, how many book?',type:'choice',opts:['8-10','5-7','3-4','Less than 3'],vals:[90,60,35,20],h:'Conversion rate of incoming referrals to scheduled visits.'},
+      {id:'pval',l:'Average patient visit value? ($)',p:'150',type:'num',h:'Average value generated per booked patient.'},
+      {id:'staff',l:'Number of staff?',p:'6',type:'num',h:'Front desk staff, medical assistants, and billing coordinators.'},
+      {id:'srate',l:'Average hourly pay? ($)',p:'25',type:'num',h:'Average clinical/admin staff hourly wage.'},
     ]}
   ], estimatePct: 0.15},
   legal:{title:'Your Law Firm — Quick Questions',secs:[
     {t:'⏰ Billable Time & Clients',f:[
-      {id:'att',l:'Number of attorneys?',p:'5',type:'num'},
-      {id:'brate',l:'Billable rate per hour? ($)',p:'300',type:'num'},
-      {id:'unbill_v',l:'Unbilled hours per attorney per week?',type:'choice',opts:['Under 2','2-4 hrs','5-8 hrs','8+ hrs'],vals:[1,3,6,10]},
-      {id:'admin_v',l:'Admin hours per attorney per week?',type:'choice',opts:['Under 2','2-4 hrs','5-8 hrs','Half day'],vals:[1,3,7,14]},
-      {id:'cons',l:'Consultations per month?',p:'20',type:'num'},
-      {id:'cconv_v',l:'Out of 10 consultations, how many become clients?',type:'choice',opts:['7-10','4-6','2-3','Less than 2'],vals:[80,50,25,10]},
-      {id:'casev',l:'Average case value? ($)',p:'5000',type:'num'},
+      {id:'att',l:'Number of attorneys?',p:'5',type:'num',h:'Number of active billable attorneys in the firm.'},
+      {id:'brate',l:'Billable rate per hour? ($)',p:'300',type:'num',h:'Average billable hourly rate charged.'},
+      {id:'unbill_v',l:'Unbilled hours per attorney per week?',type:'choice',opts:['Under 2','2-4 hrs','5-8 hrs','8+ hrs'],vals:[1,3,6,10],h:'Unrecorded billable hours due to delayed time tracking.'},
+      {id:'admin_v',l:'Admin hours per attorney per week?',type:'choice',opts:['Under 2','2-4 hrs','5-8 hrs','Half day'],vals:[1,3,7,14],h:'Time spent by attorneys on non-billable administrative tasks.'},
+      {id:'cons',l:'Consultations per month?',p:'20',type:'num',h:'Total initial client consultations held per month.'},
+      {id:'cconv_v',l:'Out of 10 consultations, how many become clients?',type:'choice',opts:['7-10','4-6','2-3','Less than 2'],vals:[80,50,25,10],h:'Consultation-to-retained-client conversion rate.'},
+      {id:'casev',l:'Average case value? ($)',p:'5000',type:'num',h:'Average fee value of a retained client/case.'},
     ]}
   ], estimatePct: 0.18},
   saas:{title:'Your SaaS Business — Quick Questions',secs:[
     {t:'💰 Revenue & Growth',f:[
-      {id:'mrr',l:'Monthly Recurring Revenue — MRR ($)',p:'50000',type:'num'},
-      {id:'churn_v',l:'Out of 100 customers, how many cancel per month?',type:'choice',opts:['Less than 2','2-5','5-10','10+'],vals:[1,3.5,7.5,12]},
-      {id:'trials',l:'Free trial signups per month?',p:'200',type:'num'},
-      {id:'tconv_v',l:'Out of 10 trials, how many upgrade to paid?',type:'choice',opts:['4+','2-3','1','Less than 1'],vals:[40,25,10,5]},
-      {id:'dval',l:'Average deal value? ($)',p:'99',type:'num'},
-      {id:'staff',l:'Number of team members?',p:'8',type:'num'},
-      {id:'srate',l:'Average hourly cost per person? ($)',p:'40',type:'num'},
+      {id:'mrr',l:'Monthly Recurring Revenue — MRR ($)',p:'50000',type:'num',h:'Current Monthly Recurring Revenue.'},
+      {id:'churn_v',l:'Out of 100 customers, how many cancel per month?',type:'choice',opts:['Less than 2','2-5','5-10','10+'],vals:[1,3.5,7.5,12],h:'Percentage of recurring revenue lost per month. Target is <2%.'},
+      {id:'trials',l:'Free trial signups per month?',p:'200',type:'num',h:'Total trial signups or demo requests per month.'},
+      {id:'tconv_v',l:'Out of 10 trials, how many upgrade to paid?',type:'choice',opts:['4+','2-3','1','Less than 1'],vals:[40,25,10,5],h:'Average trial-to-paid conversion rate (standard is 10%–20%).'},
+      {id:'dval',l:'Average deal value? ($)',p:'99',type:'num',h:'Average contract value or subscription MRR per customer.'},
+      {id:'staff',l:'Number of team members?',p:'8',type:'num',h:'Total number of full-time team members.'},
+      {id:'srate',l:'Average hourly cost per person? ($)',p:'40',type:'num',h:'Average hourly operational cost per employee.'},
     ]}
   ], estimatePct: 0.10},
   restaurant:{title:'Your Restaurant — Quick Questions',secs:[
     {t:'🍽️ Food, Bookings & Staff',f:[
-      {id:'fcost',l:'Monthly food and ingredient spend? ($)',p:'15000',type:'num'},
-      {id:'waste_v',l:'How much food gets thrown away?',type:'choice',opts:['Under 10%','Around 15%','Around 25%','30%+'],vals:[8,15,25,35]},
-      {id:'res',l:'Reservations per day?',p:'20',type:'num'},
-      {id:'nshow_v',l:'Out of 10 reservations, how many no-show?',type:'choice',opts:['1 in 10','2 in 10','3 in 10','4+ in 10'],vals:[10,20,30,40]},
-      {id:'covers',l:'Average party size?',p:'2',type:'num'},
-      {id:'spend',l:'Average spend per customer? ($)',p:'45',type:'num'},
-      {id:'total_staff',l:'Total staff?',p:'12',type:'num'},
-      {id:'srate',l:'Average hourly wage? ($)',p:'15',type:'num'},
+      {id:'fcost',l:'Monthly food and ingredient spend? ($)',p:'15000',type:'num',h:'Monthly expenditure on food, beverages, and ingredients.'},
+      {id:'waste_v',l:'How much food gets thrown away?',type:'choice',opts:['Under 10%','Around 15%','Around 25%','30%+'],vals:[8,15,25,35],h:'Typical restaurant food waste average is 15%–20%.'},
+      {id:'res',l:'Reservations per day?',p:'20',type:'num',h:'Average number of table reservations booked per day.'},
+      {id:'nshow_v',l:'Out of 10 reservations, how many no-show?',type:'choice',opts:['1 in 10','2 in 10','3 in 10','4+ in 10'],vals:[10,20,30,40],h:'Standard reservation cancellation and no-show rate.'},
+      {id:'covers',l:'Average party size?',p:'2',type:'num',h:'Average number of guests per table.'},
+      {id:'spend',l:'Average spend per customer? ($)',p:'45',type:'num',h:'Average ticket price (food + drink) per guest.'},
+      {id:'total_staff',l:'Total staff?',p:'12',type:'num',h:'Total kitchen, service, and administrative staff.'},
+      {id:'srate',l:'Average hourly wage? ($)',p:'15',type:'num',h:'Average hourly wages across front/back of house.'},
     ]}
   ], estimatePct: 0.16},
   general:{title:'Your Business — Quick Questions',secs:[
     {t:'📈 Sales & Operations',f:[
-      {id:'leads',l:'New leads or inquiries per month?',p:'50',type:'num'},
-      {id:'fup_v',l:'How many leads receive at least 3 follow-ups?',type:'choice',opts:['All of them','Most','Some','Hardly any'],vals:[95,70,40,15]},
-      {id:'tval',l:'Average sale or contract value? ($)',p:'1000',type:'num'},
-      {id:'staff',l:'Number of employees?',p:'5',type:'num'},
-      {id:'srate',l:'Average hourly cost per employee? ($)',p:'25',type:'num'},
-      {id:'admin_v',l:'Hours per week spent on manual admin tasks?',type:'choice',opts:['0-5 hrs','5-15 hrs','15-30 hrs','30+ hrs'],vals:[3,10,22,40]},
+      {id:'leads',l:'New leads or inquiries per month?',p:'50',type:'num',h:'Total business inquiries received per month.'},
+      {id:'fup_v',l:'How many leads receive at least 3 follow-ups?',type:'choice',opts:['All of them','Most','Some','Hardly any'],vals:[95,70,40,15],h:'Following up at least 5 times increases close rates by 50%.'},
+      {id:'tval',l:'Average sale or contract value? ($)',p:'1000',type:'num',h:'Average revenue earned per sale or contract.'},
+      {id:'staff',l:'Number of employees?',p:'5',type:'num',h:'Total number of employees.'},
+      {id:'srate',l:'Average hourly cost per employee? ($)',p:'25',type:'num',h:'Average employee hourly wage.'},
+      {id:'admin_v',l:'Hours per week spent on manual admin tasks?',type:'choice',opts:['0-5 hrs','5-15 hrs','15-30 hrs','30+ hrs'],vals:[3,10,22,40],h:'Time spent on invoicing, scheduling, and data entry.'},
     ]}
   ], estimatePct: 0.12}
 };
@@ -1086,6 +1093,9 @@ function goStep3(){
     html+='<div class="cs"><div class="ct">'+sec.t+'</div>';
     sec.f.forEach(function(f){
       html+='<div class="field"><label>'+f.l+'</label>';
+      if(f.h){
+        html+='<div class="hint">'+f.h+'</div>';
+      }
       if(f.type==='choice'){
         html+='<div class="choices">';
         f.opts.forEach(function(o,i){html+='<div class="choice" onclick="setFieldChoice(\''+f.id+'\','+f.vals[i]+',this)">'+o+'</div>';});
@@ -1119,6 +1129,28 @@ function goStep3(){
 
 // ── Calculation ───────────────────────────────────────────
 var _leadSessionId = null;
+
+function animateCountUp(targetId, startVal, endVal, duration, prefix) {
+  var el = document.getElementById(targetId);
+  if (!el) return;
+  var startTime = null;
+  var p = prefix || '';
+
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    var progress = Math.min((timestamp - startTime) / duration, 1);
+    var easeOutQuad = progress * (2 - progress);
+    var currentVal = Math.floor(easeOutQuad * (endVal - startVal) + startVal);
+    el.textContent = p + currentVal.toLocaleString();
+    if (progress < 1) {
+      window.requestAnimationFrame(step);
+    } else {
+      el.textContent = p + endVal.toLocaleString();
+    }
+  }
+  window.requestAnimationFrame(step);
+}
+
 async function runCalc() {
   if(!_leadSessionId) _leadSessionId = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
   document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active');});
@@ -1147,7 +1179,7 @@ async function runCalc() {
   var total=all.reduce(function(s,i){return s+i.v;},0);
   S.res={total:total,items:all};
 
-  document.getElementById('rtotal').textContent=_symbol + Math.round(total).toLocaleString();
+  animateCountUp('rtotal', 0, Math.round(total), 1200, _symbol);
   document.getElementById('rannual').innerHTML='That\'s approximately <strong>' + _symbol + Math.round(total*12).toLocaleString() + '/year</strong>';
   document.getElementById('rbiz').textContent=document.getElementById('biz_name').value+' · '+document.getElementById('biz_city').value+', '+document.getElementById('biz_state').value;
   document.getElementById('rbiz-sub').textContent='Estimated leakage for '+document.getElementById('biz_name').value+' based on your inputs';
