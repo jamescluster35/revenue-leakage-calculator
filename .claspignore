@@ -1,0 +1,11 @@
+# Ignore all files by default
+**/*
+
+# Keep only the Google Apps Script backend files
+!Code.gs
+!Core_Logic.gs
+!Email_PDF_Templates.gs
+!Helpers.gs
+!Lead_Persistence.gs
+!Tests.gs
+!appsscript.json
