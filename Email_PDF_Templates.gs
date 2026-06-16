@@ -239,6 +239,78 @@ function buildFullPdfReportHtml(lead, note) {
       `).join('')}
     </table>`;
 
+  const currentRevenue = calc.revenue - calc.monthlyLeak;
+  const currentPct = calc.revenue > 0 ? Math.round(currentRevenue / calc.revenue * 100) : 84;
+  const leakagePct = 100 - currentPct;
+
+  const categoryTableHtml = `
+    <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; margin-bottom: 12px; letter-spacing: 1px;">Leakage Category Allocation</h2>
+    <table width="100%" cellpadding="8" style="font-size: 12px; border-collapse: collapse; margin-bottom: 24px; border: 1px solid #E2E8F0;">
+      <thead>
+        <tr style="background: #0F172A; color: #FFFFFF;">
+          <th align="left" style="padding: 8px; border: 1px solid #E2E8F0;">Leakage Vector</th>
+          <th align="center" style="padding: 8px; border: 1px solid #E2E8F0; width: 25%;">Allocation %</th>
+          <th align="right" style="padding: 8px; border: 1px solid #E2E8F0; width: 30%;">Est. Monthly Loss</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${calc.breakdown.map((item, idx) => {
+          const pcts = calc.breakdown.length === 3 ? [50, 30, 20] : calc.breakdown.length === 2 ? [60, 40] : [100];
+          const pctVal = pcts[idx] || 0;
+          const amtVal = Math.round(calc.monthlyLeak * pctVal / 100);
+          return `
+            <tr>
+              <td style="border: 1px solid #E2E8F0; color: #1E293B; font-weight: bold; padding: 8px;">${esc(item)}</td>
+              <td align="center" style="border: 1px solid #E2E8F0; color: #475569; padding: 8px;">${pctVal}%</td>
+              <td align="right" style="border: 1px solid #E2E8F0; color: #F43F5E; font-weight: bold; padding: 8px;">$${amtVal.toLocaleString()}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  const visualChartHtml = calc.revenue > 0 ? `
+    <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; margin-bottom: 12px; letter-spacing: 1px;">Current vs. Capture Potential Revenue</h2>
+    <div style="background: #FAFAFA; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 15px;">
+        <tr>
+          <td width="130" style="font-size: 11px; font-weight: bold; color: #475569;">Current Revenue:</td>
+          <td>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="${currentPct}%" style="background: #64748B; height: 18px; border-radius: 4px; color: #FFFFFF; font-size: 10px; font-weight: bold; padding-left: 8px; line-height: 18px;">
+                  $${Math.round(currentRevenue).toLocaleString()}/mo (${currentPct}%)
+                </td>
+                <td width="${leakagePct}%"></td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="130" style="font-size: 11px; font-weight: bold; color: #0F172A;">Capture Potential:</td>
+          <td>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="${currentPct}%" style="background: #10B981; height: 18px; border-radius: 4px 0 0 4px; color: #FFFFFF; font-size: 10px; font-weight: bold; padding-left: 8px; line-height: 18px;">
+                  $${Math.round(currentRevenue).toLocaleString()}/mo
+                </td>
+                <td width="${leakagePct}%" style="background: #F59E0B; height: 18px; border-radius: 0 4px 4px 0; color: #FFFFFF; font-size: 10px; font-weight: bold; text-align: center; line-height: 18px;">
+                  +$${calc.monthlyLeak.toLocaleString()} (Leakage)
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <div style="font-size: 11px; color: #64748B; margin-top: 10px; text-align: right; font-style: italic;">
+        Targeting recovery of <strong>$${recoverable.toLocaleString()}/mo</strong> (70%) within 90 days.
+      </div>
+    </div>
+  ` : '';
+
   return `<!DOCTYPE html><html>
     <head><meta charset="UTF-8"><style>body{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;color:#1E293B;line-height:1.6;background:#FFFFFF;} .page-break{page-break-before:always;}</style></head>
     <body>
@@ -250,6 +322,7 @@ function buildFullPdfReportHtml(lead, note) {
             <div style="font-size: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 2px;">BDL Revenue Intelligence</div>
             <div style="font-size: 24px; font-weight: 800; margin-top: 4px; color: #FFFFFF;">${esc(bizName)}</div>
             <div style="font-size: 12px; color: #F59E0B; margin-top: 4px; font-weight: bold;">Executive Revenue Diagnostic — ${dateStr}</div>
+            <div style="font-size: 11px; color: #94A3B8; margin-top: 8px; font-style: italic;">Confidential — Prepared exclusively for ${esc(bizName)}</div>
           </td>
           <td align="right">
             <div style="border: 2px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); border-radius: 12px; padding: 12px 20px; text-align: center; display: inline-block;">
@@ -269,18 +342,24 @@ function buildFullPdfReportHtml(lead, note) {
         
         <!-- EXECUTIVE SUMMARY METRICS -->
         <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">Executive Financial Summary</h2>
-        <table width="100%" cellpadding="0" cellspacing="12" border="0" style="margin-left: -12px; width: calc(100% + 24px);">
+        <table width="100%" cellpadding="0" cellspacing="8" border="0" style="margin-left: -8px; width: calc(100% + 16px);">
           <tr>
-            <td width="50%">
-              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #F43F5E; border-radius:8px; padding: 24px; text-align: center;">
-                <div style="font-size:11px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Identified Monthly Leakage</div>
-                <div style="font-size:32px; font-weight:900; color:#F43F5E; letter-spacing: -1px;">$${calc.monthlyLeak.toLocaleString()}</div>
+            <td width="33%">
+              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #64748B; border-radius:8px; padding: 16px 12px; text-align: center; min-height: 90px;">
+                <div style="font-size:10px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Monthly Revenue Input</div>
+                <div style="font-size:22px; font-weight:800; color:#1E293B;">$${calc.revenue.toLocaleString()}</div>
               </div>
             </td>
-            <td width="50%">
-              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #F43F5E; border-radius:8px; padding: 24px; text-align: center;">
-                <div style="font-size:11px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Annualized Revenue Impact</div>
-                <div style="font-size:32px; font-weight:900; color:#F43F5E; letter-spacing: -1px;">$${calc.annualLeak.toLocaleString()}</div>
+            <td width="33%">
+              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #F43F5E; border-radius:8px; padding: 16px 12px; text-align: center; min-height: 90px;">
+                <div style="font-size:10px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Identified Monthly Leakage</div>
+                <div style="font-size:22px; font-weight:800; color:#F43F5E;">$${calc.monthlyLeak.toLocaleString()}</div>
+              </div>
+            </td>
+            <td width="33%">
+              <div style="background:#FAFAFA; border:1px solid #E2E8F0; border-top: 4px solid #F43F5E; border-radius:8px; padding: 16px 12px; text-align: center; min-height: 90px;">
+                <div style="font-size:10px; color:#64748B; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Annualized Leakage</div>
+                <div style="font-size:22px; font-weight:800; color:#F43F5E;">$${calc.annualLeak.toLocaleString()}</div>
               </div>
             </td>
           </tr>
@@ -289,6 +368,12 @@ function buildFullPdfReportHtml(lead, note) {
         <!-- LEAKAGE BREAKDOWN -->
         <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">Primary Leakage Vectors</h2>
         ${leakHtml}
+
+        <!-- LEAKAGE CATEGORY ALLOCATION TABLE -->
+        ${categoryTableHtml}
+
+        <!-- CURRENT VS POTENTIAL REVENUE VISUAL CHART -->
+        ${visualChartHtml}
         
         <!-- REPUTATION -->
         ${reputationHtml}
@@ -323,6 +408,13 @@ function buildFullPdfReportHtml(lead, note) {
         <p style="font-size: 13px; color: #475569; margin-bottom: 30px; line-height: 1.6;">The following implementation sequence is engineered to stabilize your revenue capture within the first 30 days and scale operational efficiency through day 90.</p>
         
         ${planHtml}
+
+        <!-- ROADMAP RECOVERY SUMMARY CALLOUT -->
+        <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 12px; padding: 20px; margin-top: 24px; margin-bottom: 24px; text-align: center;">
+          <div style="font-size: 11px; color: #065F46; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Estimated Total Recovery (All 3 Phases Completed)</div>
+          <div style="font-size: 26px; font-weight: 900; color: #047857;">Total Recoverable: $${recoverable.toLocaleString()}/month</div>
+          <div style="font-size: 11px; color: #065F46; margin-top: 4px;">Annualized recovery value: <strong>$${(recoverable * 12).toLocaleString()}/year</strong></div>
+        </div>
   
         <!-- VERIFICATION STAMP -->
         <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:40px; padding-bottom:8px; letter-spacing: 1px;">Quality Assurance Verification</h2>
