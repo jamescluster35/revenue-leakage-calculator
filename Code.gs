@@ -15,9 +15,11 @@ const SHEETS = {
   DELETED: "Deleted",
   CLIENTS: "Clients",
   VERIFIED: "Verified Payments",
-  TEMPLATES: "Templates"
+  TEMPLATES: "Templates",
+  SENDERS: "Senders"
 };
 const DEFAULT_TEMPLATE_HEADERS = ['id', 'name', 'niche', 'type', 'subject', 'body', 'createdAt'];
+const DEFAULT_SENDER_HEADERS = ['id', 'name'];
 const DEFAULT_CALC_LEAD_HEADERS = ['id','date','timestamp','visitorTime','lastActiveStep','name','jobTitle','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage'];
 const DEFAULT_VERIFIED_HEADERS = ['Reference', 'Email', 'Business', 'Niche', 'Leakage', 'Amount', 'Date', 'Status'];
 
@@ -115,7 +117,9 @@ function handleRequest(e) {
     'getAll', 'moveLead', 'deleteLead', 'archiveLead', 'promoteClient', 'restoreLead',
     'getCalculatorLeads', 'updateCalculatorLead', 'markPaymentPaid', 'deleteCalculatorLead', 
     'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'dailyBackupToDrive',
-    'setupRemindersTrigger', 'sendFollowUpReminders'
+    'setupRemindersTrigger', 'sendFollowUpReminders',
+    'getSenders', 'saveSenders', 'getGmailInboxFeed', 'processGmailThread', 'syncOutreachLogsFromGmail', 'setupGmailTriggers',
+    'getIngestionSettings', 'saveIngestionSettings'
   ];
 
   if (protectedActions.includes(action) && authKey !== getAdminPassword()) {
@@ -159,6 +163,17 @@ function handleRequest(e) {
     'getTemplates':    getTemplates,
     'saveTemplate':    (data) => saveTemplate(data.template),
     'deleteTemplate':  (data) => deleteTemplate(data.id),
+
+    // Senders Actions
+    'getSenders':      getSenders,
+    'saveSenders':      (data) => saveSenders(data.senders),
+
+    'getGmailInboxFeed': getGmailInboxFeed,
+    'processGmailThread': (data) => processGmailThread(data.threadId),
+    'syncOutreachLogsFromGmail': (data) => syncOutreachLogsFromGmail(),
+    'setupGmailTriggers': setupGmailTriggers,
+    'getIngestionSettings': getIngestionSettings,
+    'saveIngestionSettings': (data) => saveIngestionSettings(data.searchQuery),
 
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,
@@ -857,5 +872,51 @@ function setupRemindersTrigger() {
   } catch (e) {
     return { error: e.toString() };
   }
+}
+
+/**
+ * Retrieves the list of campaign sender profiles from Senders sheet tab.
+ * Seeds default profiles if empty.
+ */
+function getSenders() {
+  const sheet = getOrCreateSheet(SHEETS.SENDERS, DEFAULT_SENDER_HEADERS);
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) {
+    const defaultSenders = [
+      ['send-1', 'Skinner Donald'],
+      ['send-2', 'Michael Brauns'],
+      ['send-3', 'Lyle Morgan'],
+      ['send-4', 'Dan Peretti'],
+      ['send-5', 'Kate Campbell'],
+      ['send-6', 'Matthew Young']
+    ];
+    defaultSenders.forEach(s => sheet.appendRow(s));
+    return { success: true, senders: defaultSenders.map(s => ({ id: s[0], name: s[1] })) };
+  }
+  const headers = rows[0];
+  const idCol = headers.indexOf('id');
+  const nameCol = headers.indexOf('name');
+  const senders = rows.slice(1).map(row => ({
+    id: String(row[idCol] || ''),
+    name: String(row[nameCol !== -1 ? nameCol : 1] || '')
+  })).filter(s => s.id && s.id !== '');
+  return { success: true, senders: senders };
+}
+
+/**
+ * Saves/overwrites the list of campaign sender profiles.
+ */
+function saveSenders(sendersList) {
+  const sheet = getOrCreateSheet(SHEETS.SENDERS, DEFAULT_SENDER_HEADERS);
+  sheet.clear();
+  sheet.getRange(1, 1, 1, DEFAULT_SENDER_HEADERS.length).setValues([DEFAULT_SENDER_HEADERS]);
+  sheet.setFrozenRows(1);
+  if (sendersList && sendersList.length > 0) {
+    sendersList.forEach(s => {
+      const id = s.id || 'send-' + Math.random().toString(36).substr(2, 6);
+      sheet.appendRow([id, s.name]);
+    });
+  }
+  return { success: true };
 }
 

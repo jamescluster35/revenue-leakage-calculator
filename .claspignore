@@ -8,4 +8,5 @@
 !Helpers.gs
 !Lead_Persistence.gs
 !Tests.gs
+!Gmail_Ingestion.gs
 !appsscript.json
