@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>90-Day Action Tracker | BDL</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#08090C;
@@ -24,16 +24,16 @@
   --brand-primary-l: 53%;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--tx);font-family:'DM Sans',-apple-system,sans-serif;font-size:16px;line-height:1.6;min-height:100vh;}
+body{background:var(--bg);color:var(--tx);font-family:'Plus Jakarta Sans',-apple-system,sans-serif;font-size:16px;line-height:1.6;min-height:100vh;}
 .container{max-width:900px;margin:0 auto;padding:40px 20px;}
 .header{text-align:center;margin-bottom:40px;padding:36px 32px;background:var(--card);border:1.5px solid var(--border);border-top:3.5px solid var(--or);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.25);}
-.header h1{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin-bottom:8px;color:var(--or);}
+.header h1{font-family:'Outfit',sans-serif;font-size:32px;font-weight:800;margin-bottom:8px;color:var(--or);letter-spacing:-0.02em;}
 .header p{color:var(--mu);font-size:16px;margin-bottom:16px;}
 .biz-name{font-size:22px;font-weight:600;color:var(--tx);margin-bottom:8px;}
 .biz-meta{font-size:13px;color:var(--mu);}
 .progress-section{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:28px;margin-bottom:28px;box-shadow:0 10px 30px rgba(0,0,0,0.25);transition:transform .3s cubic-bezier(0.16, 1, 0.3, 1),box-shadow .3s ease;}
 .progress-section:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(0,0,0,0.35), 0 0 20px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.05);}
-.progress-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;color:var(--tx);}
+.progress-title{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;margin-bottom:20px;color:var(--tx);letter-spacing:-0.01em;}
 .progress-bar{width:100%;height:12px;background:var(--card2);border-radius:999px;overflow:hidden;margin-bottom:12px;}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--ord),var(--or));border-radius:999px;transition:width .6s ease;width:0%;}
 .progress-text{display:flex;justify-content:space-between;font-size:13px;color:var(--mu);margin-bottom:24px;}
@@ -42,13 +42,13 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',-apple-system,sa
 .stat-card{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:16px;text-align:center;transition:all .2s cubic-bezier(0.16, 1, 0.3, 1);}
 .stat-card:hover{transform:translateY(-2px);border-color:var(--or);box-shadow:0 6px 16px rgba(0,0,0,0.15), 0 0 12px rgba(249,115,22,0.1);}
 .stat-label{font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
-.stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--or);}
+.stat-value{font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;color:var(--or);letter-spacing:-0.01em;}
 .stat-sub{font-size:11px;color:var(--mu);margin-top:4px;}
 .actions-section{margin-bottom:28px;}
 .week-group{background:var(--card);border:1.5px solid var(--border);border-radius:14px;margin-bottom:20px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.2);transition:transform .3s cubic-bezier(0.16, 1, 0.3, 1),box-shadow .3s ease;}
 .week-group:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,0.3);}
 .week-header{background:var(--card2);padding:16px 20px;display:flex;align-items:center;gap:10px;border-bottom:1.5px solid var(--border);}
-.week-label{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--or);}
+.week-label{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--or);letter-spacing:-0.01em;}
 .week-actions{padding:0;}
 .action-item{display:flex;gap:14px;padding:20px 24px;border-bottom:1px solid var(--border);align-items:flex-start;transition:background .2s ease;}
 .action-item:last-child{border-bottom:none;}
@@ -66,15 +66,26 @@ body{background:var(--bg);color:var(--tx);font-family:'DM Sans',-apple-system,sa
 .action-result{display:none;margin-top:12px;padding:16px;background:var(--card2);border-radius:10px;border:1px solid var(--border);animation:stepFadeIn 0.3s ease forwards;}
 .action-result.show{display:block;}
 .action-result label{font-size:12px;color:var(--mu);font-weight:600;text-transform:uppercase;margin-bottom:6px;display:block;}
-.action-result input,.action-result textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--tx);font-size:16px;font-family:'DM Sans',sans-serif;margin-bottom:8px;transition:border-color .15s;}
+.action-result input,.action-result textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--tx);font-size:16px;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:8px;transition:border-color .15s;}
 .action-result input:focus,.action-result textarea:focus{outline:none;border-color:var(--or);}
 .action-result button{background:var(--or);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;box-shadow:0 2px 6px rgba(249,115,22,0.2);}
 .action-result button:hover{opacity:1;background:var(--ord);transform:translateY(-1px);box-shadow:0 4px 10px rgba(249,115,22,0.3);}
 .cta-section{background:linear-gradient(135deg,rgba(249,115,22,.12),rgba(234,88,12,.06));border:1.5px solid rgba(249,115,22,.4);border-radius:14px;padding:32px 28px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.2);}
 .cta-badge{display:inline-block;background:var(--or);color:#fff;font-size:11px;font-weight:700;padding:6px 16px;border-radius:20px;letter-spacing:.06em;margin-bottom:16px;text-transform:uppercase;}
-.cta-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;color:var(--tx);}
+.cta-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;color:var(--tx);letter-spacing:-0.01em;}
 .cta-sub{font-size:14px;color:var(--mu);margin-bottom:20px;line-height:1.6;}
-.cta-btn{display:inline-block;background:var(--or);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;cursor:pointer;border:none;font-size:15px;font-family:'DM Sans',sans-serif;transition:all .2s cubic-bezier(0.16, 1, 0.3, 1);box-shadow:0 4px 14px rgba(249,115,22,0.25);}
+.cta-btn{display:inline-block;background:var(--or);color:#fff;padding:16px 36px;border-radius:12px;text-decoration:none;font-weight:700;cursor:pointer;border:none;font-size:15px;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s cubic-bezier(0.16, 1, 0.3, 1);box-shadow:0 4px 14px rgba(249,115,22,0.25);}
+.cta-btn:hover{opacity:1;transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,115,22,0.4);}
+.cta-btn:active{transform:translateY(0) scale(0.98);}
+.loading{text-align:center;padding:40px;color:var(--mu);}
+.spin{display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--or);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:14px;color:var(--rd);margin-bottom:20px;font-size:13px;}
+footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);margin-top:40px;border-top:1px solid var(--border);}
+@keyframes stepFadeIn{
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
 .cta-btn:hover{opacity:1;transform:translateY(-2px);box-shadow:0 6px 20px rgba(249,115,22,0.4);}
 .cta-btn:active{transform:translateY(0) scale(0.98);}
 .loading{text-align:center;padding:40px;color:var(--mu);}
@@ -155,7 +166,7 @@ footer{text-align:center;padding:24px 20px;font-size:11px;color:var(--mu);margin
 
   <!-- Actions -->
   <div class="actions-section" id="actions-section" style="display:none;">
-    <h2 style="font-family:Syne,sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;color:var(--tx);">Your 90-Day Action Plan</h2>
+    <h2 style="font-family:Outfit,sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;color:var(--tx);letter-spacing:-0.01em;">Your 90-Day Action Plan</h2>
     <div id="actions-container"></div>
   </div>
 
