@@ -3,7 +3,13 @@
  * Entry Point & Router
  */ 
 
-const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet() ? SpreadsheetApp.getActiveSpreadsheet().getId() : "";
+const SPREADSHEET_ID = "1SYLuPbPT-hljH5EgY2UafLtOHuFO3isro9RJNlXPrqA";
+function getSpreadsheet() {
+  if (SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
 
 const SHEETS = {
   LEADS: "Leads",
@@ -39,7 +45,7 @@ const SETTINGS = {
  * Helper to retrieve the Config sheet case-insensitively.
  */
 function getConfigSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   if (!ss) return null;
   const sheet = ss.getSheetByName(SHEETS.CONFIG);
   if (sheet) return sheet;
@@ -180,6 +186,7 @@ function handleRequest(e) {
     'inspectSpreadsheet': inspectSpreadsheet,
     'setupRemindersTrigger': setupRemindersTrigger,
     'sendFollowUpReminders': (data) => sendFollowUpReminders(),
+    'getRawSheetData': getRawSheetData,
   };
 
   try {
@@ -588,7 +595,7 @@ function buildPdfPlanActions(lead) {
  */
 function dailyBackupToDrive() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSpreadsheet();
     const folderName = "BDL_Backups";
     let folder;
     const folders = DriveApp.getFoldersByName(folderName);
@@ -627,7 +634,7 @@ function dailyBackupToDrive() {
 }
 
 function inspectSpreadsheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   if (!ss) return { success: false, error: 'No active spreadsheet found' };
   
   const activeTabs = [
@@ -918,5 +925,22 @@ function saveSenders(sendersList) {
     });
   }
   return { success: true };
+}
+
+function getRawSheetData() {
+  const ss = getSpreadsheet();
+  const sheets = ss.getSheets();
+  const res = {};
+  sheets.forEach(s => {
+    const name = s.getName();
+    const range = s.getDataRange();
+    const values = range.getValues();
+    res[name] = {
+      rows: values.length,
+      headers: values[0] || [],
+      sample: values.slice(1, 3)
+    };
+  });
+  return res;
 }
 

@@ -13,7 +13,7 @@ function getAll() {
 }
 
 function getTabData(tabName) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName)
+  const sheet = getSpreadsheet().getSheetByName(tabName)
   if (!sheet) return []
   const rows = sheet.getDataRange().getValues()
   if (rows.length <= 1) return []
@@ -35,7 +35,7 @@ function getTabData(tabName) {
 }
 
 function addLead(lead) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.LEADS);
+  const sheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const row = headers.map(h => {
     if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || []);
@@ -47,7 +47,7 @@ function addLead(lead) {
 }
 
 function updateLead(id, changes, tabName) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(tabName)
+  const sheet = getSpreadsheet().getSheetByName(tabName)
   if (!sheet) return { error: 'Tab not found: ' + tabName }
   const data = sheet.getDataRange().getValues()
   const headers = data[0]
@@ -70,7 +70,7 @@ function updateLead(id, changes, tabName) {
 }
 
 function moveLead(id, fromTab, toTab, changes) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const ss = getSpreadsheet()
   const fromSheet = ss.getSheetByName(fromTab)
   const toSheet = ss.getSheetByName(toTab)
   if (!fromSheet || !toSheet) return { error: 'Tab mapping error' }

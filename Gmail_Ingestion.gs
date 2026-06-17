@@ -57,22 +57,43 @@ function processGmailThread(threadId) {
     
     const lastMsg = messages[messages.length - 1];
     const fromField = lastMsg.getFrom(); // "Sender Name <email@domain.com>"
-    
-    // Parse email out of From header
-    let email = "";
-    const emailMatch = fromField.match(/<([^>]+)>/);
-    if (emailMatch) email = emailMatch[1].trim().toLowerCase();
-    else email = fromField.trim().toLowerCase();
-    
-    let name = "";
-    const nameMatch = fromField.match(/^([^<]+)/);
-    if (nameMatch) name = nameMatch[1].replace(/['"]/g, '').trim();
-    else name = email.split('@')[0];
-
+    const subject = thread.getFirstMessageSubject() || "";
     const snippet = lastMsg.getPlainBody().trim();
     
+    let email = "";
+    let name = "";
+    
+    // Check if the email is forwarded from another inbox
+    const isForwarded = subject.toLowerCase().startsWith("fwd:") || snippet.includes("---------- Forwarded message");
+    
+    if (isForwarded) {
+      // Parse original sender out of forwarded body content
+      // Pattern matches: "From: Sender Name <sender@domain.com>" or "From: sender@domain.com"
+      const fromMatch = snippet.match(/From:\s*([^<\r\n]+)(?:<([^>]+)>)?/i);
+      if (fromMatch) {
+        if (fromMatch[2]) {
+          email = fromMatch[2].trim().toLowerCase();
+          name = fromMatch[1].replace(/['"]/g, '').trim();
+        } else {
+          email = fromMatch[1].trim().toLowerCase();
+          name = email.split('@')[0];
+        }
+      }
+    }
+    
+    if (!email) {
+      // Fallback to standard From header parsing
+      const emailMatch = fromField.match(/<([^>]+)>/);
+      if (emailMatch) email = emailMatch[1].trim().toLowerCase();
+      else email = fromField.trim().toLowerCase();
+      
+      const nameMatch = fromField.match(/^([^<]+)/);
+      if (nameMatch) name = nameMatch[1].replace(/['"]/g, '').trim();
+      else name = email.split('@')[0];
+    }
+    
     // Find matching lead in Leads sheet tab
-    const leadSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.LEADS);
+    const leadSheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
     const data = leadSheet.getDataRange().getValues();
     const headers = data[0];
     const emailCol = headers.indexOf('email');
@@ -151,7 +172,7 @@ function processGmailThread(threadId) {
  */
 function syncOutreachLogsFromGmail() {
   try {
-    const leadSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.LEADS);
+    const leadSheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
     if (!leadSheet) return { error: 'Leads tab not found' };
     
     const data = leadSheet.getDataRange().getValues();

@@ -20,7 +20,7 @@ function esc(s) {
 }
 
 function getOrCreateSheet(name, headers) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   let sheet = ss.getSheetByName(name);
   if (!sheet) {
     sheet = ss.insertSheet(name);
@@ -39,7 +39,7 @@ function getOrCreateSheet(name, headers) {
 }
 
 function restoreCalculatorLead(id) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet(), delSheet = ss.getSheetByName(SHEETS.DELETED);
+  const ss = getSpreadsheet(), delSheet = ss.getSheetByName(SHEETS.DELETED);
   const leadSheet = getOrCreateSheet(SHEETS.CALC_LEADS, DEFAULT_CALC_LEAD_HEADERS);
   if (!delSheet) return { success: false, error: "Trash is empty" };
   const data = delSheet.getDataRange().getValues(), headers = data[0], idCol = headers.indexOf('id');

@@ -146,7 +146,7 @@ function testPdfGenerationForAllNiches() {
  * and appends them to the end of the header row without affecting existing data.
  */
 function testGetOrCreateSheetAppendsHeaders() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   const tempSheetName = 'TMP_TEST_HEADERS_' + Math.random().toString(36).substr(2, 5);
   const initialHeaders = ['id', 'name'];
   const initialData = ['123', 'Test User'];
