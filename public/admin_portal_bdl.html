@@ -4,24 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BDL Admin — Report Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#08090C;--card:#0F1117;--card2:#141720;--border:#1E2230;--or:#F97316;--ord:#EA580C;--tx:#E8EAF0;--mu:#6B7280;--rd:#EF4444;--gn:#10B981;--bl:#3B82F6;--yl:#F59E0B;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh;}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh;}
 button, input, select, textarea {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Login */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
 .login-card{background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:360px;text-align:center;}
 .login-icon{font-size:40px;margin-bottom:16px;}
-.login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;}
+.login-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-0.01em;}
 .login-sub{font-size:13px;color:var(--mu);margin-bottom:24px;}
-.field-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'DM Sans',sans-serif;margin-bottom:12px;}
+.field-input{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--tx);font-family:'Inter',sans-serif;margin-bottom:12px;}
 .field-input:focus{outline:none;border-color:var(--or);}
-.login-btn{width:100%;background:var(--or);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s ease-in-out;}
+.login-btn{width:100%;background:var(--or);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s ease-in-out;}
 .login-btn:hover{filter:brightness(1.15);box-shadow:0 0 10px rgba(249,115,22,0.3);}
 .login-btn:active{transform:scale(0.96);}
 .login-err{color:var(--rd);font-size:12px;margin-top:8px;display:none;}
@@ -31,9 +31,9 @@ button, input, select, textarea {
 .topbar{background:var(--card);border-bottom:1.5px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
 .topbar-logo{display:flex;align-items:center;gap:8px;}
 .topbar-dot{width:8px;height:8px;background:var(--or);border-radius:50%;}
-.topbar-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--or);}
+.topbar-name{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--or);}
 .topbar-right{display:flex;align-items:center;gap:10px;}
-.tbtn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;transition:all 0.15s ease-in-out;}
+.tbtn{background:var(--card2);border:1.5px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;color:var(--mu);font-family:'Inter',sans-serif;transition:all 0.15s ease-in-out;}
 .tbtn:hover{color:var(--tx);background:var(--border);}
 .tbtn:active{transform:scale(0.96);}
 .tbtn-out{background:transparent;border:none;font-size:12px;color:var(--mu);cursor:pointer;transition:all 0.15s ease-in-out;}
@@ -57,14 +57,14 @@ button, input, select, textarea {
 @media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
 .stat{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;}
 .stat-label{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
-.stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1;}
+.stat-val{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;line-height:1;letter-spacing:-0.01em;}
 .stat-sub{font-size:10px;color:var(--mu);margin-top:3px;}
 
 /* Search & filter bar */
 .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
-.search-input{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;width:240px;}
+.search-input{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;width:240px;}
 .search-input:focus{outline:none;border-color:var(--or);}
-.filter-select{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+.filter-select{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;}
 
 /* Table */
 .table-wrap{background:var(--card);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;overflow-x:auto;}
@@ -86,7 +86,7 @@ button, input, select, textarea {
 .b-niche{background:rgba(249,115,22,.08);color:var(--or);font-size:10px;padding:2px 7px;border-radius:4px;}
 
 /* Action buttons */
-.ab{border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s ease-in-out;}
+.ab{border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;transition:all 0.15s ease-in-out;}
 .ab:active{transform:scale(0.96);}
 .ab:hover{opacity:.9;filter:brightness(1.15);}
 .ab-orange{background:var(--or);color:#fff;}
@@ -97,7 +97,7 @@ button, input, select, textarea {
 .ab-gap{display:flex;gap:6px;align-items:center;}
 
 /* Leakage amount */
-.leak-amt{font-family:'Syne',sans-serif;font-weight:700;color:var(--rd);}
+.leak-amt{font-family:'Outfit',sans-serif;font-weight:700;color:var(--rd);}
 
 /* Modal */
 .modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);overflow-y:auto;padding:20px;}
@@ -106,7 +106,7 @@ button, input, select, textarea {
 .mc-sm{max-width:480px;}
 .mc-lg{max-width:720px;}
 .mc-head{padding:18px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.mc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.mc-title{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;letter-spacing:-0.01em;}
 .mc-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--mu);line-height:1;}
 .mc-body{padding:20px;}
 .mc-foot{padding:14px 20px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;align-items:center;}
@@ -121,7 +121,7 @@ button, input, select, textarea {
 .mf{margin-bottom:14px;}
 .mf:last-child{margin-bottom:0;}
 .mf label{display:block;font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
-.mf input,.mf textarea,.mf select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--tx);font-family:'DM Sans',sans-serif;}
+.mf input,.mf textarea,.mf select{width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:9px;padding:10px 13px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;}
 .mf input:focus,.mf textarea:focus,.mf select:focus{outline:none;border-color:var(--or);}
 .mf textarea{resize:vertical;min-height:90px;line-height:1.5;}
 
@@ -140,10 +140,10 @@ button, input, select, textarea {
 .rpt-item-val{font-weight:700;color:var(--rd);}
 
 /* Buttons */
-.btn-primary{background:var(--or);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s ease-in-out;}
-.btn-secondary{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--mu);font-family:'DM Sans',sans-serif;transition:all 0.15s ease-in-out;}
-.btn-danger{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--rd);font-family:'DM Sans',sans-serif;transition:all 0.15s ease-in-out;}
-.btn-success{background:var(--gn);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s ease-in-out;}
+.btn-primary{background:var(--or);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s ease-in-out;}
+.btn-secondary{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--mu);font-family:'Inter',sans-serif;transition:all 0.15s ease-in-out;}
+.btn-danger{background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:10px 18px;font-size:13px;cursor:pointer;color:var(--rd);font-family:'Inter',sans-serif;transition:all 0.15s ease-in-out;}
+.btn-success{background:var(--gn);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s ease-in-out;}
 
 .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover, .btn-success:hover{opacity:.95;filter:brightness(1.1);}
 .btn-primary:active, .btn-secondary:active, .btn-danger:active, .btn-success:active{transform:scale(0.96);}
@@ -295,7 +295,7 @@ button, input, select, textarea {
     <!-- EMAIL TEMPLATES TAB -->
     <div class="tab-panel" id="tab-templates">
       <div style="margin-bottom:16px;">
-        <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Niche-Specific Email Templates</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Niche-Specific Email Templates</div>
         <div style="font-size:13px;color:var(--mu);">These templates are automatically personalised with the client's name, business name, and leakage data when you send a report.</div>
       </div>
       <div id="templates-list"></div>
@@ -305,7 +305,7 @@ button, input, select, textarea {
     <div class="tab-panel" id="tab-preview">
       <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Report Preview</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;">Report Preview</div>
           <div style="font-size:13px;color:var(--mu);">This is how the report looks when sent to a client. Data is automatically filled from their calculator submission.</div>
         </div>
         <button class="tbtn" onclick="renderReportPreview()" style="white-space:nowrap; color:var(--or);">Refresh Preview</button>
@@ -902,10 +902,9 @@ function buildReportHtml(lead, note, template){
   var items     = (lead.leakageBreakdown||'').split(' | ').filter(Boolean);
   if (items.length === 0) items = ['Operational Revenue Friction'];
   
-  var reportId  = lead.id || 'BDL-DRAFT';
   var noteBlock = note
     ? '<div style="background:#1a1d2e;border-left:4px solid #F97316;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px;">'+
-      '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;font-family:Syne,sans-serif;">Personal Note from Your Analyst</p>'+
+      '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;font-family:Outfit,sans-serif;">Personal Note from Your Analyst</p>'+
       '<p style="color:#E8EAF0;font-size:13px;line-height:1.7;margin:0;">'+esc(note).split('\n').join('<br>')+'</p></div>'
     : '';
 
@@ -931,16 +930,16 @@ function buildReportHtml(lead, note, template){
     var w = Math.round(100-(i*60/Math.max(1,items.length-1)));
     return '<div style="border-left:3px solid '+col+';background:#141720;padding:12px 16px;margin-bottom:10px;">'+
       '<table style="width:100%;border-collapse:collapse;"><tr>'+
-        '<td style="vertical-align:middle;"><div style="font-size:13px;font-weight:600;color:#E8EAF0;font-family:\'DM Sans\',sans-serif;">'+esc(item)+'</div></td>'+
+        '<td style="vertical-align:middle;"><div style="font-size:13px;font-weight:600;color:#E8EAF0;font-family:\'Inter\',sans-serif;">'+esc(item)+'</div></td>'+
         '<td style="text-align:right;width:100px;">'+
-          '<div style="font-size:14px;font-weight:800;color:'+col+';font-family:Syne,sans-serif;">-$'+share.toLocaleString()+'/mo</div>'+
+          '<div style="font-size:14px;font-weight:800;color:'+col+';font-family:Outfit,sans-serif;">-$'+share.toLocaleString()+'/mo</div>'+
           '<div style="background:rgba(239,68,68,.1);color:'+col+';font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px;">'+sev+'</div>'+
         '</td>'+
       '</tr></table>'+
       '<div style="height:4px;background:#1E2230;border-radius:2px;margin-bottom:6px;">'+
         '<div style="width:'+w+'%;height:100%;background:'+col+';border-radius:2px;"></div>'+
       '</div>'+
-      '<div style="font-size:11px;color:#6B7280;font-family:\'DM Sans\',sans-serif;">Resolving this recovers a portion of your $'+leakage.toLocaleString()+'/mo total.</div>'+
+      '<div style="font-size:11px;color:#6B7280;font-family:\'Inter\',sans-serif;">Resolving this recovers a portion of your $'+leakage.toLocaleString()+'/mo total.</div>'+
     '</div>';
   }).join('');
 
@@ -974,7 +973,7 @@ function buildReportHtml(lead, note, template){
     return '<div style="background:#0F1117;border:1.5px solid #1E2230;border-radius:10px;padding:14px;margin-bottom:10px;">'+
       '<table style="width:100%;margin-bottom:12px;"><tr>'+
         '<td style="width:30px;"><div style="width:26px;height:26px;background:'+c+';border-radius:50%;text-align:center;line-height:26px;font-size:11px;font-weight:700;color:#fff;">'+week.split('-')[0]+'</div></td>'+
-        '<td><div style="font-size:13px;font-weight:700;color:#E8EAF0;font-family:Syne,sans-serif;">'+(wTitles[week]||'Weeks '+week)+'</div></td>'+
+        '<td><div style="font-size:13px;font-weight:700;color:#E8EAF0;font-family:Outfit,sans-serif;">'+(wTitles[week]||'Weeks '+week)+'</div></td>'+
         '<td style="text-align:right;"><div style="font-size:10px;color:#10B981;font-weight:600;">+$'+Math.round(leakage*0.15).toLocaleString()+'/mo potential</div></td>'+
       '</tr></table>'+
       actions + '</div>';
@@ -1024,7 +1023,7 @@ function buildReportHtml(lead, note, template){
     return '<div style="padding:10px 0;border-bottom:1px solid #1E2230;">'+
       '<table style="width:100%;"><tr>'+
       '<td style="width:12px;vertical-align:top;padding-top:4px;"><div style="width:5px;height:5px;background:#F97316;border-radius:50%;"></div></td>'+
-      '<td><div style="font-size:12px;font-weight:700;color:#F97316;margin-bottom:2px;font-family:Syne,sans-serif;">'+esc(item.area)+'</div>'+
+      '<td><div style="font-size:12px;font-weight:700;color:#F97316;margin-bottom:2px;font-family:Outfit,sans-serif;">'+esc(item.area)+'</div>'+
       '<div style="font-size:12px;color:#9CA3AF;line-height:1.5;">'+esc(item.fix)+'</div></div>'+
       '</td></tr></table></div>';
   }).join('');
@@ -1045,53 +1044,53 @@ function buildReportHtml(lead, note, template){
       '<table style="width:100%;border-collapse:separate;border-spacing:5px;"><tr>'+
         '<td style="width:50%;background:#141720;border-radius:8px;padding:12px;border:1px solid #1E2230;vertical-align:top;">'+
           '<p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:0 0 4px;">Google Rating</p>'+
-          '<p style="font-size:24px;font-weight:800;color:'+rc+';margin:0 0 3px;font-family:Syne,sans-serif;">'+grRating+' ★</p>'+
+          '<p style="font-size:24px;font-weight:800;color:'+rc+';margin:0 0 3px;font-family:Outfit,sans-serif;">'+grRating+' ★</p>'+
           '<p style="color:#6B7280;font-size:11px;margin:0;">'+rm+'</p></td>'+
         '<td style="width:50%;background:#141720;border-radius:8px;padding:12px;border:1px solid #1E2230;vertical-align:top;">'+
           '<p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:0 0 4px;">Review Count</p>'+
-          '<p style="font-size:24px;font-weight:800;color:'+(grCount>=50?'#10B981':'#F59E0B')+';margin:0 0 3px;font-family:Syne,sans-serif;">'+grCount+'</p>'+
+          '<p style="font-size:24px;font-weight:800;color:'+(grCount>=50?'#10B981':'#F59E0B')+';margin:0 0 3px;font-family:Outfit,sans-serif;">'+grCount+'</p>'+
           '<p style="color:#6B7280;font-size:11px;margin:0;">Target: 50+ reviews</p></td>'+
       '</tr></table></div>';
   }
 
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">'+
-  '<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">'+
+  '<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">'+
   '</head>'+
-  '<body style="margin:0;padding:0;background:#08090C;font-family:\'DM Sans\', Helvetica, Arial, sans-serif;color:#E8EAF0;">'+
+  '<body style="margin:0;padding:0;background:#08090C;font-family:\'Inter\', Helvetica, Arial, sans-serif;color:#E8EAF0;">'+
   '<div style="max-width:680px;margin:0 auto;">'+
   '<table style="width:100%;background:#F97316;border-collapse:collapse;"><tr>'+
-    '<td style="padding:10px 24px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:Syne,sans-serif;">BDL — Revenue Intelligence</td>'+
+    '<td style="padding:10px 24px;color:#fff;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:Outfit,sans-serif;">BDL — Revenue Intelligence</td>'+
     '<td style="padding:10px 24px;text-align:right;color:rgba(255,255,255,.8);font-size:11px;">Report ID: '+reportId+'</td>'+
   '</tr></table>'+
   '<div style="background:#0F1117;border-bottom:3px solid #F97316;padding:26px;">'+
-    '<h1 style="font-size:22px;font-weight:800;margin:0 0 4px;color:#E8EAF0;font-family:Syne,sans-serif;">'+esc(bizName)+'</h1>'+
+    '<h1 style="font-size:22px;font-weight:800;margin:0 0 4px;color:#E8EAF0;font-family:Outfit,sans-serif;">'+esc(bizName)+'</h1>'+
     '<p style="color:#6B7280;font-size:12px;margin:0 0 14px;">Executive Revenue Diagnostic · ' + locStr + nicheType + '</p>'+
     noteBlock+
     '<p style="color:#E8EAF0;font-size:13px;line-height:1.7;margin:0;">Hi '+esc(firstName)+', I have personally reviewed the diagnostic data for <strong>'+esc(bizName)+'</strong>. Below is your complete leakage analysis with a full 90-day recovery roadmap.</p>'+
   '</div>'+
   '<div style="background:#141720;padding:24px;text-align:center;border-bottom:1px solid #1E2230;">'+
     '<p style="color:#6B7280;font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 8px;">ESTIMATED MONTHLY LEAKAGE</p>'+
-    '<p style="color:#EF4444;font-size:52px;font-weight:800;letter-spacing:-2px;margin:0 0 6px;line-height:1;font-family:Syne,sans-serif;">$'+leakage.toLocaleString()+'</p>'+
+    '<p style="color:#EF4444;font-size:52px;font-weight:800;letter-spacing:-0.01em;margin:0 0 6px;line-height:1;font-family:Outfit,sans-serif;">$'+leakage.toLocaleString()+'</p>'+
     '<p style="color:#6B7280;font-size:13px;margin:0 0 16px;">≈ <strong style="color:#E8EAF0;">$'+annual.toLocaleString()+'/year</strong></p>'+
     '<table style="margin:0 auto;border-collapse:separate;border-spacing:10px;"><tr>'+
       '<td style="background:#0F1117;border:1px solid #1E2230;border-radius:8px;padding:10px 16px;text-align:center;">'+
-        '<p style="color:#EF4444;font-size:16px;font-weight:800;margin:0;font-family:Syne,sans-serif;">$'+daily+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per day</p></td>'+
+        '<p style="color:#EF4444;font-size:16px;font-weight:800;margin:0;font-family:Outfit,sans-serif;">$'+daily+'</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">per day</p></td>'+
       '<td style="background:#0F1117;border:1px solid #1E2230;border-radius:8px;padding:10px 16px;text-align:center;">'+
-        '<p style="color:#10B981;font-size:16px;font-weight:800;margin:0;font-family:Syne,sans-serif;">+$'+fixTop.toLocaleString()+'/mo</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">recoverable</p></td>'+
+        '<p style="color:#10B981;font-size:16px;font-weight:800;margin:0;font-family:Outfit,sans-serif;">+$'+fixTop.toLocaleString()+'/mo</p><p style="color:#6B7280;font-size:10px;text-transform:uppercase;margin:2px 0 0;">recoverable</p></td>'+
     '</tr></table>'+
   '</div>'+
   '<div style="background:#08090C;padding:22px 24px;">'+
-    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">📉 LEAKAGE BREAKDOWN</p>'+leakHtml+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Outfit,sans-serif;">📉 LEAKAGE BREAKDOWN</p>'+leakHtml+
   '</div>'+
   repHtml+
   '<div style="background:#0F1117;padding:20px 24px;margin-bottom:3px;">'+
-    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">🔧 HOW TO IMPROVE — '+niche.toUpperCase()+' SPECIFIC FIXES</p>'+improveHtml+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Outfit,sans-serif;">🔧 HOW TO IMPROVE — '+niche.toUpperCase()+' SPECIFIC FIXES</p>'+improveHtml+
   '</div>'+
   '<div style="background:#08090C;padding:22px 24px;">'+
-    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">📅 YOUR 90-DAY RECOVERY ROADMAP</p>'+planHtml+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Outfit,sans-serif;">📅 YOUR 90-DAY RECOVERY ROADMAP</p>'+planHtml+
   '</div>'+
   '<div style="background:#141720;padding:20px 24px;">'+
-    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Syne,sans-serif;">📊 DECISION SUMMARY</p>'+
+    '<p style="color:#F97316;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin:0 0 12px;font-family:Outfit,sans-serif;">📊 DECISION SUMMARY</p>'+
     '<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;margin-bottom:12px;text-align:center;">'+
       '<p style="color:#6B7280;font-size:12px;margin:0 0 10px;">Every day without action costs:</p>'+
       '<table style="width:100%;"><tr>'+
@@ -1137,7 +1136,7 @@ function buildReportSummaryHtml(lead, note, template){
     <div class="rpt-preview">
       <div style="background:var(--card2); border-radius:12px; padding:24px; text-align:center; margin-bottom:20px; border:1px solid var(--border);">
         <div style="font-size:10px; color:var(--mu); text-transform:uppercase; margin-bottom:8px;">Revenue Leakage Estimate</div>
-        <div style="font-size:36px; font-weight:800; color:var(--rd); font-family:Syne;">$${Math.round(leakage).toLocaleString()}</div>
+        <div style="font-size:36px; font-weight:800; color:var(--rd); font-family:Outfit;">$${Math.round(leakage).toLocaleString()}</div>
         <div style="font-size:12px; color:var(--mu);">$${Math.round(annual).toLocaleString()} annual impact</div>
       </div>
 
