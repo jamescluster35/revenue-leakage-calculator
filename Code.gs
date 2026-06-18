@@ -22,7 +22,8 @@ const SHEETS = {
   CLIENTS: "Clients",
   VERIFIED: "Verified Payments",
   TEMPLATES: "Templates",
-  SENDERS: "Senders"
+  SENDERS: "Senders",
+  CONNECTED_ACCOUNTS: "Connected Accounts"
 };
 const DEFAULT_TEMPLATE_HEADERS = ['id', 'name', 'niche', 'type', 'subject', 'body', 'createdAt'];
 const DEFAULT_SENDER_HEADERS = ['id', 'name'];
@@ -92,7 +93,13 @@ function getWebhookSecret() {
  * @param {GoogleAppsScript.Events.DoGet} e The event object for a GET request.
  * @returns {GoogleAppsScript.Content.TextOutput} JSON response.
  */
-function doGet(e) { return handleRequest(e); }
+function doGet(e) {
+  const event = e || {};
+  if (event.parameter && event.parameter.code && event.parameter.state) {
+    return handleOAuthCallback(event);
+  }
+  return handleRequest(e);
+}
 /** 
  * Entry point for HTTP POST requests. Delegates to handleRequest.
  * @param {GoogleAppsScript.Events.DoPost} e The event object for a POST request.
@@ -125,7 +132,8 @@ function handleRequest(e) {
     'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'dailyBackupToDrive',
     'setupRemindersTrigger', 'sendFollowUpReminders',
     'getSenders', 'saveSenders', 'getGmailInboxFeed', 'processGmailThread', 'syncOutreachLogsFromGmail', 'setupGmailTriggers',
-    'getIngestionSettings', 'saveIngestionSettings'
+    'getIngestionSettings', 'saveIngestionSettings',
+    'getConnectedAccounts', 'generateAuthUrl', 'deleteConnectedAccount', 'saveOAuthCredentials', 'getOAuthCredentials'
   ];
 
   if (protectedActions.includes(action) && authKey !== getAdminPassword()) {
@@ -175,11 +183,18 @@ function handleRequest(e) {
     'saveSenders':      (data) => saveSenders(data.senders),
 
     'getGmailInboxFeed': getGmailInboxFeed,
-    'processGmailThread': (data) => processGmailThread(data.threadId),
+    'processGmailThread': (data) => processGmailThread(data),
     'syncOutreachLogsFromGmail': (data) => syncOutreachLogsFromGmail(),
     'setupGmailTriggers': setupGmailTriggers,
     'getIngestionSettings': getIngestionSettings,
     'saveIngestionSettings': (data) => saveIngestionSettings(data.searchQuery),
+    
+    // Connected accounts endpoint actions
+    'getConnectedAccounts': getConnectedAccounts,
+    'generateAuthUrl': (data) => generateAuthUrl(data),
+    'deleteConnectedAccount': (data) => deleteConnectedAccount(data),
+    'saveOAuthCredentials': (data) => saveOAuthCredentials(data.clientId, data.clientSecret),
+    'getOAuthCredentials': getOAuthCredentials,
 
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,
@@ -643,7 +658,8 @@ function inspectSpreadsheet() {
     SHEETS.VERIFIED,
     SHEETS.TRACKER,
     SHEETS.LOGS,
-    SHEETS.CONFIG
+    SHEETS.CONFIG,
+    SHEETS.CONNECTED_ACCOUNTS
   ];
   
   const legacyTabs = [
@@ -667,13 +683,15 @@ function inspectSpreadsheet() {
   const verifiedHeaders = DEFAULT_VERIFIED_HEADERS;
   const trackerHeaders = DEFAULT_TRACKER_HEADERS;
   const logsHeaders = ['Timestamp', 'Action', 'Key Attempted', 'Method'];
+  const connectedAccountsHeaders = ['Email', 'Status', 'RefreshToken', 'AddedAt'];
 
   const tabConfigs = [
     { name: SHEETS.CALC_LEADS, headers: calcHeaders },
     { name: SHEETS.DELETED, headers: calcHeaders },
     { name: SHEETS.VERIFIED, headers: verifiedHeaders },
     { name: SHEETS.TRACKER, headers: trackerHeaders },
-    { name: SHEETS.LOGS, headers: logsHeaders }
+    { name: SHEETS.LOGS, headers: logsHeaders },
+    { name: SHEETS.CONNECTED_ACCOUNTS, headers: connectedAccountsHeaders }
   ];
 
   tabConfigs.forEach(conf => {
@@ -942,5 +960,267 @@ function getRawSheetData() {
     };
   });
   return res;
+}
+
+// ── Connected Accounts Actions & Helpers ──
+
+function saveOAuthCredentials(clientId, clientSecret) {
+  try {
+    const sheet = getConfigSheet();
+    if (!sheet) return { error: 'Config sheet not found' };
+    sheet.getRange('A6').setValue(String(clientId || '').trim());
+    sheet.getRange('A7').setValue(String(clientSecret || '').trim());
+    return { success: true };
+  } catch (e) {
+    return { error: e.toString() };
+  }
+}
+
+function getOAuthCredentials() {
+  try {
+    const sheet = getConfigSheet();
+    if (!sheet) return { error: 'Config sheet not found' };
+    const clientId = String(sheet.getRange('A6').getValue()).trim();
+    const clientSecret = String(sheet.getRange('A7').getValue()).trim();
+    return {
+      success: true,
+      clientId: clientId,
+      hasClientSecret: clientSecret.length > 0
+    };
+  } catch (e) {
+    return { error: e.toString() };
+  }
+}
+
+function getConnectedAccounts() {
+  try {
+    const list = getConnectedAccountsList();
+    const sanitizedList = list.map(acct => ({
+      email: acct.email,
+      status: acct.status,
+      addedAt: acct.addedAt
+    }));
+    return { success: true, accounts: sanitizedList };
+  } catch (e) {
+    return { error: e.toString() };
+  }
+}
+
+function generateAuthUrl(data) {
+  try {
+    const email = data.email;
+    if (!email) return { error: 'Missing email' };
+    
+    const sheet = getConfigSheet();
+    const clientId = sheet ? String(sheet.getRange('A6').getValue()).trim() : '';
+    if (!clientId) {
+      return { error: 'Google Client ID is not configured in CRM settings.' };
+    }
+    
+    const redirectUri = ScriptApp.getService().getUrl();
+    const scope = encodeURIComponent('https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.modify');
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${scope}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&state=${encodeURIComponent(email)}`;
+      
+    return { success: true, authUrl: authUrl };
+  } catch (e) {
+    return { error: e.toString() };
+  }
+}
+
+function deleteConnectedAccount(data) {
+  try {
+    const email = data.email;
+    if (!email) return { error: 'Missing email' };
+    
+    const sheet = getOrCreateSheet(SHEETS.CONNECTED_ACCOUNTS, ['Email', 'Status', 'RefreshToken', 'AddedAt']);
+    const rows = sheet.getDataRange().getValues();
+    const headers = rows[0];
+    const emailCol = headers.indexOf('Email');
+    
+    for (let i = 1; i < rows.length; i++) {
+      if (String(rows[i][emailCol]).trim().toLowerCase() === email.toLowerCase()) {
+        sheet.deleteRow(i + 1);
+        return { success: true };
+      }
+    }
+    return { error: 'Email account not found.' };
+  } catch (e) {
+    return { error: e.toString() };
+  }
+}
+
+function getConnectedAccountsList() {
+  const sheet = getOrCreateSheet(SHEETS.CONNECTED_ACCOUNTS, ['Email', 'Status', 'RefreshToken', 'AddedAt']);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const emailCol = headers.indexOf('Email');
+  const statusCol = headers.indexOf('Status');
+  const tokenCol = headers.indexOf('RefreshToken');
+  const dateCol = headers.indexOf('AddedAt');
+  
+  const accounts = [];
+  for (let i = 1; i < data.length; i++) {
+    const email = String(data[i][emailCol]).trim();
+    if (email) {
+      accounts.push({
+        email: email,
+        status: String(data[i][statusCol] || ''),
+        refreshToken: String(data[i][tokenCol] || ''),
+        addedAt: String(data[i][dateCol] || '')
+      });
+    }
+  }
+  return accounts;
+}
+
+function updateConnectedAccountStatus(email, status) {
+  const sheet = getOrCreateSheet(SHEETS.CONNECTED_ACCOUNTS, ['Email', 'Status', 'RefreshToken', 'AddedAt']);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const emailCol = headers.indexOf('Email');
+  const statusCol = headers.indexOf('Status');
+  
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][emailCol]).trim().toLowerCase() === email.toLowerCase()) {
+      sheet.getRange(i + 1, statusCol + 1).setValue(status);
+      break;
+    }
+  }
+}
+
+function handleOAuthCallback(e) {
+  const code = e.parameter.code;
+  const email = e.parameter.state;
+  
+  const sheet = getConfigSheet();
+  const clientId = sheet ? String(sheet.getRange('A6').getValue()).trim() : '';
+  const clientSecret = sheet ? String(sheet.getRange('A7').getValue()).trim() : '';
+  
+  if (!clientId || !clientSecret) {
+    return HtmlService.createHtmlOutput(`
+      <html>
+        <body style="background-color: #08090C; color: #EF4444; font-family: Arial; text-align: center; padding: 50px;">
+          <h2>Configuration Error</h2>
+          <p>Google Client ID and Client Secret must be configured in your CRM Settings first.</p>
+        </body>
+      </html>
+    `);
+  }
+  
+  const redirectUri = ScriptApp.getService().getUrl();
+  const payload = {
+    code: code,
+    client_id: clientId,
+    client_secret: clientSecret,
+    redirect_uri: redirectUri,
+    grant_type: 'authorization_code'
+  };
+  
+  const response = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    payload: payload,
+    muteHttpExceptions: true
+  });
+  
+  const resCode = response.getResponseCode();
+  const resText = response.getContentText();
+  
+  if (resCode !== 200) {
+    return HtmlService.createHtmlOutput(`
+      <html>
+        <body style="background-color: #08090C; color: #EF4444; font-family: Arial; text-align: center; padding: 50px;">
+          <h2>OAuth Token Exchange Failed</h2>
+          <p>${resText}</p>
+        </body>
+      </html>
+    `);
+  }
+  
+  const tokenData = JSON.parse(resText);
+  const refreshToken = tokenData.refresh_token;
+  
+  if (!refreshToken) {
+    return HtmlService.createHtmlOutput(`
+      <html>
+        <body style="background-color: #08090C; color: #F59E0B; font-family: Arial; text-align: center; padding: 50px;">
+          <h2>Authentication Succeeded (No Refresh Token)</h2>
+          <p>We received an access token but not a refresh token. To fix this:</p>
+          <p>1. Go to your Google Account permissions, remove access for your OAuth App, and try again.</p>
+          <p>2. Ensure prompt=consent is used.</p>
+        </body>
+      </html>
+    `);
+  }
+  
+  const connSheet = getOrCreateSheet(SHEETS.CONNECTED_ACCOUNTS, ['Email', 'Status', 'RefreshToken', 'AddedAt']);
+  const data = connSheet.getDataRange().getValues();
+  const headers = data[0];
+  const emailCol = headers.indexOf('Email');
+  const statusCol = headers.indexOf('Status');
+  const tokenCol = headers.indexOf('RefreshToken');
+  const dateCol = headers.indexOf('AddedAt');
+  
+  let foundRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][emailCol]).trim().toLowerCase() === email.toLowerCase()) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+  
+  if (foundRow > 0) {
+    connSheet.getRange(foundRow, statusCol + 1).setValue('Connected');
+    connSheet.getRange(foundRow, tokenCol + 1).setValue(refreshToken);
+    connSheet.getRange(foundRow, dateCol + 1).setValue(new Date().toISOString());
+  } else {
+    connSheet.appendRow([email, 'Connected', refreshToken, new Date().toISOString()]);
+  }
+  
+  return HtmlService.createHtmlOutput(`
+    <html>
+      <head>
+        <title>Authentication Successful</title>
+        <style>
+          body {
+            background-color: #08090C;
+            color: #E8EAF0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+          }
+          .card {
+            background-color: #141720;
+            border: 1px solid #1E2230;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          }
+          h1 { color: #10B981; margin-top: 0; }
+          p { color: #9CA3AF; line-height: 1.6; font-size: 14px; }
+          .email { color: #F97316; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>✓ Success!</h1>
+          <p>Your email account <span class="email">${email}</span> has been successfully connected to BDL CRM.</p>
+          <p>You can close this window now and refresh your Campaign Integrations page.</p>
+        </div>
+      </body>
+    </html>
+  `);
 }
 
