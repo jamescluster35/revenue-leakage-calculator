@@ -1557,6 +1557,11 @@ function renderVerifiedTable(rows){
 
 async function sendPaymentRequest(btn){
   if(!AdminApp.state.current||!AdminApp.state.current.email){showToast('No lead selected',true);return;}
+  var email = AdminApp.state.current.email;
+  var biz = AdminApp.state.current.business || 'this business';
+  if(!confirm("Are you sure you want to send the payment request email to " + email + " for " + biz + "?")) {
+    return;
+  }
   var wiseLink = ''; // Will fall back to Config sheet on backend
   var origTxt = '';
   if(btn) {
