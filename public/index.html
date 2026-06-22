@@ -312,6 +312,31 @@ footer a{color:var(--brand-primary);text-decoration:none;}
   .chart-labels{flex-wrap:wrap; gap:8px 12px; justify-content: center;}
   .chart-labels span{font-size:10px; background:var(--surface-secondary); padding:4px 8px; border-radius:6px; border:1px solid var(--border-default);}
 }
+/* Custom range slider styling */
+.custom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.custom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+.custom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.custom-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+}
 </style>
 </head>
 <body>
@@ -1138,18 +1163,49 @@ function goStep3(){
   def.secs.forEach(function(sec){
     html+='<div class="cs"><div class="ct">'+sec.t+'</div>';
     sec.f.forEach(function(f){
-      html+='<div class="field"><label>'+f.l+'</label>';
-      if(f.h){
-        html+='<div class="hint">'+f.h+'</div>';
-      }
       if(f.type==='choice'){
+        html+='<div class="field"><label>'+f.l+'</label>';
+        if(f.h){
+          html+='<div class="hint">'+f.h+'</div>';
+        }
         html+='<div class="choices">';
         f.opts.forEach(function(o,i){html+='<div class="choice" onclick="setFieldChoice(\''+f.id+'\','+f.vals[i]+',this)">'+o+'</div>';});
         html+='</div>';
+        html+='</div>';
       } else {
-        html+='<input type="number" id="nf_'+f.id+'" placeholder="'+f.p+'" min="0">';
+        var pVal = parseFloat(f.p) || 0;
+        var min = 0;
+        var max = pVal * 3;
+        if (max < 10) max = 10;
+        
+        var step = 1;
+        if (pVal >= 5000) {
+          step = 500;
+          max = Math.ceil(pVal * 3.5 / 1000) * 1000;
+        } else if (pVal >= 1000) {
+          step = 100;
+          max = Math.ceil(pVal * 3.5 / 1000) * 1000;
+        } else if (pVal >= 100) {
+          step = 10;
+          max = Math.ceil(pVal * 3.5 / 100) * 100;
+        }
+        
+        var isCurrency = f.l.indexOf('$') !== -1 || f.id.indexOf('val') !== -1 || f.id.indexOf('cost') !== -1 || f.id.indexOf('comm') !== -1 || f.id.indexOf('spend') !== -1 || f.id.indexOf('fees') !== -1;
+        var prefix = isCurrency ? _symbol : '';
+
+        html+='<div class="field">';
+        html+='  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">';
+        html+='    <label style="margin:0; font-weight:600; font-size:14px;">'+f.l+'</label>';
+        html+='    <span class="slider-badge" id="nf_val_'+f.id+'" style="background:var(--brand-primary); color:#fff; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:13px; font-family:\'Outfit\',sans-serif;">'+prefix+pVal.toLocaleString()+'</span>';
+        html+='  </div>';
+        if(f.h){
+          html+='<div class="hint" style="margin-bottom:12px;">'+f.h+'</div>';
+        }
+        html+='  <div style="padding: 8px 0;">';
+        html+='    <input type="range" id="nf_'+f.id+'" min="'+min+'" max="'+max+'" value="'+pVal+'" step="'+step+'" class="custom-slider" style="width:100%; -webkit-appearance:none; height:6px; background:var(--border-default); border-radius:3px; outline:none; vertical-align:middle;" oninput="document.getElementById(\'nf_val_'+f.id+'\').textContent = \''+prefix+'\' + Number(this.value).toLocaleString();">';
+        html+='  </div>';
+        html+='</div>';
       }
-      html+='</div>';
     });
     html+='</div>';
   });
