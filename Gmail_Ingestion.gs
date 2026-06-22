@@ -109,11 +109,15 @@ function getGmailInboxFeedForAccount(email, accessToken) {
     const snippet = lastMsg.snippet || "";
     const date = dateStr ? new Date(dateStr) : new Date();
     
+    const prospect = getProspectFromThread(messages, subject, snippet);
+    const feedSender = prospect ? (prospect.name ? `"${prospect.name}" <${prospect.email}>` : prospect.email) : sender;
+    const feedRecipient = prospect ? email : recipient;
+    
     feed.push({
       threadId: t.id + '::' + email, // Key with email context
       subject: subject,
-      sender: sender,
-      recipient: recipient,
+      sender: feedSender,
+      recipient: feedRecipient,
       date: date.toISOString(),
       snippet: snippet
     });
@@ -143,11 +147,15 @@ function getGmailInboxFeedLegacy() {
     const subject = t.getFirstMessageSubject();
     const snippet = lastMsg.getPlainBody().substring(0, 180);
     
+    const prospect = getProspectFromThread(messages, subject, snippet);
+    const feedSender = prospect ? (prospect.name ? `"${prospect.name}" <${prospect.email}>` : prospect.email) : sender;
+    const feedRecipient = prospect ? Session.getEffectiveUser().getEmail() : recipient;
+
     feed.push({
       threadId: t.getId(), // No :: context
       subject: subject,
-      sender: sender,
-      recipient: recipient,
+      sender: feedSender,
+      recipient: feedRecipient,
       date: date.toISOString(),
       snippet: snippet
     });
@@ -228,29 +236,14 @@ function processGmailThreadRest(threadId, accountEmail, accessToken) {
   let email = "";
   let name = "";
   
-  const isForwarded = subject.toLowerCase().startsWith("fwd:") || snippet.includes("---------- Forwarded message");
-  
-  if (isForwarded) {
-    const fromMatch = snippet.match(/From:\s*([^<\r\n]+)(?:<([^>]+)>)?/i);
-    if (fromMatch) {
-      if (fromMatch[2]) {
-        email = fromMatch[2].trim().toLowerCase();
-        name = fromMatch[1].replace(/['"]/g, '').trim();
-      } else {
-        email = fromMatch[1].trim().toLowerCase();
-        name = email.split('@')[0];
-      }
-    }
+  const prospect = getProspectFromThread(messages, subject, snippet);
+  if (prospect) {
+    email = prospect.email;
+    name = prospect.name;
   }
   
   if (!email) {
-    const emailMatch = fromField.match(/<([^>]+)>/);
-    if (emailMatch) email = emailMatch[1].trim().toLowerCase();
-    else email = fromField.trim().toLowerCase();
-    
-    const nameMatch = fromField.match(/^([^<]+)/);
-    if (nameMatch) name = nameMatch[1].replace(/['"]/g, '').trim();
-    else name = email.split('@')[0];
+    return { error: 'Could not resolve prospect email from thread' };
   }
   
   const leadSheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
@@ -352,29 +345,14 @@ function processGmailThreadLegacy(threadId) {
   let email = "";
   let name = "";
   
-  const isForwarded = subject.toLowerCase().startsWith("fwd:") || snippet.includes("---------- Forwarded message");
-  
-  if (isForwarded) {
-    const fromMatch = snippet.match(/From:\s*([^<\r\n]+)(?:<([^>]+)>)?/i);
-    if (fromMatch) {
-      if (fromMatch[2]) {
-        email = fromMatch[2].trim().toLowerCase();
-        name = fromMatch[1].replace(/['"]/g, '').trim();
-      } else {
-        email = fromMatch[1].trim().toLowerCase();
-        name = email.split('@')[0];
-      }
-    }
+  const prospect = getProspectFromThread(messages, subject, snippet);
+  if (prospect) {
+    email = prospect.email;
+    name = prospect.name;
   }
   
   if (!email) {
-    const emailMatch = fromField.match(/<([^>]+)>/);
-    if (emailMatch) email = emailMatch[1].trim().toLowerCase();
-    else email = fromField.trim().toLowerCase();
-    
-    const nameMatch = fromField.match(/^([^<]+)/);
-    if (nameMatch) name = nameMatch[1].replace(/['"]/g, '').trim();
-    else name = email.split('@')[0];
+    return { error: 'Could not resolve prospect email from thread' };
   }
   
   const leadSheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
@@ -855,6 +833,133 @@ function saveIngestionSettings(searchQuery) {
 }
 
 /**
+ * Retrieves all connected account emails and the script owner's email
+ * to filter out campaign senders.
+ */
+function getCampaignEmails() {
+  const emails = [];
+  try {
+    const list = getConnectedAccountsList();
+    if (list && Array.isArray(list)) {
+      list.forEach(a => {
+        if (a.email) emails.push(a.email.toLowerCase().trim());
+      });
+    }
+  } catch(e) {
+    Logger.log("Error fetching connected accounts for campaign filter: " + e.toString());
+  }
+  
+  try {
+    const ownerEmail = Session.getEffectiveUser().getEmail();
+    if (ownerEmail) {
+      const lowerOwner = ownerEmail.toLowerCase().trim();
+      if (!emails.includes(lowerOwner)) emails.push(lowerOwner);
+    }
+  } catch(e) {
+    Logger.log("Error getting effective user email: " + e.toString());
+  }
+  
+  return emails;
+}
+
+/**
+ * Resolves the prospect's name and email from a thread's messages,
+ * ignoring all campaign email addresses.
+ */
+function getProspectFromThread(messages, subject, snippet) {
+  let email = "";
+  let name = "";
+  
+  const campaignEmails = getCampaignEmails();
+  
+  // 1. First check if it's a forwarded thread and parse the original sender from the snippet
+  const isForwarded = String(subject || '').toLowerCase().startsWith("fwd:") || String(snippet || '').includes("---------- Forwarded message");
+  if (isForwarded) {
+    const fromMatch = String(snippet || '').match(/From:\s*([^<\r\n]+)(?:<([^>]+)>)?/i);
+    if (fromMatch) {
+      if (fromMatch[2]) {
+        email = fromMatch[2].trim().toLowerCase();
+        name = fromMatch[1].replace(/['"]/g, '').trim();
+      } else {
+        email = fromMatch[1].trim().toLowerCase();
+        name = email.split('@')[0];
+      }
+    }
+  }
+  
+  // If we resolved a valid non-campaign email from the forward header, return it
+  if (email && !campaignEmails.includes(email)) {
+    return { email: email, name: name };
+  }
+  
+  // 2. Loop through all messages in the thread (newest first) to find a non-campaign sender
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    let fromField = "";
+    
+    if (msg.payload && msg.payload.headers) {
+      // REST API format
+      const headers = msg.payload.headers;
+      headers.forEach(h => {
+        if (h.name.toLowerCase() === 'from') fromField = h.value;
+      });
+    } else if (typeof msg.getFrom === 'function') {
+      // Legacy GmailApp format
+      fromField = msg.getFrom();
+    }
+    
+    if (fromField) {
+      let msgEmail = "";
+      const emailMatch = fromField.match(/<([^>]+)>/);
+      if (emailMatch) msgEmail = emailMatch[1].trim().toLowerCase();
+      else msgEmail = fromField.trim().toLowerCase();
+      
+      if (msgEmail && !campaignEmails.includes(msgEmail)) {
+        let msgName = "";
+        const nameMatch = fromField.match(/^([^<]+)/);
+        if (nameMatch) msgName = nameMatch[1].replace(/['"]/g, '').trim();
+        else msgName = msgEmail.split('@')[0];
+        
+        return { email: msgEmail, name: msgName };
+      }
+    }
+  }
+  
+  // 3. Fallback: If all messages are from campaign accounts, get the recipient of the first message
+  if (messages.length > 0) {
+    const firstMsg = messages[0];
+    let toField = "";
+    
+    if (firstMsg.payload && firstMsg.payload.headers) {
+      const headers = firstMsg.payload.headers;
+      headers.forEach(h => {
+        if (h.name.toLowerCase() === 'to') toField = h.value;
+      });
+    } else if (typeof firstMsg.getTo === 'function') {
+      toField = firstMsg.getTo();
+    }
+    
+    if (toField) {
+      let msgEmail = "";
+      const emailMatch = toField.match(/<([^>]+)>/);
+      if (emailMatch) msgEmail = emailMatch[1].trim().toLowerCase();
+      else msgEmail = toField.trim().toLowerCase();
+      
+      if (msgEmail && !campaignEmails.includes(msgEmail)) {
+        let msgName = "";
+        const nameMatch = toField.match(/^([^<]+)/);
+        if (nameMatch) msgName = nameMatch[1].replace(/['"]/g, '').trim();
+        else msgName = msgEmail.split('@')[0];
+        
+        return { email: msgEmail, name: msgName };
+      }
+    }
+  }
+  
+  return null;
+}
+
+/**
  * Simple email extractor helper.
  */
 function extractEmails(text) {
@@ -922,24 +1027,13 @@ function sendCalculatorLinkToLead(threadId) {
       });
     }
     
-    // Parse the prospect's email and name from the "From" header
-    let prospectEmail = "";
-    let prospectName = "";
-    
-    const emailMatch = originalFrom.match(/<([^>]+)>/);
-    if (emailMatch) {
-      prospectEmail = emailMatch[1].trim().toLowerCase();
-      const nameMatch = originalFrom.match(/^([^<]+)/);
-      if (nameMatch) {
-        prospectName = nameMatch[1].replace(/['"]/g, '').trim();
-      }
-    } else {
-      prospectEmail = originalFrom.trim().toLowerCase();
+    // Resolve the prospect's email and name from the thread messages
+    const prospect = getProspectFromThread(messages, originalSubject, lastMsg.snippet || "");
+    if (!prospect || !prospect.email) {
+      return { error: 'Could not resolve prospect email from thread messages' };
     }
-    
-    if (!prospectName) {
-      prospectName = prospectEmail.split('@')[0];
-    }
+    const prospectEmail = prospect.email;
+    const prospectName = prospect.name;
     
     // Capitalize first name
     let firstName = prospectName.split(' ')[0];
@@ -987,7 +1081,8 @@ function sendCalculatorLinkToLead(threadId) {
     
     // Construct MIME message
     let mimeParts = [];
-    mimeParts.push("To: " + originalFrom);
+    const formattedTo = prospectName ? `"${prospectName.replace(/"/g, '\\"')}" <${prospectEmail}>` : prospectEmail;
+    mimeParts.push("To: " + formattedTo);
     mimeParts.push("Subject: " + replySubject);
     mimeParts.push("MIME-Version: 1.0");
     mimeParts.push("Content-Type: text/plain; charset=UTF-8");

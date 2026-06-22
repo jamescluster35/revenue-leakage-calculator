@@ -16,7 +16,8 @@ function runAllBackendTests() {
     testGenerateAndSendReportEmptyLead,
     testLeakageBenchmarkDefaulting,
     testPdfGenerationForAllNiches,
-    testGetOrCreateSheetAppendsHeaders
+    testGetOrCreateSheetAppendsHeaders,
+    testProspectResolution
   ];
 
   const timestamp = new Date();
@@ -172,5 +173,68 @@ function testGetOrCreateSheetAppendsHeaders() {
   } finally {
     const sheetToDelete = ss.getSheetByName(tempSheetName);
     if (sheetToDelete) ss.deleteSheet(sheetToDelete);
+  }
+}
+
+function testProspectResolution() {
+  // Case A: Normal thread with a reply from the prospect
+  const messagesA = [
+    {
+      payload: {
+        headers: [
+          { name: "From", value: "Emma Johnson <emmajohnson.114584@gmail.com>" },
+          { name: "To", value: "prospect@example.com" },
+          { name: "Subject", value: "Revenue Audit" }
+        ]
+      }
+    },
+    {
+      payload: {
+        headers: [
+          { name: "From", value: "prospect@example.com" },
+          { name: "To", value: "Emma Johnson <emmajohnson.114584@gmail.com>" },
+          { name: "Subject", value: "Re: Revenue Audit" }
+        ]
+      }
+    }
+  ];
+  const resA = getProspectFromThread(messagesA, "Re: Revenue Audit", "Yes, let's connect");
+  if (!resA || resA.email !== "prospect@example.com") {
+    throw new Error("Case A failed: expected prospect@example.com, got: " + (resA ? resA.email : "null"));
+  }
+  
+  // Case B: Thread with only outbound pitches sent by us
+  const messagesB = [
+    {
+      payload: {
+        headers: [
+          { name: "From", value: "Emma Johnson <emmajohnson.114584@gmail.com>" },
+          { name: "To", value: "prospect_outbound@example.com" },
+          { name: "Subject", value: "Revenue Audit for you" }
+        ]
+      }
+    }
+  ];
+  const resB = getProspectFromThread(messagesB, "Revenue Audit for you", "Here is your report");
+  if (!resB || resB.email !== "prospect_outbound@example.com") {
+    throw new Error("Case B failed: expected prospect_outbound@example.com, got: " + (resB ? resB.email : "null"));
+  }
+  
+  // Case C: Forwarded message
+  const messagesC = [
+    {
+      payload: {
+        headers: [
+          { name: "From", value: "Emma Johnson <emmajohnson.114584@gmail.com>" },
+          { name: "To", value: "another@example.com" },
+          { name: "Subject", value: "Fwd: Revenue Audit" }
+        ]
+      }
+    }
+  ];
+  const snippetC = "---------- Forwarded message ---------\nFrom: Forwarded Prospect <forwarded_prospect@example.com>\nDate: Mon, Jun 15, 2026\nSubject: Help";
+  const resC = getProspectFromThread(messagesC, "Fwd: Revenue Audit", snippetC);
+  if (!resC || resC.email !== "forwarded_prospect@example.com") {
+    throw new Error("Case C failed: expected forwarded_prospect@example.com, got: " + (resC ? resC.email : "null"));
   }
 }
