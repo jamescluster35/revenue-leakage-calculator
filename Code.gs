@@ -559,6 +559,9 @@ function sendPaymentRequestEmail(lead, toEmail, wiseLink) {
             3. Full PDF report delivered within 24 hours.
           </p>
           <a href="${wiseLink}" style="display: block; background: #F97316; color: #fff; text-align: center; padding: 16px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px;">Unlock Report — $47 USD →</a>
+          <p style="margin: 12px 0 0; font-size: 11px; color: #9CA3AF; text-align: center; font-style: italic; line-height: 1.4;">
+            * Note: Payments are securely processed via Wise under our parent finance name: <strong>M Haresh Kumar</strong>.
+          </p>
         </div>
 
         <p style="font-size: 12px; color: #6B7280; text-align: center; margin: 0;">One-time secure payment. Professional Analyst support included.</p>
