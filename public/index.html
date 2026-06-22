@@ -29,7 +29,7 @@
 
   /* Text Hierarchy */
   --text-primary:         hsl(220, 25%, 92%);
-  --text-secondary:       hsl(218, 10%, 46%);
+  --text-secondary:       hsl(218, 14%, 62%);
 
   /* Status Feedback - HSL components */
   --status-error-h: 0;
@@ -76,16 +76,24 @@ input, select, textarea, button {
   font-family: inherit;
   font-size: 16px; /* Prevents iOS auto-zoom */
 }
-.hdr{text-align:center;padding:48px 20px 0;}
-.logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:28px;}
-.logo-dot{width:10px;height:10px;background:var(--brand-primary);border-radius:50%;}
+/* ── Top Nav ─────────────────────────────────────────── */
+.top-nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:hsla(210,20%,4%,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default);}
+.logo{display:inline-flex;align-items:center;gap:8px;}
+.logo-dot{width:9px;height:9px;background:var(--brand-primary);border-radius:50%;}
 .logo-txt{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-primary);}
-.hdr h1{font-family:'Outfit',sans-serif;font-size:clamp(32px,6vw,54px);font-weight:800;line-height:1.15;letter-spacing:-0.01em;margin-bottom:16px;}
+.nav-cta{display:inline-flex;align-items:center;gap:6px;background:var(--brand-primary);color:#fff;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;text-decoration:none;letter-spacing:0.02em;transition:all 0.2s ease;white-space:nowrap;box-shadow:0 4px 14px hsla(var(--brand-primary-h),var(--brand-primary-s),var(--brand-primary-l),0.35);}
+.nav-cta:hover{background:var(--brand-primary-dark);transform:translateY(-1px);box-shadow:0 6px 20px hsla(var(--brand-primary-h),var(--brand-primary-s),var(--brand-primary-l),0.45);}
+.nav-cta-arrow{font-size:15px;transition:transform 0.2s;}
+.nav-cta:hover .nav-cta-arrow{transform:translateX(3px);}
+@media(max-width:480px){.nav-cta{font-size:12px;padding:8px 14px;}.nav-cta .nav-cta-label{display:none;}.top-nav{padding:12px 16px;}}
+/* ── Hero Header ─────────────────────────────────────── */
+.hdr{text-align:center;padding:44px 20px 0;}
+.hdr h1{font-family:'Outfit',sans-serif;font-size:clamp(30px,5.5vw,52px);font-weight:800;line-height:1.15;letter-spacing:-0.01em;margin-bottom:16px;}
 .hdr h1 span{color:var(--brand-primary);}
-.hdr p{color:var(--text-secondary);font-size:16px;max-width:520px;margin:0 auto 16px;}
+.hdr p{color:var(--text-secondary);font-size:16px;max-width:520px;margin:0 auto 16px;line-height:1.65;}
 .trust{display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;margin-bottom:36px;}
-.trust-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);}
-.trust-item span:first-child{color:var(--status-success);}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);font-weight:500;}
+.trust-item span:first-child{color:var(--status-success);font-size:14px;}
 .prog-wrap{width: 100%; max-width:620px;margin:0 auto 28px;padding:0 20px;}
 .prog-steps{display:flex;align-items:flex-start;}
 .ps{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
@@ -341,14 +349,21 @@ footer a{color:var(--brand-primary);text-decoration:none;}
 </head>
 <body>
 
+<nav class="top-nav">
+  <div class="logo"><div class="logo-dot"></div><div class="logo-txt">BDL Revenue</div></div>
+  <button class="nav-cta" onclick="scrollToAuditCta()">
+    <span class="nav-cta-label">Request My Audit</span>
+    <span class="nav-cta-arrow">→</span>
+  </button>
+</nav>
+
 <div class="hdr">
-  <div class="logo"><div class="logo-dot"></div><div class="logo-txt">BDL</div></div>
   <h1>Is Your Business<br><span>Leaking Revenue?</span></h1>
   <p>Answer a few simple questions. Get a free estimate of where your business is losing money — then request a personalised audit.</p>
   <div class="trust">
     <div class="trust-item"><span>✓</span><span>Takes 2 minutes</span></div>
     <div class="trust-item"><span>✓</span><span>Free estimate</span></div>
-    <div class="trust-item"><span>✓</span><span>Personalised audit delivered within 24hrs</span></div>
+    <div class="trust-item"><span>✓</span><span>Audit delivered in 24hrs</span></div>
   </div>
 </div>
 
@@ -1358,10 +1373,31 @@ async function runCalc() {
   _saveLead('New', null, null, null, null, null, 'Step 3 Completed');
 }
 
+function scrollToAuditCta(){
+  var ctaEl = document.getElementById('audit-cta');
+  var formEl = document.getElementById('audit-form');
+  // If form is visible, just scroll to it
+  if(formEl && formEl.style.display !== 'none'){
+    window.scrollTo({top:formEl.offsetTop-80,behavior:'smooth'});
+    return;
+  }
+  // If CTA block is visible, scroll to it
+  if(ctaEl && ctaEl.style.display !== 'none'){
+    window.scrollTo({top:ctaEl.offsetTop-80,behavior:'smooth'});
+    // Add a brief pulse to draw attention
+    ctaEl.style.transition='box-shadow 0.3s ease';
+    ctaEl.style.boxShadow='0 0 0 4px hsla(24,92%,53%,0.5)';
+    setTimeout(function(){ctaEl.style.boxShadow='';},1000);
+    return;
+  }
+  // If not on results step yet, scroll to bottom of page to hint them to continue
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+
 function showAuditForm(){
   document.getElementById('audit-cta').style.display='none';
   document.getElementById('audit-form').style.display='block';
-  window.scrollTo({top:document.getElementById('audit-form').offsetTop-20,behavior:'smooth'});
+  window.scrollTo({top:document.getElementById('audit-form').offsetTop-80,behavior:'smooth'});
 }
 
 // ── Submit audit request ──────────────────────────────────
