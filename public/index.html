@@ -441,10 +441,7 @@ footer a{color:var(--brand-primary);text-decoration:none;}
             <input type="text" id="monthly_revenue" placeholder="Monthly revenue" inputmode="numeric" style="flex:1;" oninput="formatCurrencyInput(this)">
           </div>
         </div>
-        <div class="field">
-          <label>Number of employees</label>
-          <input type="number" id="num_employees" placeholder="No. of employees" min="1">
-        </div>
+
       </div>
 
     </div>
@@ -467,7 +464,17 @@ footer a{color:var(--brand-primary);text-decoration:none;}
           <div class="star" data-v="0" onclick="setRating('g',0)" style="font-size:11px;padding:8px;">Not listed</div>
         </div>
       </div>
-      <div class="field"><label>Number of Google reviews</label><input type="number" id="google_reviews" placeholder="Number of reviews" min="0"></div>
+      <div class="field">
+        <label>How many Google reviews do you have?</label>
+        <div class="hint">Review count directly affects how much customers trust your business before contacting you.</div>
+        <div class="choices">
+          <div class="choice" onclick="setChoice('rc','none',this)">None (0 reviews)</div>
+          <div class="choice on" onclick="setChoice('rc','low',this)">Under 30</div>
+          <div class="choice" onclick="setChoice('rc','mid',this)">30 &ndash; 100</div>
+          <div class="choice" onclick="setChoice('rc','good',this)">100 &ndash; 500</div>
+          <div class="choice" onclick="setChoice('rc','great',this)">500+</div>
+        </div>
+      </div>
       <div class="field"><label>Do you reply to reviews?</label>
         <div class="choices">
           <div class="choice" onclick="setChoice('respond','always',this)">Yes, always</div>
@@ -832,7 +839,7 @@ function toggleMethodology(btn) {
 
 // ── State ─────────────────────────────────────────────────
 var S={
-  niche:'',gr:-1,respond:'',social:'',
+  niche:'',gr:-1,rc:'low',respond:'',social:'',
   res:{total:0,items:[]}
 };
 
@@ -1021,6 +1028,11 @@ function getLeakageItems(n, g, v){
       {l:'Food Waste',v:Math.max(0,g('fcost')*(v('waste_v')/100)*cm),w:'Food purchased but thrown away'},
       {l:'No-Show & Cancellation Loss',v:Math.max(0,g('res')*(v('nshow_v')/100)*g('covers')*g('spend')*30*cm),w:'Reserved tables that sat empty'},
     ];
+  } else if(n==='general'){
+    r=[
+      {l:'Lead Follow-Up Gap',v:Math.max(0,g('leads')*(1-v('fup_v')/100)*g('tval')*cm),w:'Inquiries not followed up on properly'},
+      {l:'Administrative Time Waste',v:Math.max(0,g('staff')*v('admin_v')*g('srate')*4*cm),w:'Wages spent on manual admin tasks instead of growth'},
+    ];
   }
   return r.filter(function(i){return i.v>=1;});
 }
@@ -1037,8 +1049,16 @@ function _calcRep(rev){
     r.push({l:'Reputation Impact — Low Google Rating',v:loss,w:'Potential customers choosing higher-rated competitors'});
   }
   if(gr===0){r.push({l:'Not Listed on Google',v:v*0.10,w:'Missing from local search — customers can\'t find you'});}
-  var rc=parseInt((document.getElementById('google_reviews')||{}).value)||0;
-  if(rc<30&&rc>0)r.push({l:'Low Review Volume',v:v*0.06,w:'Fewer reviews means less trust from potential customers'});
+  // Review volume leakage based on choice selection
+  var rc = S.rc || 'low'; // default 'low' if not set
+  if(rc === 'none'){
+    r.push({l:'No Google Reviews',v:v*0.10,w:'Zero reviews — customers have no social proof to trust your business'});
+  } else if(rc === 'low'){
+    r.push({l:'Low Review Volume (Under 30)',v:v*0.06,w:'Fewer reviews means less trust — customers choose competitors with more'});
+  } else if(rc === 'mid'){
+    r.push({l:'Growing Review Volume (30–100)',v:v*0.02,w:'Decent but below the trust threshold of top local businesses'});
+  }
+  // 'good' (100-500) and 'great' (500+) = no review volume penalty
   return r;
 }
 
@@ -1187,7 +1207,7 @@ async function runCalc() {
   await new Promise(function(r){setTimeout(r,300);});
   document.getElementById('ca').style.display='none';
 
-  var rev=document.getElementById('monthly_revenue').value.replace(/,/g,'');
+  var rev=document.getElementById('monthly_revenue').value.replace(/[$,]/g,'');
   var fi=_calc(S.niche);
   var ri=_calcRep(rev);
   var pi=_calcPlatforms(S.niche);
@@ -1357,9 +1377,16 @@ function _saveLead(status,name,email,phone,website,jobTitle,lastStep){
           country:_country,
           website:website||(document.getElementById('biz_website')&&document.getElementById('biz_website').value)||'', // Ensure biz_website is correctly retrieved
           monthlyRevenue:document.getElementById('monthly_revenue').value.replace(/[$,]/g,''), // Remove $ and ,
-          employees:document.getElementById('num_employees').value||'',
+          employees:(function(){
+            var niche = S.niche;
+            if (niche === 'restaurant') return (document.getElementById('nf_total_staff') || {}).value || '';
+            if (niche === 'realestate') return (document.getElementById('nf_agents') || {}).value || '';
+            if (niche === 'legal') return (document.getElementById('nf_att') || {}).value || '';
+            return (document.getElementById('nf_staff') || {}).value || '';
+          })() || '',
           googleRating:S.gr||'',
-          googleReviews:(document.getElementById('google_reviews')||{}).value||0,
+          googleReviewRange:(function(){var m={none:'0 reviews',low:'Under 30',mid:'30-100',good:'100-500',great:'500+'};return m[S.rc]||'';})(),
+          googleReviews:(function(){var m={none:0,low:15,mid:50,good:250,great:600};return m[S.rc]!==undefined?m[S.rc]:0;})(),
           totalLeakage:S.res?Math.round(S.res.total):0,
           annualLeakage:S.res?Math.round(S.res.total*12):0,
           leakageBreakdown:tops,

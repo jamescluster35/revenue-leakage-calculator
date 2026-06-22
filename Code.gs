@@ -129,11 +129,12 @@ function handleRequest(e) {
   const protectedActions = [
     'getAll', 'moveLead', 'deleteLead', 'archiveLead', 'promoteClient', 'restoreLead',
     'getCalculatorLeads', 'updateCalculatorLead', 'markPaymentPaid', 'deleteCalculatorLead', 
-    'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'dailyBackupToDrive',
+    'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'saveLeadPdfToDrive', 'dailyBackupToDrive',
     'setupRemindersTrigger', 'sendFollowUpReminders',
     'getSenders', 'saveSenders', 'getGmailInboxFeed', 'processGmailThread', 'syncOutreachLogsFromGmail', 'setupGmailTriggers',
     'getIngestionSettings', 'saveIngestionSettings',
-    'getConnectedAccounts', 'generateAuthUrl', 'deleteConnectedAccount', 'saveOAuthCredentials', 'getOAuthCredentials'
+    'getConnectedAccounts', 'generateAuthUrl', 'deleteConnectedAccount', 'saveOAuthCredentials', 'getOAuthCredentials',
+    'sendTestReceipt', 'sendCalculatorLink'
   ];
 
   if (protectedActions.includes(action) && authKey !== getAdminPassword()) {
@@ -144,7 +145,7 @@ function handleRequest(e) {
   const router = {
     // CRM Actions
     'getAll': getAll,
-    'addLead': addLead,
+    'addLead': (data) => addLead(data.lead),
     'updateLead': (data) => updateLead(data.id, data.changes, data.tab || SHEETS.LEADS),
     'moveLead': (data) => moveLead(data.id, data.fromTab, data.toTab, data.changes || {}),
     'deleteLead': (data) => moveLead(data.id, data.fromTab, SHEETS.DELETED, {}),
@@ -168,6 +169,7 @@ function handleRequest(e) {
     'verifyPayment': (data) => verifyPayment(data.orderId, data.email),
     'webhookPayment': (data) => webhookPayment(data, event),
     'getLeadPdf': (data) => getLeadPdf(data.lead, data.note, data.pdfType),
+    'saveLeadPdfToDrive': (data) => saveLeadPdfToDrive(data.leadId, data.pdfType, data.note),
     
     // Tracker Actions
     'getTrackerData': (data) => getTracker(data.trackerId, data.email),
@@ -195,6 +197,8 @@ function handleRequest(e) {
     'deleteConnectedAccount': (data) => deleteConnectedAccount(data),
     'saveOAuthCredentials': (data) => saveOAuthCredentials(data.clientId, data.clientSecret),
     'getOAuthCredentials': getOAuthCredentials,
+    'sendTestReceipt': (data) => { sendPaymentReceiptEmail(data.lead); return { success: true }; },
+    'sendCalculatorLink': (data) => sendCalculatorLinkToLead(data.threadId),
 
     // Admin Actions
     'dailyBackupToDrive': dailyBackupToDrive,

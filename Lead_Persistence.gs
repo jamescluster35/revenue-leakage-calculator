@@ -4,6 +4,12 @@
  */
 
 function getAll() {
+  try {
+    repairMissingIdsAndNums();
+    ensureRequiredHeaders();
+  } catch (e) {
+    Logger.log("Failed to repair missing IDs or headers: " + e.toString());
+  }
   return {
     leads:    getTabData(SHEETS.LEADS),
     archived: getTabData(SHEETS.ARCHIVED),
@@ -11,6 +17,62 @@ function getAll() {
     clients:  getTabData(SHEETS.CLIENTS),
   }
 }
+
+function ensureRequiredHeaders() {
+  const ss = getSpreadsheet();
+  const tabs = [SHEETS.LEADS, SHEETS.ARCHIVED, SHEETS.DELETED, SHEETS.CLIENTS];
+  const required = ['aiPersonalization', 'pdfLink'];
+  
+  tabs.forEach(tabName => {
+    const sheet = ss.getSheetByName(tabName);
+    if (!sheet) return;
+    let lastCol = sheet.getLastColumn();
+    if (lastCol === 0) return;
+    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    
+    required.forEach(header => {
+      if (headers.indexOf(header) === -1) {
+        lastCol++;
+        sheet.getRange(1, lastCol).setValue(header);
+        Logger.log("Added " + header + " column header to tab: " + tabName);
+      }
+    });
+  });
+}
+
+function repairMissingIdsAndNums() {
+  const sheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
+  if (!sheet) return;
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return;
+  const headers = rows[0];
+  const idCol = headers.indexOf('id');
+  const numCol = headers.indexOf('num');
+  const emailCol = headers.indexOf('email');
+  
+  if (idCol === -1) return;
+  
+  // Loop backwards to safely delete rows without shifting indices of upcoming loops
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const rowNum = i + 1;
+    const emailVal = emailCol !== -1 ? String(rows[i][emailCol]).trim() : '';
+    const idVal = rows[i][idCol];
+    
+    if (emailVal === '') {
+      sheet.deleteRow(rowNum);
+      continue;
+    }
+    
+    if (!idVal || String(idVal).trim() === '') {
+      const generatedId = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+      sheet.getRange(rowNum, idCol + 1).setValue(generatedId);
+    }
+    if (numCol !== -1 && (!rows[i][numCol] || String(rows[i][numCol]).trim() === '')) {
+      sheet.getRange(rowNum, numCol + 1).setValue(i);
+    }
+  }
+}
+
 
 function getTabData(tabName) {
   const sheet = getSpreadsheet().getSheetByName(tabName)
@@ -37,6 +99,27 @@ function getTabData(tabName) {
 function addLead(lead) {
   const sheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  // Map scraper keys to spreadsheet headers
+  if (lead) {
+    if (lead.contact && !lead.name) {
+      lead.name = lead.contact;
+    }
+    if (lead.company && !lead.business) {
+      lead.business = lead.company;
+    }
+    
+    // Auto-generate missing fields for API/scraper additions
+    if (!lead.id || String(lead.id).trim() === '') {
+      lead.id = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    }
+    if (!lead.num || String(lead.num).trim() === '') {
+      lead.num = sheet.getLastRow();
+    }
+  } else {
+    lead = {};
+  }
+  
   const row = headers.map(h => {
     if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || []);
     if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE';

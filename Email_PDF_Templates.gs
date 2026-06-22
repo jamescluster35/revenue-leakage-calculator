@@ -782,6 +782,76 @@ function getLeadPdf(lead, note, type = 'full') {
   } catch (err) { return { success: false, error: err.message }; }
 }
 
+function saveLeadPdfToDrive(leadId, pdfType = 'teaser', note = '') {
+  try {
+    const leadSheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
+    if (!leadSheet) return { success: false, error: 'Leads tab not found' };
+    const data = leadSheet.getDataRange().getValues();
+    const headers = data[0];
+    const idCol = headers.indexOf('id');
+    const pdfLinkCol = headers.indexOf('pdfLink');
+    const notesCol = headers.indexOf('notes');
+    
+    let leadRow = -1;
+    let lead = {};
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]).trim() === String(leadId).trim()) {
+        leadRow = i + 1;
+        headers.forEach((h, idx) => {
+          lead[h] = data[i][idx];
+        });
+        break;
+      }
+    }
+    
+    if (leadRow === -1) {
+      return { success: false, error: 'Lead not found: ' + leadId };
+    }
+    
+    let html = '';
+    const safeBizName = (lead.business || 'Revenue_Audit').replace(/[^a-z0-9]/gi, '_');
+    let filename = '';
+    
+    if (pdfType === 'teaser') {
+      html = buildTeaserPdfReportHtml(lead, note);
+      filename = safeBizName + '_Teaser.pdf';
+    } else {
+      html = buildFullPdfReportHtml(lead, note);
+      filename = safeBizName + '_Full_Report.pdf';
+    }
+    
+    const pdfBlob = Utilities.newBlob(html, 'text/html', 'report.html').getAs('application/pdf');
+    pdfBlob.setName(filename);
+    
+    const folderName = "BDL Audit Reports";
+    let folder;
+    const folders = DriveApp.getFoldersByName(folderName);
+    if (folders.hasNext()) {
+      folder = folders.next();
+    } else {
+      folder = DriveApp.createFolder(folderName);
+    }
+    
+    const file = folder.createFile(pdfBlob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    const link = file.getUrl();
+    
+    if (pdfLinkCol !== -1) {
+      leadSheet.getRange(leadRow, pdfLinkCol + 1).setValue(link);
+    }
+    
+    if (notesCol !== -1) {
+      const currentNotes = String(leadSheet.getRange(leadRow, notesCol + 1).getValue() || '');
+      const appendStr = `\n[PDF Audit Generated]: ${link}`;
+      leadSheet.getRange(leadRow, notesCol + 1).setValue(currentNotes + appendStr);
+    }
+    
+    return { success: true, pdfLink: link, filename: filename };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
 function createPdfAttachment(html, filename) {
   const blob = Utilities.newBlob(html, 'text/html', 'report.html');
   const pdfBlob = blob.getAs('application/pdf');

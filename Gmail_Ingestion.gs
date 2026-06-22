@@ -866,3 +866,179 @@ function extractEmails(text) {
   }
   return emails;
 }
+
+/**
+ * Sends a calculator link reply to a prospect's email thread, including the handoff to James.
+ */
+function sendCalculatorLinkToLead(threadId) {
+  try {
+    if (!threadId) return { error: 'Missing threadId' };
+    
+    const parts = threadId.split('::');
+    const targetThreadId = parts[0];
+    const accountEmail = parts[1];
+    
+    if (!accountEmail) {
+      return { error: 'Direct Gmail Integration is required for this action' };
+    }
+    
+    const accessToken = getGmailApiClient(accountEmail);
+    if (!accessToken) {
+      return { error: 'Could not get authorization for account: ' + accountEmail };
+    }
+    
+    // Fetch thread details to get original headers and sender details
+    const threadUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + targetThreadId;
+    const response = UrlFetchApp.fetch(threadUrl, {
+      headers: { 'Authorization': 'Bearer ' + accessToken },
+      muteHttpExceptions: true
+    });
+    if (response.getResponseCode() !== 200) {
+      return { error: 'Thread not found on ' + accountEmail + ': ' + response.getContentText() };
+    }
+    
+    const threadData = JSON.parse(response.getContentText());
+    const messages = threadData.messages || [];
+    if (messages.length === 0) return { error: 'No messages in thread' };
+    
+    const lastMsg = messages[messages.length - 1];
+    
+    // Find Headers
+    let originalFrom = "";
+    let originalSubject = "";
+    let messageId = "";
+    const headers = lastMsg.payload?.headers || [];
+    headers.forEach(h => {
+      const name = h.name.toLowerCase();
+      if (name === 'from') originalFrom = h.value;
+      if (name === 'subject') originalSubject = h.value;
+      if (name === 'message-id') messageId = h.value;
+    });
+    
+    if (!originalSubject) {
+      const firstHeaders = messages[0].payload?.headers || [];
+      firstHeaders.forEach(h => {
+        if (h.name.toLowerCase() === 'subject') originalSubject = h.value;
+      });
+    }
+    
+    // Parse the prospect's email and name from the "From" header
+    let prospectEmail = "";
+    let prospectName = "";
+    
+    const emailMatch = originalFrom.match(/<([^>]+)>/);
+    if (emailMatch) {
+      prospectEmail = emailMatch[1].trim().toLowerCase();
+      const nameMatch = originalFrom.match(/^([^<]+)/);
+      if (nameMatch) {
+        prospectName = nameMatch[1].replace(/['"]/g, '').trim();
+      }
+    } else {
+      prospectEmail = originalFrom.trim().toLowerCase();
+    }
+    
+    if (!prospectName) {
+      prospectName = prospectEmail.split('@')[0];
+    }
+    
+    // Capitalize first name
+    let firstName = prospectName.split(' ')[0];
+    if (firstName) {
+      firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+    } else {
+      firstName = "there";
+    }
+    
+    // Look up the active sender name and title from our AccountMap
+    const AccountMap = {
+      "emmajohnson.114584@gmail.com": { Name: "Emma Johnson", Title: "Hospitality Revenue Consultant" },
+      "franktoczek.data@gmail.com": { Name: "Frank Toczek", Title: "Hotel Operations Consultant" },
+      "kevinamanda.dataoutreach@gmail.com": { Name: "Kevin Amanda", Title: "Hospitality Advisor" },
+      "martinseidel.dataoutreach@gmail.com": { Name: "Martin Seidel", Title: "Independent Lodging Consultant" },
+      "lylemorgan884@gmail.com": { Name: "Lyle Morgan", Title: "Direct Booking Advisor" },
+      "lylemorgan.data@gmail.com": { Name: "Lyle Morgan", Title: "Direct Booking Advisor" },
+      "skinnerdonald.data@gmail.com": { Name: "Skinner Donald", Title: "Hospitality Consultant" },
+      "michaelbrauns.dataoutreach@gmail.com": { Name: "Michael Brauns", Title: "Hotel Revenue Strategist" },
+      "oestenchristian.dataoutreach@gmail.com": { Name: "Oesten Christian", Title: "Hospitality Operations Consultant" },
+      "matthewyoung.data@gmail.com": { Name: "Matthew Young", Title: "Lodging Strategy Advisor" },
+      "katecampbell.data@gmail.com": { Name: "Kate Campbell", Title: "Hospitality Consultant" },
+      "barrygisser.dataoutreach@gmail.com": { Name: "Barry Gisser", Title: "Revenue Operations Advisor" },
+      "williams.dataoutreach@gmail.com": { Name: "William", Title: "Hospitality Advisor" },
+      "danperetti.data@gmail.com": { Name: "Dan Peretti", Title: "Hotel Consultant" },
+      "jennifer.brooks@bluedatalabs.com": { Name: "Jennifer Brooks", Title: "Senior Hospitality Consultant" }
+    };
+    
+    const sender = AccountMap[accountEmail.toLowerCase().trim()] || { Name: "Hospitality Team", Title: "Revenue Operations Specialist" };
+    
+    // Construct the subject for reply (Re:)
+    let replySubject = originalSubject;
+    if (replySubject && !replySubject.toLowerCase().startsWith("re:")) {
+      replySubject = "Re: " + replySubject;
+    }
+    
+    // Construct the reply body (James handoff matching)
+    const replyBody = "Hi " + firstName + ",\n\n" +
+                      "Here is the link to run your numbers:\n" +
+                      "https://audit.dataconnectmail.com\n\n" +
+                      "My colleague, James, will follow up with you directly to help review the estimates. You can also reach him at jamescluster35@gmail.com.\n\n" +
+                      "Best regards,\n\n" +
+                      sender.Name + "\n" +
+                      sender.Title;
+    
+    // Construct MIME message
+    let mimeParts = [];
+    mimeParts.push("To: " + originalFrom);
+    mimeParts.push("Subject: " + replySubject);
+    mimeParts.push("MIME-Version: 1.0");
+    mimeParts.push("Content-Type: text/plain; charset=UTF-8");
+    if (messageId) {
+      mimeParts.push("In-Reply-To: " + messageId);
+      mimeParts.push("References: " + messageId);
+    }
+    mimeParts.push(""); // Empty line separating headers from body
+    mimeParts.push(replyBody);
+    
+    const mimeString = mimeParts.join("\r\n");
+    // Encode MIME message base64url
+    const raw = Utilities.base64EncodeWebSafe(Utilities.newBlob(mimeString).getBytes());
+    
+    // Send message via Gmail API
+    const sendUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/messages';
+    const sendRes = UrlFetchApp.fetch(sendUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify({
+        raw: raw,
+        threadId: targetThreadId
+      }),
+      muteHttpExceptions: true
+    });
+    
+    if (sendRes.getResponseCode() !== 200) {
+      return { error: 'Failed to send reply email: ' + sendRes.getContentText() };
+    }
+    
+    // Tag the thread as processed by adding the BDL-Processed label
+    const processedLabelId = getOrCreateGmailRestLabel(accessToken, 'BDL-Processed');
+    const modifyUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/threads/' + targetThreadId + '/modify';
+    const modifyRes = UrlFetchApp.fetch(modifyUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify({ addLabelIds: [processedLabelId] }),
+      muteHttpExceptions: true
+    });
+    
+    // Link lead in CRM sheet (mark as Warm / create log entry)
+    processGmailThreadRest(targetThreadId, accountEmail, accessToken);
+    
+    return { success: true };
+  } catch (err) {
+    return { error: err.toString() };
+  }
+}
