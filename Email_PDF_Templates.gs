@@ -971,10 +971,10 @@ function buildPaymentPdfHtml(lead) {
 
         <div style="margin-top: 40px; padding: 20px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; text-align: center;">
           <h3 style="margin-top: 0; color: #111;">Payment Instructions</h3>
-          <p style="font-size: 14px; color: #444;">Please click the button below to complete your payment.</p>
+          <p style="font-size: 14px; color: #444;">Please click the button below to complete your payment (supports local, fee-free transfer options like ACH and SEPA).</p>
           <p style="font-size: 13px; color: #EF4444; font-weight: bold; margin-bottom: 20px;">Crucial: Include the Reference ID <span style="background: #e5e7eb; padding: 3px 8px; border-radius: 4px; color: #111;">${paymentId}</span> in the payment note.</p>
           <a href="${link}" style="display: inline-block; background: #F97316; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold;">Pay $${amount} Securely</a>
-          <div style="font-size: 11px; color: #6B7280; margin-top: 15px; font-style: italic; line-height: 1.4;">* Note: Payments are securely processed via Wise under our parent finance name: <strong>M Haresh Kumar</strong>.</div>
+          <div style="font-size: 11px; color: #6B7280; margin-top: 15px; font-style: italic; line-height: 1.4;">* Note: Payments are securely processed via Wise under our parent finance name: <strong>M Haresh Kumar</strong> (supporting standard fee-free local transfers to minimize transaction costs).</div>
         </div>
       </div>
     </body></html>`;
