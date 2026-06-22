@@ -1070,14 +1070,21 @@ function sendCalculatorLinkToLead(threadId) {
       replySubject = "Re: " + replySubject;
     }
     
-    // Construct the reply body (James handoff matching)
-    const replyBody = "Hi " + firstName + ",\n\n" +
-                      "Here is the link to run your numbers:\n" +
-                      "https://audit.dataconnectmail.com\n\n" +
-                      "My colleague, James, will follow up with you directly to help review the estimates. You can also reach him at jamescluster35@gmail.com.\n\n" +
-                      "Best regards,\n\n" +
-                      sender.Name + "\n" +
-                      sender.Title;
+    // Construct the HTML reply body with a beautifully styled button
+    const replyHtml = 
+      `<div style="font-family: Arial, sans-serif; max-width: 600px; color: #1E293B; font-size: 14px; line-height: 1.6;">` +
+        `<p>Hi ${firstName},</p>` +
+        `<p>Here is the link to run your estimated numbers against industry benchmarks:</p>` +
+        `<div style="margin: 24px 0;">` +
+          `<a href="https://audit.dataconnectmail.com" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(249,115,22,0.2);">` +
+            `Run Your Revenue Audit →` +
+          `</a>` +
+        `</div>` +
+        `<p>My colleague, James, will follow up with you directly to help review the estimates. You can also reach him at <a href="mailto:jamescluster35@gmail.com" style="color: #F97316; text-decoration: none;">jamescluster35@gmail.com</a>.</p>` +
+        `<p style="margin-top: 24px;">Best regards,</p>` +
+        `<p style="margin: 0; font-weight: bold;">${sender.Name}</p>` +
+        `<p style="margin: 0; color: #64748B; font-size: 13px;">${sender.Title}</p>` +
+      `</div>`;
     
     // Construct MIME message
     let mimeParts = [];
@@ -1085,13 +1092,13 @@ function sendCalculatorLinkToLead(threadId) {
     mimeParts.push("To: " + formattedTo);
     mimeParts.push("Subject: " + replySubject);
     mimeParts.push("MIME-Version: 1.0");
-    mimeParts.push("Content-Type: text/plain; charset=UTF-8");
+    mimeParts.push("Content-Type: text/html; charset=UTF-8");
     if (messageId) {
       mimeParts.push("In-Reply-To: " + messageId);
       mimeParts.push("References: " + messageId);
     }
     mimeParts.push(""); // Empty line separating headers from body
-    mimeParts.push(replyBody);
+    mimeParts.push(replyHtml);
     
     const mimeString = mimeParts.join("\r\n");
     // Encode MIME message base64url
