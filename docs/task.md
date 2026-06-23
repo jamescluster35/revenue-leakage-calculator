@@ -1,0 +1,38 @@
+- [x] Update `generate_batch2.py`
+  - [x] Set `EMAILS_PER_SENDER = 60`
+  - [x] Update email templates to match the new permission-based, link-free wording
+  - [x] Implement smart personalized greetings (`Hi [First Name],` vs `Hi Owner,`)
+  - [x] Implement smart company/city sentences (`I was looking over [Company] in [City]...`)
+  - [x] Format outputs correctly in `campaign_batch_2.txt`
+- [x] Update `run_outlook_campaign.ps1`
+  - [x] Set sending limits per account to 60 (total run limit 360)
+  - [x] Update email templates to the same permission-based, link-free text
+  - [x] Implement the identical smart personalization fallback rules
+  - [x] Implement `Niche` tracking in the sent database
+  - [x] Load and exclude bounced emails from `bounced_emails.txt`
+- [x] Run and Verify Live Campaign Dispatch
+  - [x] Set `$DryRun = $false` and run the script
+  - [x] Successfully dispatched 360 emails to restaurant leads
+- [x] Centralized Bounce Sheet & Outlook Inbox Cleanup
+  - [x] Modify `check_bounces.ps1` to log bounces to `campaign_bounces_database.csv`
+  - [x] Modify `check_bounces.ps1` to delete processed bounce notification emails from Outlook
+  - [x] Execute `check_bounces.ps1` successfully to clean the inboxes and write the CSV sheet
+  - [x] Run `backfill_sent_db.py` to backfill `Niche` values in the sent database
+- [ ] Build & Execute One-Time Backfill Script (`backfill_crm_stats.ps1`)
+  - [ ] Retrieve all leads from the Google Sheet CRM
+  - [ ] Match emails from `campaign_sent_database.csv` and mark them as `Pitched` (stage: `Pitched`, pitchSent: `TRUE`)
+  - [ ] Match emails from `campaign_bounces_database.csv` and mark them as `Lost` (status: `Lost`, stage: `Cold`)
+  - [ ] Execute backfill and verify dashboard updates in `bdl live pro`
+- [ ] Build & Deploy Email Warming Script (`run_warmup.ps1`)
+  - [ ] Implement round-robin conversation sends between 14 accounts
+  - [ ] Implement automatic Junk-to-Inbox recovery and mark-as-read logic
+- [ ] Build Consolidated Inbox Activity Tracker (`check_inbox_activity.ps1`)
+  - [ ] Scan Outlook inboxes for bounces & read receipts from past 7 days only
+  - [ ] Call CRM Google Sheets API to update lead status/notes in real-time
+- [ ] Copy Scripts to Campaign Directory
+  - [ ] Place `run_outlook_campaign.ps1`, `check_inbox_activity.ps1`, and `run_warmup.ps1` in `D:\Restaurant_Campaign\`
+- [ ] Implement Fast Fetch React Store Caching
+  - [ ] Modify `leadsStore.js` to implement Stale-While-Revalidate caching
+  - [ ] Test the local build for 0ms page loads
+  - [ ] Rebuild React app using `npm run build`
+  - [ ] Deploy new build assets to `bdl-leads-pro-live`
