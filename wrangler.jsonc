@@ -2,6 +2,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "revenue-leakage-calculator",
   "compatibility_date": "2026-06-22",
+  "workers_dev": true,
+  "preview_urls": true,
   "observability": {
     "enabled": true
   },
@@ -10,5 +12,12 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "routes": [
+    {
+      "pattern": "bdl.dataconnectmail.com",
+      "zone_name": "dataconnectmail.com",
+      "custom_domain": true
+    }
   ]
 }
