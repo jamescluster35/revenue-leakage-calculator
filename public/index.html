@@ -148,51 +148,7 @@
       color: var(--brand-primary);
     }
 
-    .nav-cta {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      background: var(--brand-primary);
-      color: #fff;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 9px 18px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 0.02em;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-      box-shadow: 0 4px 14px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.35);
-    }
-
-    .nav-cta:hover {
-      background: var(--brand-primary-dark);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px hsla(var(--brand-primary-h), var(--brand-primary-s), var(--brand-primary-l), 0.45);
-    }
-
-    .nav-cta-arrow {
-      font-size: 15px;
-      transition: transform 0.2s;
-    }
-
-    .nav-cta:hover .nav-cta-arrow {
-      transform: translateX(3px);
-    }
-
     @media(max-width:480px) {
-      .nav-cta {
-        font-size: 12px;
-        padding: 8px 14px;
-      }
-
-      .nav-cta .nav-cta-label {
-        display: none;
-      }
-
       .top-nav {
         padding: 12px 16px;
       }
@@ -1521,10 +1477,6 @@
       <div class="logo-dot"></div>
       <div class="logo-txt">BDL Revenue</div>
     </div>
-    <button class="nav-cta" onclick="scrollToAuditCta()">
-      <span class="nav-cta-label">Request My Audit</span>
-      <span class="nav-cta-arrow">→</span>
-    </button>
   </nav>
 
   <div class="hdr">
@@ -2465,10 +2417,6 @@
         if (i < n) ps.classList.add('done');
         else if (i === n) ps.classList.add('active');
       }
-      var navCta = document.querySelector('.nav-cta');
-      if (navCta) {
-        navCta.style.display = (n === 4) ? 'inline-flex' : 'none';
-      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     function goStep2() {
@@ -2690,26 +2638,7 @@
       _saveLead('New', null, null, null, null, null, 'Step 3 Completed');
     }
 
-    function scrollToAuditCta() {
-      var ctaEl = document.getElementById('audit-cta');
-      var formEl = document.getElementById('audit-form');
-      // If form is visible, just scroll to it
-      if (formEl && formEl.style.display !== 'none') {
-        window.scrollTo({ top: formEl.offsetTop - 80, behavior: 'smooth' });
-        return;
-      }
-      // If CTA block is visible, scroll to it
-      if (ctaEl && ctaEl.style.display !== 'none') {
-        window.scrollTo({ top: ctaEl.offsetTop - 80, behavior: 'smooth' });
-        // Add a brief pulse to draw attention
-        ctaEl.style.transition = 'box-shadow 0.3s ease';
-        ctaEl.style.boxShadow = '0 0 0 4px hsla(24,92%,53%,0.5)';
-        setTimeout(function () { ctaEl.style.boxShadow = ''; }, 1000);
-        return;
-      }
-      // If not on results step yet, scroll to bottom of page to hint them to continue
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
+
 
     function showAuditForm() {
       document.getElementById('audit-cta').style.display = 'none';
