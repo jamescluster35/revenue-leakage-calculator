@@ -36,3 +36,11 @@
   - [ ] Test the local build for 0ms page loads
   - [ ] Rebuild React app using `npm run build`
   - [ ] Deploy new build assets to `bdl-leads-pro-live`
+
+## Cloudflare Revenue Calculator Deployment & Custom Domain
+- [x] Restore repository privacy to Private on GitHub
+- [x] Resolve C: drive disk space & Wrangler CLI installation blockages
+- [x] Configure Cloudflare API token credentials and local deployment script (`deploy.ps1`)
+- [x] Add custom domain `bdl.dataconnectmail.com` to Wrangler configuration
+- [x] Fix header "Request My Audit" CTA visibility (hide on Steps 1, 2, 3; show only on Step 4)
+- [x] Deploy live and push code changes to GitHub repository
