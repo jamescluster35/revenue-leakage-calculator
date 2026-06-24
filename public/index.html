@@ -149,7 +149,7 @@
     }
 
     .nav-cta {
-      display: inline-flex;
+      display: none;
       align-items: center;
       gap: 6px;
       background: var(--brand-primary);
@@ -2464,6 +2464,10 @@
         ps.classList.remove('active', 'done');
         if (i < n) ps.classList.add('done');
         else if (i === n) ps.classList.add('active');
+      }
+      var navCta = document.querySelector('.nav-cta');
+      if (navCta) {
+        navCta.style.display = (n >= 3) ? 'inline-flex' : 'none';
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
