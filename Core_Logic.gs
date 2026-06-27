@@ -162,3 +162,117 @@ function calculateLeadLeakage(lead) {
 
   return { revenue, monthlyLeak, annualLeak, breakdown, score, grade, rules, ratio, toolTag };
 }
+
+
+/**
+ * Runs the detailed leakage calculation securely on the server side.
+ * Hides all multipliers and mathematical formulas from F12 browser inspection.
+ *
+ * @param {Object} data The input data from the frontend.
+ * @returns {Object} Clean calculated results.
+ */
+function calculateDetailedLeakage(data) {
+  const niche = String(data.niche || '').trim().toLowerCase();
+  const revenue = parseFloat(data.monthlyRevenue) || 0;
+  const inputs = data.calculationInputs || {};
+  const googleRating = parseFloat(data.googleRating) || 0;
+  const googleReviews = parseInt(data.googleReviews) || 0;
+  const googleReviewRange = data.googleReviewRange || 'low';
+  const platforms = data.platforms || [];
+  
+  const cm = 0.6; // Conservative multiplier
+  
+  // Helper to get inputs
+  const g = (id) => {
+    if (id === 'mrr') return revenue;
+    if (id === 'fcost') return revenue * 0.35;
+    if (id === 'res') return Math.round(revenue / 50);
+    return parseFloat(inputs[id]) || 0;
+  };
+  
+  const v = (id) => {
+    return parseFloat(inputs[id]) || 0;
+  };
+
+  let r = [];
+  if (niche === 'dental') {
+    r = [
+      { l: 'Appointment No-Show Loss', v: Math.max(0, g('slots') * (v('nshow_v') / 100) * g('aval') * 22 * cm), w: 'Empty appointment slots — industry avg no-show rate is 12%' },
+      { l: 'Unscheduled Recall Patients', v: Math.max(0, g('recalls') * g('aval') * cm), w: 'Patients overdue for checkups who haven\'t been called back' },
+      { l: 'New Patient Follow-Up Gap', v: Math.max(0, g('leads') * (1 - v('fup_v') / 100) * g('tval') * cm), w: 'Inquiries not followed up on properly' },
+      { l: 'Staff Idle Time', v: Math.max(0, g('staff') * 4 * g('srate') * 4 * cm), w: 'Estimated wages during gaps between appointments' }
+    ];
+  } else if (niche === 'realestate') {
+    r = [
+      { l: 'Lead Follow-Up Gap', v: Math.max(0, g('leads') * (1 - v('fup_v') / 100) * g('comm') * (v('crate_v') / 100) * cm), w: 'Leads not followed up enough times' },
+      { l: 'Portal Spend vs Returns', v: Math.max(0, (g('pfees') - g('pdeals') * g('comm')) * cm), w: 'Portal fees vs deals actually generated' },
+      { l: 'Agent Admin Time', v: Math.max(0, g('agents') * v('ahrs_v') * g('arate') * 4 * cm), w: 'Time spent on admin instead of selling' }
+    ];
+  } else if (niche === 'healthcare') {
+    r = [
+      { l: 'Appointment No-Show Loss', v: Math.max(0, g('appts') * (v('nshow_v') / 100) * g('aval') * 22 * cm), w: 'Empty slots that can\'t be filled last minute' },
+      { l: 'Insurance Claim Rejections', v: Math.max(0, g('claims') * (v('reject_v') / 100) * g('cval') * cm), w: 'Claims denied — revenue earned but not collected' },
+      { l: 'Referral No-Conversion', v: Math.max(0, g('refs') * (1 - v('rconv_v') / 100) * g('pval') * cm), w: 'Referrals received that never booked' }
+    ];
+  } else if (niche === 'legal') {
+    r = [
+      { l: 'Unbilled Attorney Hours', v: Math.max(0, g('att') * v('unbill_v') * g('brate') * 4 * cm), w: 'Work done but never invoiced' },
+      { l: 'Consultation No-Convert', v: Math.max(0, g('cons') * (1 - v('cconv_v') / 100) * g('casev') * cm), w: 'Consultations that didn\'t turn into cases' },
+      { l: 'Attorney Admin Time', v: Math.max(0, g('att') * v('admin_v') * g('brate') * 4 * cm), w: 'Billable attorneys doing admin work' }
+    ];
+  } else if (niche === 'saas') {
+    r = [
+      { l: 'Monthly Churn Loss', v: Math.max(0, g('mrr') * (v('churn_v') / 100) * cm), w: 'Recurring revenue lost to cancellations' },
+      { l: 'Trial No-Convert Loss', v: Math.max(0, g('trials') * (1 - v('tconv_v') / 100) * g('dval') * cm), w: 'Trials that never became paying customers' }
+    ];
+  } else if (niche === 'restaurant') {
+    r = [
+      { l: 'Food Waste', v: Math.max(0, g('fcost') * (v('waste_v') / 100) * cm), w: 'Food purchased but thrown away' },
+      { l: 'No-Show & Cancellation Loss', v: Math.max(0, g('res') * (v('nshow_v') / 100) * g('covers') * g('spend') * 30 * cm), w: 'Reserved tables that sat empty' }
+    ];
+  } else {
+    r = [
+      { l: 'Lead Follow-Up Gap', v: Math.max(0, g('leads') * (1 - v('fup_v') / 100) * g('tval') * cm), w: 'Inquiries not followed up on properly' },
+      { l: 'Administrative Time Waste', v: Math.max(0, g('staff') * v('admin_v') * g('srate') * 4 * cm), w: 'Wages spent on manual admin tasks instead of growth' }
+    ];
+  }
+
+  // Filter items
+  let items = r.filter(item => item.v >= 1);
+
+  // Reputation Loss
+  if (googleRating > 0 && googleRating < 4.0) {
+    const loss = revenue * (googleRating < 3.5 ? 0.15 : 0.08);
+    items.push({ l: 'Reputation Impact — Low Google Rating', v: loss, w: 'Potential customers choosing higher-rated competitors' });
+  }
+  if (googleRating === 0) {
+    items.push({ l: 'Not Listed on Google', v: revenue * 0.10, w: 'Missing from local search — customers can\'t find you' });
+  }
+  
+  if (googleReviewRange === 'none') {
+    items.push({ l: 'No Google Reviews', v: revenue * 0.10, w: 'Zero reviews — customers have no social proof to trust your business' });
+  } else if (googleReviewRange === 'low') {
+    items.push({ l: 'Low Review Volume (Under 30)', v: revenue * 0.06, w: 'Fewer reviews means less trust — customers choose competitors with more' });
+  } else if (googleReviewRange === 'mid') {
+    items.push({ l: 'Growing Review Volume (30–100)', v: revenue * 0.02, w: 'Decent but below the trust threshold of top local businesses' });
+  }
+
+  // Platforms Loss
+  platforms.forEach(p => {
+    const cost = parseFloat(p.cost) || 0;
+    if (cost > 0) {
+      items.push({ l: p.name + ' Commission & Fees', v: cost, w: 'Monthly cost of using ' + p.name });
+    }
+  });
+
+  // Sort
+  items.sort((a, b) => b.v - a.v);
+
+  const total = items.reduce((sum, item) => sum + item.v, 0);
+
+  return {
+    success: true,
+    total: Math.round(total),
+    items: items.map(item => ({ l: item.l, v: Math.round(item.v), w: item.w }))
+  };
+}

@@ -156,6 +156,7 @@ function handleRequest(e) {
     
     // Calculator Actions
     'saveCalculatorLead': (data) => saveCalculatorLead(data.lead),
+    'calculateLeakage': (data) => calculateDetailedLeakage(data),
     'getCalculatorLeads': getCalculatorLeads,
     'updateCalculatorLead': (data) => updateCalculatorLead(data.id || data.email, data.changes || {}),
     'markPaymentPaid': (data) => markPaymentPaid(data.id || data.email, data.changes || {}),
