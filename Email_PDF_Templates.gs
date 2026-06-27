@@ -193,8 +193,15 @@ function buildFullPdfReportHtml(lead, note) {
   const grCount = parseInt(lead.googleReviews) || 0;
   const hasReputation = grRating > 0 || grCount > 0;
 
-  const planHtml = (calc.rules.plan90 || []).map(step => {
+  const planHtml = (calc.rules.plan90 || []).map((step, idx) => {
     let pColor = step.priority === 'CRITICAL' ? '#F43F5E' : step.priority === 'HIGH' ? '#F59E0B' : '#3B82F6';
+    
+    // Dynamically calculate estimated impact per phase (50% for Phase 1, 30% for Phase 2, 20% for Phase 3)
+    const stepsPcts = [50, 30, 20];
+    const pctVal = stepsPcts[idx] || 0;
+    const stepImpactAmt = Math.round(recoverable * pctVal / 100);
+    const dynamicImpact = '+$' + stepImpactAmt.toLocaleString() + '/mo';
+
     return `
     <div style="margin-bottom: 20px; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: #FAFAFA;">
       <table width="100%" cellpadding="12" cellspacing="0" border="0" style="background: #0F172A; color: #FFFFFF;">
@@ -214,7 +221,7 @@ function buildFullPdfReportHtml(lead, note) {
       <div style="padding: 16px; font-size: 13px; color: #475569; line-height: 1.6;">
         ${esc(step.detail)}
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 1px;">
-          Estimated Financial Impact: ${esc(step.impact)}
+          Estimated Financial Impact: ${esc(dynamicImpact)}
         </div>
       </div>
     </div>`;
