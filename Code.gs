@@ -35,7 +35,7 @@ const SETTINGS = {
   REPORT_PRICE: 47,
   ADMIN_EMAIL: "jamescluster35@gmail.com",
   ADMIN_DASHBOARD_URL: "https://audit.dataconnectmail.com/admin_portal_bdl.html",
-  WALKTHROUGH_LINK: "mailto:hello@bluedatalabs.com?subject=Walkthrough%20Request%20%E2%80%94%20BDL%20Revenue%20Diagnostic"
+  WALKTHROUGH_LINK: "https://bluedatalabs.com/video-walkthrough"
 };
  
 /**
@@ -1336,11 +1336,11 @@ function sendDripEmail(lead, dayNum) {
                     That's money directly leaving your bottom line. Over the next quarter, this adds up to <strong>$${(dailyLoss * 90).toLocaleString()}</strong> in unrecovered leakage.
                   </p>
                   <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 25px;">
-                    We want to help you plug these gaps. Book your 15-minute walkthrough call now, and we will show you exactly how to recover up to <strong>$${recoverable.toLocaleString()} per month</strong>.
+                    We want to help you plug these gaps. Watch our free 5-minute video walkthrough explaining exactly how to recover up to <strong>$${recoverable.toLocaleString()} per month</strong> using the copy-paste templates in your report.
                   </p>
                   
                   <div style="text-align: center; margin-bottom: 25px;">
-                    <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;">Book Walkthrough Call</a>
+                    <a href="${SETTINGS.WALKTHROUGH_LINK || 'https://bluedatalabs.com/video-walkthrough'}" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;">Watch Walkthrough Video</a>
                   </div>
 
                   <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 0;">
@@ -1371,11 +1371,11 @@ function sendDripEmail(lead, dayNum) {
                     But the numbers don't lie. Within 90 days of implementing their revenue recovery plan, similar businesses have plugged their operational leaks and recovered between $10,000 and $50,000+ per month.
                   </p>
                   <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 25px;">
-                    Whether it's scheduling optimization, claim rejection audits, or automated follow-up drips, we make recovery simple. Let's walk through your report together.
+                    Whether it's scheduling optimization, claim rejection audits, or automated follow-up drips, we make recovery simple. Watch our quick video walkthrough to see how.
                   </p>
                   
                   <div style="text-align: center; margin-bottom: 25px;">
-                    <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;">Schedule My Recovery Session</a>
+                    <a href="${SETTINGS.WALKTHROUGH_LINK || 'https://bluedatalabs.com/video-walkthrough'}" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;">Watch Walkthrough Video</a>
                   </div>
 
                   <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 0;">

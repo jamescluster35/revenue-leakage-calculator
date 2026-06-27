@@ -552,7 +552,7 @@ function buildFullPdfReportHtml(lead, note) {
             </table>
           </div>
           <div style="text-align: center;">
-            <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background: #F97316; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 10px 20px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Fix This Now → Book a Call</a>
+            <a href="${SETTINGS.WALKTHROUGH_LINK || 'https://bluedatalabs.com/video-walkthrough'}" style="display: inline-block; background: #F97316; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 10px 20px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Watch 5-Min Walkthrough Video</a>
           </div>
         </div>
 
@@ -720,9 +720,9 @@ function buildFullPdfReportHtml(lead, note) {
         <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px;">
           <h3 style="margin-top: 0; color: #1E293B; font-size: 14px; font-weight: bold; margin-bottom: 6px;">❓ Need Help Reviewing This Report?</h3>
           <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
-            Not sure how to act on these findings? Book a free 15-minute walkthrough call. We will guide you step-by-step through your leakage breakdown and recovery plan.
+            Not sure how to act on these findings? Watch our free 5-minute video walkthrough explaining how to use these copy-paste templates to start recovering your leakage immediately.
           </p>
-          <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background: #64748B; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 8px 16px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Schedule My Walkthrough</a>
+          <a href="${SETTINGS.WALKTHROUGH_LINK || 'https://bluedatalabs.com/video-walkthrough'}" style="display: inline-block; background: #64748B; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 8px 16px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Watch 5-Min Walkthrough Video</a>
         </div>
       </div>
 
