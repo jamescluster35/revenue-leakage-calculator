@@ -27,7 +27,7 @@ const SHEETS = {
 };
 const DEFAULT_TEMPLATE_HEADERS = ['id', 'name', 'niche', 'type', 'subject', 'body', 'createdAt'];
 const DEFAULT_SENDER_HEADERS = ['id', 'name'];
-const DEFAULT_CALC_LEAD_HEADERS = ['id','date','timestamp','visitorTime','lastActiveStep','name','jobTitle','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage'];
+const DEFAULT_CALC_LEAD_HEADERS = ['id','date','timestamp','visitorTime','lastActiveStep','name','jobTitle','email','phone','business','niche','street','city','state','zip','country','website','monthlyRevenue','employees','googleRating','googleReviews','totalLeakage','annualLeakage','leakageBreakdown','platforms','paidReport','reportRequestDate','contacted','notes','paymentReference','calculationInputs','userAgent','timeOnPage','firebaseUid'];
 const DEFAULT_VERIFIED_HEADERS = ['Reference', 'Email', 'Business', 'Niche', 'Leakage', 'Amount', 'Date', 'Status'];
 
 const DEFAULT_TRACKER_HEADERS = ['Tracker ID', 'Data'];

@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Portal | BDL Revenue Recovery Dashboard</title>
+  <meta name="description" content="Manage your revenue recovery audits, track implementation checklists, and view historical business diagnostic metrics in real-time.">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+      --surface-card: rgba(15, 23, 42, 0.75);
+      --surface-card-hover: rgba(30, 41, 59, 0.85);
+      --border-glow: rgba(249, 115, 22, 0.15);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      
+      --brand-primary: #F97316;
+      --brand-primary-hover: #EA580C;
+      --brand-success: #10B981;
+      --brand-success-hover: #059669;
+      --brand-error: #EF4444;
+      --brand-info: #3B82F6;
+      
+      --text-main: #F1F5F9;
+      --text-muted: #94A3B8;
+      --text-dark: #64748B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Glassmorphism Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Top Navigation bar */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(2, 6, 23, 0.5);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-dot {
+      width: 12px;
+      height: 12px;
+      background: var(--brand-primary);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--brand-primary);
+    }
+
+    .logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-email {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--brand-error);
+      color: var(--brand-error);
+    }
+
+    /* Main Grid Layout */
+    .dashboard-container {
+      max-width: 1300px;
+      margin: 40px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 30px;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .glass-card {
+      background: var(--surface-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: transparent;
+      transition: background 0.3s;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    .glass-card.primary-highlight::before {
+      background: var(--brand-primary);
+    }
+
+    /* Header details inside sections */
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Stats Row */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stat-card.orange .val { color: var(--brand-primary); }
+    .stat-card.green .val { color: var(--brand-success); }
+    .stat-card.info .val { color: var(--brand-info); }
+
+    /* Checklist Progress Bar */
+    .progress-wrapper {
+      margin-bottom: 30px;
+    }
+
+    .progress-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-success) 100%);
+      width: 0%;
+      border-radius: 20px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Checklist Section */
+    .checklist-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .checklist-item {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .checklist-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .checkbox-container {
+      display: block;
+      position: relative;
+      padding-left: 28px;
+      margin-bottom: 0;
+      cursor: pointer;
+      font-size: 15px;
+      user-select: none;
+    }
+
+    .checkbox-container input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .checkmark {
+      position: absolute;
+      top: 2px;
+      left: 0;
+      height: 20px;
+      width: 20px;
+      background-color: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .checkbox-container:hover input ~ .checkmark {
+      background-color: rgba(255,255,255,0.1);
+      border-color: var(--brand-primary);
+    }
+
+    .checkbox-container input:checked ~ .checkmark {
+      background-color: var(--brand-success);
+      border-color: var(--brand-success);
+    }
+
+    .checkmark:after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    .checkbox-container input:checked ~ .checkmark:after {
+      display: block;
+    }
+
+    .checkbox-container .checkmark:after {
+      left: 6px;
+      top: 2px;
+      width: 5px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .checklist-content {
+      flex: 1;
+    }
+
+    .checklist-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checklist-item.completed .checklist-title {
+      text-decoration: line-through;
+      color: var(--text-dark);
+    }
+
+    .checklist-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .checklist-badge {
+      font-size: 9px;
+      text-transform: uppercase;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+      margin-left: auto;
+    }
+
+    .checklist-badge.phase1 { background: rgba(239, 68, 68, 0.15); color: #F87171; }
+    .checklist-badge.phase2 { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+    .checklist-badge.phase3 { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+
+    /* Audit History List */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-item {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .history-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .history-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .history-date {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .history-niche {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    .history-right {
+      text-align: right;
+    }
+
+    .history-leak {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--brand-primary);
+    }
+
+    .btn-pdf {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--brand-info);
+      text-decoration: none;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-pdf:hover {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--brand-info);
+    }
+
+    /* Gated Auth Overlay Overlay Card */
+    .auth-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(2, 6, 23, 0.95);
+      backdrop-filter: blur(12px);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .auth-overlay-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    .auth-overlay-card h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .auth-overlay-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .auth-input-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+
+    .auth-input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .auth-input-group input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      color: var(--text-main);
+      outline: none;
+      font-size: 14px;
+    }
+
+    .auth-input-group input:focus {
+      border-color: var(--brand-primary);
+    }
+
+    .btn-auth-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--brand-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 16px;
+    }
+
+    .btn-auth-submit:hover {
+      background: var(--brand-primary-hover);
+    }
+
+    .auth-switch-view {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .auth-switch-view a {
+      color: var(--brand-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="nav-bar">
+    <div class="logo-container">
+      <div class="logo-dot"></div>
+      <span class="logo-text">BDL Revenue Recovery</span>
+    </div>
+    <div class="nav-user" id="nav-user-panel" style="display:none;">
+      <span class="user-email" id="user-email-display">client@company.com</span>
+      <button class="btn-logout" onclick="logoutUser()">Log Out</button>
+    </div>
+  </nav>
+
+  <!-- Main Grid Layout -->
+  <div class="dashboard-container">
+    
+    <!-- Left Column: Recovery Plan -->
+    <div class="glass-card primary-highlight">
+      <h2 class="section-title">
+        <span>📋 Your 90-Day Revenue Recovery Plan</span>
+        <span style="font-size:12px;color:var(--text-muted);" id="current-niche-display">Niche: Dental</span>
+      </h2>
+
+      <!-- Metrics Row -->
+      <div class="stats-grid">
+        <div class="stat-card orange">
+          <div class="label">Total Leakage</div>
+          <div class="val" id="metric-leakage">$0/mo</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">90-Day Recovery Target</div>
+          <div class="val" id="metric-recovery">$0/mo</div>
+        </div>
+        <div class="stat-card info">
+          <div class="label">Diagnostics Score</div>
+          <div class="val" id="metric-score">0</div>
+        </div>
+      </div>
+
+      <!-- Checklist Progress Tracker -->
+      <div class="progress-wrapper">
+        <div class="progress-label-row">
+          <span>Implementation Progress</span>
+          <span id="progress-percent-display">0% Completed</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Checklist Items -->
+      <div class="checklist-section" id="checklist-container">
+        <!-- Will be loaded dynamically via Javascript -->
+      </div>
+    </div>
+
+    <!-- Right Column: Audit History & Next Steps -->
+    <div class="glass-card">
+      <h2 class="section-title">📊 Historical Audits</h2>
+      <div class="history-list" id="history-container">
+        <!-- Will be populated dynamically -->
+      </div>
+      
+      <div style="margin-top:30px; text-align:center;">
+        <a href="index.html" style="display:block; padding:12px; border-radius:8px; background:var(--brand-primary); color:white; text-decoration:none; font-weight:700; font-size:14px; transition:background 0.2s;">+ Run New Audit</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Firebase Gated Auth Overlay Modal -->
+  <div class="auth-overlay" id="dashboard-auth-overlay">
+    <div class="auth-overlay-card">
+      <h2 id="overlay-title">Client Login</h2>
+      <p id="overlay-desc">Enter your credentials to access your saved audit reports.</p>
+
+      <div class="auth-input-group">
+        <label for="overlay-email">Email Address</label>
+        <input type="email" id="overlay-email" placeholder="name@company.com">
+      </div>
+      <div class="auth-input-group" style="margin-bottom:24px;">
+        <label for="overlay-password">Password</label>
+        <input type="password" id="overlay-password" placeholder="••••••••">
+      </div>
+
+      <button class="btn-auth-submit" onclick="submitOverlayAuth()" id="overlay-submit-btn">Log In</button>
+
+      <div class="auth-switch-view" id="overlay-switch-container">
+        Don't have an account? <a href="#" onclick="toggleOverlayView('signup')">Create Account</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Import -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <script>
+    // ── Config Template ──────────────────────────────────────
+    var firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    var firebaseEnabled = false;
+    var db = null;
+    var auth = null;
+
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        auth = firebase.auth();
+        firebaseEnabled = true;
+        console.log("Firebase initialized on dashboard.");
+      } catch (e) {
+        console.error("Firebase init failed:", e);
+      }
+    }
+
+    var currentView = 'login';
+    var mockEnabled = !firebaseEnabled;
+
+    function toggleOverlayView(view) {
+      currentView = view;
+      var title = document.getElementById('overlay-title');
+      var desc = document.getElementById('overlay-desc');
+      var btn = document.getElementById('overlay-submit-btn');
+      var switchLink = document.getElementById('overlay-switch-container');
+
+      if (view === 'signup') {
+        title.textContent = 'Create Account';
+        desc.textContent = 'Register to track audits and checklists.';
+        btn.textContent = 'Register';
+        switchLink.innerHTML = 'Already have an account? <a href="#" onclick="toggleOverlayView(\'login\')">Log In</a>';
+      } else {
+        title.textContent = 'Client Login';
+        desc.textContent = 'Enter your credentials to access your saved audit reports.';
+        btn.textContent = 'Log In';
+        switchLink.innerHTML = 'Don\'t have an account? <a href="#" onclick="toggleOverlayView(\'signup\')">Create Account</a>';
+      }
+    }
+
+    async function submitOverlayAuth() {
+      var email = document.getElementById('overlay-email').value.trim();
+      var pass = document.getElementById('overlay-password').value.trim();
+      if (!email || !pass) { alert('Please enter both email and password.'); return; }
+
+      var btn = document.getElementById('overlay-submit-btn');
+      btn.disabled = true;
+      btn.textContent = currentView === 'signup' ? 'Registering...' : 'Logging In...';
+
+      if (mockEnabled) {
+        console.log("Running in Mock Mode");
+        setTimeout(function() {
+          btn.disabled = false;
+          btn.textContent = 'Success!';
+          document.getElementById('dashboard-auth-overlay').style.display = 'none';
+          document.getElementById('nav-user-panel').style.display = 'flex';
+          document.getElementById('user-email-display').textContent = email;
+          loadMockDashboardData();
+        }, 1000);
+        return;
+      }
+
+      try {
+        if (currentView === 'signup') {
+          await auth.createUserWithEmailAndPassword(email, pass);
+          var user = auth.currentUser;
+          await db.collection('users').doc(user.uid).set({
+            email: email,
+            role: 'client',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } else {
+          await auth.signInWithEmailAndPassword(email, pass);
+        }
+        document.getElementById('dashboard-auth-overlay').style.display = 'none';
+        document.getElementById('nav-user-panel').style.display = 'flex';
+      } catch (err) {
+        alert("Authentication Error: " + err.message);
+        btn.disabled = false;
+        btn.textContent = currentView === 'signup' ? 'Register' : 'Log In';
+      }
+    }
+
+    if (firebaseEnabled) {
+      auth.onAuthStateChanged(function(user) {
+        if (user) {
+          document.getElementById('dashboard-auth-overlay').style.display = 'none';
+          document.getElementById('nav-user-panel').style.display = 'flex';
+          document.getElementById('user-email-display').textContent = user.email;
+          loadClientDashboardData(user.uid);
+        } else {
+          document.getElementById('dashboard-auth-overlay').style.display = 'flex';
+          document.getElementById('nav-user-panel').style.display = 'none';
+        }
+      });
+    }
+
+    function logoutUser() {
+      if (mockEnabled) {
+        window.location.reload();
+        return;
+      }
+      auth.signOut().then(function() {
+        window.location.reload();
+      });
+    }
+
+    // ── Dashboard Data Populators ────────────────────────────
+    var NICHE_CHECKLISTS = {
+      dental: [
+        { title: "Implement Automated Text Reminders", desc: "Set up SMS confirmation sequences to reduce appointment no-shows.", phase: "phase1" },
+        { title: "Run Unscheduled Recall Campaign", desc: "Export hygiene lists and target overdue recall patients with email/SMS scripts.", phase: "phase1" },
+        { title: "Implement Immediate Lead Call-Backs", desc: "Ensure new patient phone inquiries are called back within 15 minutes.", phase: "phase2" },
+        { title: "Audit Reception Desk Gaps", desc: "Analyze staff scheduling during peak hours to resolve idle administrative wages.", phase: "phase2" },
+        { title: "Configure Patient Software Reminders", desc: "Integrate reminder templates directly into Solutionreach or NexHealth.", phase: "phase3" }
+      ],
+      realestate: [
+        { title: "Optimize Portal Spend", desc: "Analyze Zillow/Realtor.com spending vs actual conversions; adjust allocations.", phase: "phase1" },
+        { title: "Set Up 5-Touch Lead Follow-Up", desc: "Configure automated emails and SMS touches for all new incoming leads.", phase: "phase1" },
+        { title: "Automate Showing Inquiries", desc: "Implement auto-responses for showing requests to capture leads faster.", phase: "phase2" },
+        { title: "Outsource Contract Admin Tasks", desc: "Hire transaction coordinators to free up agent selling hours.", phase: "phase3" }
+      ],
+      healthcare: [
+        { title: "Automate Insurance Check", desc: "Implement automated front-office insurance eligibility checks to stop reject losses.", phase: "phase1" },
+        { title: "Establish No-Show Fill List", desc: "Maintain a standby short-notice list to immediately fill cancelled slots.", phase: "phase1" },
+        { title: "Referral Conversion Sequence", desc: "Send automated follow-up sequences to referred patients who haven't booked.", phase: "phase2" },
+        { title: "Optimize Billing System Codes", desc: "Revamp medical coding templates to minimize claims rejection rates.", phase: "phase3" }
+      ],
+      legal: [
+        { title: "Implement Billable Hour Auditing", desc: "Audit weekly logged time sheets against client billing templates to stop leaks.", phase: "phase1" },
+        { title: "Automate Consult Bookings", desc: "Embed self-scheduling client calendar links in all follow-up emails.", phase: "phase1" },
+        { title: "Streamline Client Onboarding", desc: "Digitize intake questionnaires to cut lawyer admin time in half.", phase: "phase2" },
+        { title: "Optimize Retainer Reminders", desc: "Configure alerts when retainer balances drop below billable thresholds.", phase: "phase3" }
+      ],
+      saas: [
+        { title: "Implement Exit Intention Surveys", desc: "Trigger personalized surveys and discounts when users hit cancel pages.", phase: "phase1" },
+        { title: "Build Trial-to-Paid Email Flows", desc: "Optimize feature onboarding emails based on product usage benchmarks.", phase: "phase1" },
+        { title: "Set Up Dunning Retry Schedules", desc: "Automate credit card retry attempts with Stripe billing settings.", phase: "phase2" },
+        { title: "Track User Inactivity Alerts", desc: "Flag accounts that have not logged in for 14 days and trigger outreach.", phase: "phase3" }
+      ],
+      restaurant: [
+        { title: "Implement Inventory Food Auditing", desc: "Set up daily tracking checks for high-cost raw ingredient wastage.", phase: "phase1" },
+        { title: "Gate Large Bookings", desc: "Require deposit captures or card authorizations for bookings over 6 covers.", phase: "phase1" },
+        { title: "Automate Delivery Commissions", desc: "Deploy direct-to-consumer online ordering to bypass portal fees.", phase: "phase2" },
+        { title: "Audit POS Staff Shifts", desc: "Optimize staff schedules against peak order intake periods.", phase: "phase3" }
+      ],
+      general: [
+        { title: "Configure Lead Intake Touchpoints", desc: "Establish auto-reply protocols for all general inquiries.", phase: "phase1" },
+        { title: "Standardize Administrative Flows", desc: "Digitize spreadsheet tracking tasks to eliminate manual staff hours.", phase: "phase2" },
+        { title: "Audit Tool Cost Gaps", desc: "Remove redundant subscriptions and consolidate features.", phase: "phase3" }
+      ]
+    };
+
+    function populateChecklist(niche, completedItems) {
+      var tasks = NICHE_CHECKLISTS[niche] || NICHE_CHECKLISTS.general;
+      var container = document.getElementById('checklist-container');
+      container.innerHTML = '';
+      
+      completedItems = completedItems || [];
+
+      tasks.forEach(function(task, index) {
+        var isChecked = completedItems.includes(index);
+        var completedClass = isChecked ? 'completed' : '';
+        var checkedAttr = isChecked ? 'checked' : '';
+
+        var html = `
+          <div class="checklist-item ${completedClass}" id="task-card-${index}">
+            <label class="checkbox-container">
+              <input type="checkbox" ${checkedAttr} onclick="toggleTask(${index})">
+              <span class="checkmark"></span>
+            </label>
+            <div class="checklist-content">
+              <div class="checklist-title">${task.title}</div>
+              <div class="checklist-desc">${task.desc}</div>
+            </div>
+            <span class="checklist-badge ${task.phase}">${task.phase.replace('phase', 'Phase ')}</span>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+      });
+
+      updateProgressBar();
+    }
+
+    function toggleTask(index) {
+      var card = document.getElementById('task-card-' + index);
+      if (card) {
+        card.classList.toggle('completed');
+      }
+      updateProgressBar();
+      saveProgressState();
+    }
+
+    function updateProgressBar() {
+      var total = document.querySelectorAll('.checklist-item').length;
+      var checked = document.querySelectorAll('.checklist-item input:checked').length;
+      if (total === 0) return;
+
+      var percent = Math.round((checked / total) * 100);
+      document.getElementById('progress-bar-fill').style.width = percent + '%';
+      document.getElementById('progress-percent-display').textContent = percent + '% Completed';
+    }
+
+    function saveProgressState() {
+      if (!firebaseEnabled || !auth.currentUser) return;
+      var uid = auth.currentUser.uid;
+      var checked = [];
+      document.querySelectorAll('.checklist-item').forEach(function(item, index) {
+        var input = item.querySelector('input');
+        if (input && input.checked) checked.push(index);
+      });
+
+      db.collection('users').doc(uid).collection('progress').doc('checklist').set({
+        checkedTasks: checked,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    async function loadClientDashboardData(uid) {
+      try {
+        var auditsSnapshot = await db.collection('users').doc(uid).collection('audits')
+          .orderBy('timestamp', 'desc').limit(10).get();
+
+        if (auditsSnapshot.empty) {
+          loadMockDashboardData();
+          return;
+        }
+
+        var audits = [];
+        auditsSnapshot.forEach(doc => audits.push(doc.data()));
+        var latest = audits[0];
+
+        document.getElementById('metric-leakage').textContent = '$' + Math.round(latest.totalLeakage).toLocaleString() + '/mo';
+        document.getElementById('metric-recovery').textContent = '$' + Math.round(latest.totalLeakage * 0.7).toLocaleString() + '/mo';
+        document.getElementById('metric-score').textContent = latest.monthlyRevenue > 0 ? Math.round(95 - (latest.totalLeakage / latest.monthlyRevenue) * 100) : 80;
+        document.getElementById('current-niche-display').textContent = 'Niche: ' + latest.niche.toUpperCase();
+
+        var progressDoc = await db.collection('users').doc(uid).collection('progress').doc('checklist').get();
+        var completed = [];
+        if (progressDoc.exists) {
+          completed = progressDoc.data().checkedTasks || [];
+        }
+
+        populateChecklist(latest.niche, completed);
+        populateHistoryList(audits);
+
+      } catch (err) {
+        console.error("Error loading dashboard data:", err);
+      }
+    }
+
+    function populateHistoryList(audits) {
+      var container = document.getElementById('history-container');
+      container.innerHTML = '';
+
+      audits.forEach(function(audit) {
+        var dateStr = new Date(audit.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        var html = `
+          <div class="history-item">
+            <div class="history-left">
+              <span class="history-date">${dateStr}</span>
+              <span class="history-niche">${audit.niche} Diagnostic</span>
+            </div>
+            <div class="history-right">
+              <div class="history-leak">$${Math.round(audit.totalLeakage).toLocaleString()}/mo</div>
+              <a href="#" class="btn-pdf" onclick="alert('PDF loading is under construction in Phase 2!')">View PDF</a>
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+      });
+    }
+
+    function loadMockDashboardData() {
+      document.getElementById('metric-leakage').textContent = '$12,450/mo';
+      document.getElementById('metric-recovery').textContent = '$8,715/mo';
+      document.getElementById('metric-score').textContent = '72';
+      document.getElementById('current-niche-display').textContent = 'Niche: DENTAL (MOCK)';
+
+      populateChecklist('dental', [0, 2]);
+
+      var mockAudits = [
+        { timestamp: new Date().toISOString(), niche: 'dental', totalLeakage: 12450 },
+        { timestamp: new Date(Date.now() - 86400000 * 5).toISOString(), niche: 'dental', totalLeakage: 15100 }
+      ];
+      populateHistoryList(mockAudits);
+    }
+  </script>
+</body>
+
+</html>

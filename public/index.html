@@ -1929,7 +1929,40 @@
       service.</p>
   </footer>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
   <script>
+    // ── Firebase Configuration & Initialization ────────────────
+    var firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    var firebaseEnabled = false;
+    var db = null;
+    var auth = null;
+
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        auth = firebase.auth();
+        firebaseEnabled = true;
+        console.log("Firebase initialized successfully.");
+      } catch (e) {
+        console.error("Firebase initialization failed:", e);
+      }
+    } else {
+      console.warn("Firebase config placeholder detected. Running in mock local auth mode.");
+    }
+
     // ── Country & Currency ───────────────────────────────────
     var _country = 'USA';
     var _symbol = '$';
@@ -2638,6 +2671,21 @@
 
 
     function showAuditForm() {
+      if (firebaseEnabled && !auth.currentUser) {
+        showAuthModal(function() {
+          proceedToShowAuditForm();
+        });
+      } else {
+        proceedToShowAuditForm();
+      }
+    }
+
+    function proceedToShowAuditForm() {
+      if (firebaseEnabled && auth.currentUser) {
+        var user = auth.currentUser;
+        var emailEl = document.getElementById('lead_email');
+        if (emailEl && !emailEl.value) emailEl.value = user.email || '';
+      }
       document.getElementById('audit-cta').style.display = 'none';
       document.getElementById('audit-form').style.display = 'block';
       window.scrollTo({ top: document.getElementById('audit-form').offsetTop - 80, behavior: 'smooth' });
@@ -2691,6 +2739,28 @@
           });
         });
       }
+
+      // Save to Firebase Firestore if enabled
+      if (firebaseEnabled && auth.currentUser) {
+        var uid = auth.currentUser.uid;
+        db.collection('users').doc(uid).collection('audits').doc(_leadSessionId).set({
+          id: _leadSessionId,
+          timestamp: new Date().toISOString(),
+          businessName: document.getElementById('biz_name').value,
+          niche: S.niche,
+          monthlyRevenue: parseFloat(document.getElementById('monthly_revenue').value.replace(/[$,]/g, '')) || 0,
+          totalLeakage: S.res ? Math.round(S.res.total) : 0,
+          annualLeakage: S.res ? Math.round(S.res.total * 12) : 0,
+          leakageBreakdown: tops,
+          calculationInputs: JSON.stringify(calculationInputs),
+          status: status
+        }).then(function() {
+          console.log("Audit saved to Firestore successfully.");
+        }).catch(function(err) {
+          console.error("Firestore save error:", err);
+        });
+      }
+
       setTimeout(function () {
         fetch(SHEET_URL, {
           method: 'POST',
@@ -2741,7 +2811,8 @@
               contacted: 'No', // Default to No, updated by backend on email send
               notes: status === 'Requested' ? 'Audit requested — follow up to confirm and send payment link' : '',
               userAgent: navigator.userAgent,
-              timeOnPage: timeOnPage + 's'
+              timeOnPage: timeOnPage + 's',
+              firebaseUid: (firebaseEnabled && auth.currentUser) ? auth.currentUser.uid : ''
             }
           }),
           mode: 'cors'
@@ -2814,7 +2885,171 @@
           .call());
       }, 1000);
     })();
+
+    // ── Firebase Client Auth Helpers ──────────────────────────
+    var _authCallback = null;
+    function showAuthModal(onSuccess) {
+      _authCallback = onSuccess;
+      document.getElementById('auth-modal').style.display = 'flex';
+      toggleAuthView('signup');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('auth-modal').style.display = 'none';
+      _authCallback = null;
+    }
+
+    function toggleAuthView(view) {
+      if (view === 'signup') {
+        document.getElementById('auth-signup-view').style.display = 'block';
+        document.getElementById('auth-login-view').style.display = 'none';
+      } else {
+        document.getElementById('auth-signup-view').style.display = 'none';
+        document.getElementById('auth-login-view').style.display = 'block';
+      }
+    }
+
+    async function handleSignup() {
+      var email = document.getElementById('auth-signup-email').value.trim();
+      var pass = document.getElementById('auth-signup-pass').value.trim();
+      if (!email || !pass) { alert('Please fill in all fields'); return; }
+      if (pass.length < 6) { alert('Password must be at least 6 characters'); return; }
+      
+      var btn = document.getElementById('signup-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Creating Account...';
+
+      if (!firebaseEnabled) {
+        console.log('Mock Signup Successful');
+        setTimeout(function() {
+          btn.disabled = false;
+          btn.textContent = 'Sign Up & Save Audit';
+          closeAuthModal();
+          if (_authCallback) _authCallback();
+        }, 800);
+        return;
+      }
+
+      try {
+        await auth.createUserWithEmailAndPassword(email, pass);
+        var user = auth.currentUser;
+        await db.collection('users').doc(user.uid).set({
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          role: 'client'
+        });
+        
+        btn.disabled = false;
+        btn.textContent = 'Sign Up & Save Audit';
+        closeAuthModal();
+        if (_authCallback) _authCallback();
+      } catch (err) {
+        alert('Signup Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Sign Up & Save Audit';
+      }
+    }
+
+    async function handleLogin() {
+      var email = document.getElementById('auth-login-email').value.trim();
+      var pass = document.getElementById('auth-login-pass').value.trim();
+      if (!email || !pass) { alert('Please fill in all fields'); return; }
+      
+      var btn = document.getElementById('login-submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Logging In...';
+
+      if (!firebaseEnabled) {
+        console.log('Mock Login Successful');
+        setTimeout(function() {
+          btn.disabled = false;
+          btn.textContent = 'Log In';
+          closeAuthModal();
+          if (_authCallback) _authCallback();
+        }, 800);
+        return;
+      }
+
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        btn.disabled = false;
+        btn.textContent = 'Log In';
+        closeAuthModal();
+        if (_authCallback) _authCallback();
+      } catch (err) {
+        alert('Login Error: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Log In';
+      }
+    }
+
+    if (firebaseEnabled) {
+      auth.onAuthStateChanged(function(user) {
+        if (user) {
+          console.log("User logged in:", user.email);
+          var pBtn = document.querySelector('.nav-btn');
+          if (pBtn) {
+            pBtn.textContent = 'Client Dashboard';
+            pBtn.href = 'dashboard.html';
+          }
+        } else {
+          console.log("No user logged in.");
+          var pBtn = document.querySelector('.nav-btn');
+          if (pBtn) {
+            pBtn.textContent = 'Client Portal';
+            pBtn.href = 'dashboard.html';
+          }
+        }
+      });
+    }
   </script>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center; backdrop-filter:blur(8px); padding:20px;">
+    <div style="background:var(--surface-primary); border:1px solid var(--border-default); border-radius:16px; padding:32px; width:100%; max-width:400px; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.5);">
+      <button onclick="closeAuthModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; color:var(--text-secondary); font-size:24px; cursor:pointer; line-height:1;">&times;</button>
+      
+      <div id="auth-signup-view">
+        <h3 style="font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; margin-bottom:10px; color:var(--text-primary);">Create Your Account</h3>
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:24px;">Save your audit reports, check off recovery tasks, and track your metrics in the client portal.</p>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600; color:var(--text-secondary);">Email Address</label>
+          <input type="email" id="auth-signup-email" placeholder="name@company.com" style="width:100%; padding:10px 14px; background:var(--surface-secondary); border:1px solid var(--border-default); border-radius:8px; color:var(--text-primary); outline:none;">
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600; color:var(--text-secondary);">Password</label>
+          <input type="password" id="auth-signup-pass" placeholder="At least 6 characters" style="width:100%; padding:10px 14px; background:var(--surface-secondary); border:1px solid var(--border-default); border-radius:8px; color:var(--text-primary); outline:none;">
+        </div>
+        
+        <button onclick="handleSignup()" id="signup-submit-btn" style="width:100%; padding:12px; background:var(--brand-primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:16px; transition:background 0.2s; font-family:'Inter',sans-serif;">Sign Up &amp; Save Audit</button>
+        
+        <div style="font-size:13px; text-align:center; color:var(--text-secondary);">
+          Already have an account? <a href="#" onclick="toggleAuthView('login')" style="color:var(--brand-primary); text-decoration:none; font-weight:600;">Log In</a>
+        </div>
+      </div>
+      
+      <div id="auth-login-view" style="display:none;">
+        <h3 style="font-family:'Outfit',sans-serif; font-size:22px; font-weight:700; margin-bottom:10px; color:var(--text-primary);">Welcome Back</h3>
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:24px;">Log in to access your saved audits and track your recovery checklist.</p>
+        
+        <div style="margin-bottom:16px;">
+          <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600; color:var(--text-secondary);">Email Address</label>
+          <input type="email" id="auth-login-email" placeholder="name@company.com" style="width:100%; padding:10px 14px; background:var(--surface-secondary); border:1px solid var(--border-default); border-radius:8px; color:var(--text-primary); outline:none;">
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block; margin-bottom:6px; font-size:12px; font-weight:600; color:var(--text-secondary);">Password</label>
+          <input type="password" id="auth-login-pass" placeholder="Enter your password" style="width:100%; padding:10px 14px; background:var(--surface-secondary); border:1px solid var(--border-default); border-radius:8px; color:var(--text-primary); outline:none;">
+        </div>
+        
+        <button onclick="handleLogin()" id="login-submit-btn" style="width:100%; padding:12px; background:var(--brand-primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-bottom:16px; transition:background 0.2s; font-family:'Inter',sans-serif;">Log In</button>
+        
+        <div style="font-size:13px; text-align:center; color:var(--text-secondary);">
+          Don't have an account? <a href="#" onclick="toggleAuthView('signup')" style="color:var(--brand-primary); text-decoration:none; font-weight:600;">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
