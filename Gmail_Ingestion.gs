@@ -1076,7 +1076,7 @@ function sendCalculatorLinkToLead(threadId) {
         `<p>Hi ${firstName},</p>` +
         `<p>Here is the link to run your estimated numbers against industry benchmarks:</p>` +
         `<div style="margin: 24px 0;">` +
-          `<a href="https://audit.bluedatalabs.com" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(249,115,22,0.2);">` +
+          `<a href="https://audit.dataconnectmail.com" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(249,115,22,0.2);">` +
             `Run Your Revenue Audit →` +
           `</a>` +
         `</div>` +
