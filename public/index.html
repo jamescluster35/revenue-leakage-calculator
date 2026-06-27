@@ -2671,21 +2671,6 @@
 
 
     function showAuditForm() {
-      if (firebaseEnabled && !auth.currentUser) {
-        showAuthModal(function() {
-          proceedToShowAuditForm();
-        });
-      } else {
-        proceedToShowAuditForm();
-      }
-    }
-
-    function proceedToShowAuditForm() {
-      if (firebaseEnabled && auth.currentUser) {
-        var user = auth.currentUser;
-        var emailEl = document.getElementById('lead_email');
-        if (emailEl && !emailEl.value) emailEl.value = user.email || '';
-      }
       document.getElementById('audit-cta').style.display = 'none';
       document.getElementById('audit-form').style.display = 'block';
       window.scrollTo({ top: document.getElementById('audit-form').offsetTop - 80, behavior: 'smooth' });
