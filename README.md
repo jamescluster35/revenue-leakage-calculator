@@ -65,11 +65,11 @@ When setting up your Cloudflare Pages project pointing to this private GitHub re
 * **Build Command:** Leave blank
 * **Root Directory (or Output Directory):** Set to `public` (or `/public`)
 
-This ensures that all four frontend files are hosted under your custom domain `audit.dataconnectmail.com`:
-* **Calculator:** `https://audit.dataconnectmail.com`
-* **Tracker:** `https://audit.dataconnectmail.com/tracker.html`
-* **Admin Panel:** `https://audit.dataconnectmail.com/admin_portal_bdl.html`
-* **Sample Report:** `https://audit.dataconnectmail.com/sample_report.html`
+This ensures that all four frontend files are hosted under your custom domain `bdl.dataconnectmail.com`:
+* **Calculator:** `https://bdl.dataconnectmail.com`
+* **Tracker:** `https://bdl.dataconnectmail.com/tracker.html`
+* **Admin Panel:** `https://bdl.dataconnectmail.com/admin_portal_bdl.html`
+* **Sample Report:** `https://bdl.dataconnectmail.com/sample_report.html`
 
 ### 2. Google Apps Script Backend (API Hosting)
 To push changes to the backend API:
