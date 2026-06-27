@@ -34,7 +34,7 @@ const DEFAULT_TRACKER_HEADERS = ['Tracker ID', 'Data'];
 const SETTINGS = {
   REPORT_PRICE: 47,
   ADMIN_EMAIL: "jamescluster35@gmail.com",
-  ADMIN_DASHBOARD_URL: "https://audit.dataconnectmail.com/admin_portal_bdl.html",
+  ADMIN_DASHBOARD_URL: "https://audit.bluedatalabs.com/admin_portal_bdl.html",
   WALKTHROUGH_LINK: "https://bluedatalabs.com/video-walkthrough"
 };
  
