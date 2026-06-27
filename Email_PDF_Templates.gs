@@ -202,6 +202,45 @@ function buildFullPdfReportHtml(lead, note) {
     const stepImpactAmt = Math.round(recoverable * pctVal / 100);
     const dynamicImpact = '+$' + stepImpactAmt.toLocaleString() + '/mo';
 
+    // Parse out template, script, or checklist box if available in detail
+    let mainDetail = step.detail;
+    let resourceBox = '';
+    
+    const templateIdx = step.detail.indexOf('Template:');
+    const scriptIdx = step.detail.indexOf('Script:');
+    const checklistIdx = step.detail.indexOf('Checklist:');
+    const guidelineIdx = step.detail.indexOf('Guideline:');
+    
+    let boxIdx = -1;
+    let boxType = '';
+    
+    if (templateIdx !== -1) { boxIdx = templateIdx; boxType = '⚡ COPY-PASTE TEMPLATE'; }
+    else if (scriptIdx !== -1) { boxIdx = scriptIdx; boxType = '🗣️ OUTREACH SCRIPT'; }
+    else if (checklistIdx !== -1) { boxIdx = checklistIdx; boxType = '📝 OPERATION CHECKLIST'; }
+    else if (guidelineIdx !== -1) { boxIdx = guidelineIdx; boxType = '💡 PRACTICE GUIDELINE'; }
+    
+    if (boxIdx !== -1) {
+      mainDetail = step.detail.substring(0, boxIdx).trim();
+      const colonIdx = step.detail.indexOf(':', boxIdx);
+      let resourceContent = '';
+      if (colonIdx !== -1) {
+        resourceContent = step.detail.substring(colonIdx + 1).trim();
+      } else {
+        resourceContent = step.detail.substring(boxIdx + 10).trim();
+      }
+      
+      // Strip outer quotes if they exist
+      if (resourceContent.startsWith('"') && resourceContent.endsWith('"')) {
+        resourceContent = resourceContent.substring(1, resourceContent.length - 1);
+      }
+      
+      resourceBox = `
+      <div style="margin-top: 12px; padding: 12px 14px; border: 1px dashed #10B981; background-color: #F0FDF4; border-radius: 8px; font-family: monospace; font-size: 11px; color: #166534; line-height: 1.5;">
+        <span style="font-weight: 800; font-size: 10px; color: #10B981; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">${boxType}</span>
+        ${esc(resourceContent)}
+      </div>`;
+    }
+
     return `
     <div style="margin-bottom: 20px; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: #FAFAFA;">
       <table width="100%" cellpadding="12" cellspacing="0" border="0" style="background: #0F172A; color: #FFFFFF;">
@@ -219,7 +258,8 @@ function buildFullPdfReportHtml(lead, note) {
         </tr>
       </table>
       <div style="padding: 16px; font-size: 13px; color: #475569; line-height: 1.6;">
-        ${esc(step.detail)}
+        ${esc(mainDetail)}
+        ${resourceBox}
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 1px;">
           Estimated Financial Impact: ${esc(dynamicImpact)}
         </div>

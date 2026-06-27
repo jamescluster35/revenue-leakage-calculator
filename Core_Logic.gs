@@ -35,9 +35,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.11,
       breakdown: ['Appointment No-Show Loss', 'Unscheduled Recall Patients', 'New Patient Follow-Up Gap', 'Staff Idle Time'],
       plan90: [
-        { week: '1-2', action: 'Audit scheduling', detail: 'Implement automated SMS/Email reminders at 48h and 2h. Target a no-show rate of <8% to recapture lost chair time.', priority: 'CRITICAL', quick: true, impact: '+$800/mo' },
-        { week: '3-4', action: 'Reactivation Campaign', detail: 'Assign a coordinator to call 10 overdue patients daily using multi-channel reactivation scripts to book hygiene visits.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
-        { week: '5-8', action: 'Software Audit', detail: 'Consolidate redundant subscriptions (PMS, imaging, patient marketing) to recover immediate overhead and improve margins.', priority: 'MEDIUM', quick: true, impact: '+$300/mo' }
+        { week: '1-2', action: 'Audit scheduling', detail: 'Implement automated SMS/Email reminders at 48h and 2h. Template: "Hi {Name}, your dental visit at {Clinic} is scheduled for {Time}. Please reply YES to confirm or call to reschedule. See you soon!"', priority: 'CRITICAL', quick: true, impact: '+$800/mo' },
+        { week: '3-4', action: 'Reactivation Campaign', detail: 'Assign a coordinator to call 10 overdue patients daily to book hygiene visits. Script: "Hi {Name}, it’s been over 6 months since your last cleaning at {Clinic}. We have a spot open this Thursday—would you like to protect your dental health and claim it?"', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+        { week: '5-8', action: 'Software Audit', detail: 'Consolidate redundant subscriptions (PMS, imaging, patient marketing) to recover immediate overhead. Checklist: (1) Audit software licenses vs active staff, (2) Cancel unused marketing modules, (3) Negotiate merchant processing fees.', priority: 'MEDIUM', quick: true, impact: '+$300/mo' }
       ]
     },
     realestate: {
@@ -45,9 +45,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.08,
       breakdown: ['Lead Follow-Up Gap', 'Portal Spend vs Returns', 'Agent Admin Time'],
       plan90: [
-        { week: '1-2', action: '5-Touch Sequence', detail: 'Deploy a 7-touch follow-up system (Call/Text/Email). Industry data shows 80% of deals close between contact 5 and 12.', priority: 'CRITICAL', quick: true, impact: '+$2,500/mo' },
-        { week: '3-4', action: 'Portal ROI Review', detail: 'Audit Portal GCI vs monthly spend. Reallocate budget from underperforming zip codes to high-intent lead sources.', priority: 'HIGH', quick: false, impact: '+$1,000/mo' },
-        { week: '5-8', action: 'Standardize Outreach', detail: 'Create automated templates for open house visitors and referral partner check-ins to ensure no lead expires.', priority: 'MEDIUM', quick: false, impact: '+$1,500/mo' }
+        { week: '1-2', action: '5-Touch Sequence', detail: 'Deploy a 7-touch follow-up system (Call/Text/Email). Text Template: "Hi {Name}, this is {Agent} with BDL Realty. I saw you viewed {Address} online. Would you like me to send you the neighborhood pricing trends?"', priority: 'CRITICAL', quick: true, impact: '+$2,500/mo' },
+        { week: '3-4', action: 'Portal ROI Review', detail: 'Audit Portal GCI vs monthly spend. Reallocate budget from underperforming zip codes. Checklist: (1) Calculate cost-per-lead per portal, (2) Identify zip codes with zero closings, (3) Pause low-intent ad campaigns.', priority: 'HIGH', quick: false, impact: '+$1,000/mo' },
+        { week: '5-8', action: 'Standardize Outreach', detail: 'Create automated templates for open house visitors. Email Template: "Hi {Name}, thanks for stopping by {Address}! I’ve attached the private inspection disclosures and virtual layout here: {Link}."', priority: 'MEDIUM', quick: false, impact: '+$1,500/mo' }
       ]
     }, 
     healthcare: {
@@ -55,9 +55,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.15,
       breakdown: ['Appointment No-Show Loss', 'Insurance Claim Rejections', 'Referral No-Conversion'],
       plan90: [
-        { week: '1-2', action: 'Reminders & Claims', detail: 'Deploy 2-way SMS reminders and audit top 3 claim rejection codes for immediate resubmission and process change.', priority: 'CRITICAL', quick: true, impact: '+$1,100/mo' },
-        { week: '3-4', action: 'Referral Sequence', detail: 'Contact all incoming referrals within 24 hours using warm scripts. Prompt callbacks increase booking rates by 40%.', priority: 'HIGH', quick: false, impact: '+$900/mo' },
-        { week: '5-8', action: 'Staff Optimization', detail: 'Align clinical staff hours with historical patient volume to eliminate overtime and idle blocks during slow periods.', priority: 'MEDIUM', quick: false, impact: '+$600/mo' }
+        { week: '1-2', action: 'Reminders & Claims', detail: 'Deploy 2-way SMS reminders and audit claim rejection codes. Template: "Hi {Name}, your consultation is confirmed for {Time}. To help our team prepare, reply YES to confirm or click to cancel: {Link}."', priority: 'CRITICAL', quick: true, impact: '+$1,100/mo' },
+        { week: '3-4', action: 'Referral Sequence', detail: 'Contact all incoming referrals within 24 hours. Script: "Hi {Name}, we received your referral from Dr. {Name}. I noticed your charts were processed, and we have an opening tomorrow at 10 AM to get you checked. Does that work?"', priority: 'HIGH', quick: false, impact: '+$900/mo' },
+        { week: '5-8', action: 'Staff Optimization', detail: 'Align clinical staff hours with historical patient volume. Checklist: (1) Extract check-in volume hourly reports, (2) Align scheduling blocks, (3) Trim administrative shifts during mid-day troughs.', priority: 'MEDIUM', quick: false, impact: '+$600/mo' }
       ]
     }, 
     legal: {
@@ -65,9 +65,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.15,
       breakdown: ['Unbilled Attorney Hours', 'Consultation No-Convert', 'Attorney Admin Time'],
       plan90: [
-        { week: '1-2', action: 'Time Capture', detail: 'Adopt daily contemporaneous time entry. Capturing just 15 more billable minutes a day adds $3k-$5k/mo per attorney.', priority: 'CRITICAL', quick: true, impact: '+$3,000/mo' },
-        { week: '3-4', action: 'Task Delegation', detail: 'Move non-billable administrative and intake tasks to paralegals or VAs to maximize attorney realization rates.', priority: 'HIGH', quick: false, impact: '+$1,500/mo' },
-        { week: '5-8', action: 'Pipeline Audit', detail: 'Review the Consult-to-Retained funnel. Implement follow-up calls at Day 3 and Day 7 for unsigned fee agreements.', priority: 'MEDIUM', quick: false, impact: '+$2,000/mo' }
+        { week: '1-2', action: 'Time Capture', detail: 'Adopt daily contemporaneous time entry. Practice Guideline: Log billable blocks immediately after calls/tasks. Capturing just 15 more minutes a day adds $3,000+/mo per attorney.', priority: 'CRITICAL', quick: true, impact: '+$3,000/mo' },
+        { week: '3-4', action: 'Task Delegation', detail: 'Move non-billable administrative and intake tasks to paralegals or VAs. Checklist: (1) Identify daily document collation tasks, (2) Build standardized client intake templates, (3) Assign follow-up calls to admin team.', priority: 'HIGH', quick: false, impact: '+$1,500/mo' },
+        { week: '5-8', action: 'Pipeline Audit', detail: 'Review the Consult-to-Retained funnel. Follow-Up Script: "Hi {Name}, this is {Attorney}\'s assistant. {Attorney} has completed your case audit. Do you want us to initiate the draft retainers for your signature?"', priority: 'MEDIUM', quick: false, impact: '+$2,000/mo' }
       ]
     }, 
     saas: {
@@ -75,9 +75,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.10,
       breakdown: ['Monthly Churn Loss', 'Trial No-Convert Loss', 'Failed Payments'],
       plan90: [
-        { week: '1-2', action: 'Churn Guard', detail: 'Segment users by last login. Trigger personal reach-out for "at-risk" accounts inactive for more than 14 days.', priority: 'CRITICAL', quick: false, impact: '+$1,500/mo' },
-        { week: '3-4', action: 'Dunning Setup', detail: 'Automate failed payment recovery with a 3-step retry sequence (Day 0, 3, 7) before subscription suspension.', priority: 'HIGH', quick: true, impact: '+$800/mo' },
-        { week: '5-8', action: 'Docs & Support', detail: 'Audit common support tickets and build a self-service knowledge base to reduce L1 ticket volume by 30%.', priority: 'MEDIUM', quick: false, impact: '+$500/mo' }
+        { week: '1-2', action: 'Churn Guard', detail: 'Segment users by last login to find at-risk accounts. Email Template: "Subject: Getting the most out of {App}. Hi {Name}, I noticed your team hasn\'t used the reporting module lately. Here is a quick 2-minute video on how it saves 4h/week: {Link}."', priority: 'CRITICAL', quick: false, impact: '+$1,500/mo' },
+        { week: '3-4', action: 'Dunning Setup', detail: 'Automate failed payment recovery with a retry sequence. Email Template: "Subject: Action Required: Update billing info. Hi {Name}, your monthly payment failed. We have kept your account active, but please update details here to avoid service suspension: {Link}."', priority: 'HIGH', quick: true, impact: '+$800/mo' },
+        { week: '5-8', action: 'Docs & Support', detail: 'Audit common support tickets and build a self-service knowledge base. Checklist: (1) Export last 90 days of tickets, (2) Group by query category, (3) Write step-by-step guides for top 5 issues.', priority: 'MEDIUM', quick: false, impact: '+$500/mo' }
       ]
     }, 
     restaurant: {
@@ -85,9 +85,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.16,
       breakdown: ['Food Waste', 'No-Show & Cancellation Loss', 'Delivery Fees'],
       plan90: [
-        { week: '1-2', action: 'Reservation Fix', detail: 'Require SMS confirmation for all bookings. Implement a standard 24h cancellation policy to reduce empty table loss.', priority: 'CRITICAL', quick: true, impact: '+$1,200/mo' },
-        { week: '3-4', action: 'Fee Analysis', detail: 'Analyze net profit per platform. Promote direct ordering via QR codes to recapture 25-30% delivery commissions.', priority: 'HIGH', quick: true, impact: '+$600/mo' },
-        { week: '5-8', action: 'Menu Optimization', detail: 'Track food waste for 14 days. Engineer menus to focus on high-margin, low-waste ingredients and optimize prep.', priority: 'MEDIUM', quick: false, impact: '+$1,000/mo' }
+        { week: '1-2', action: 'Reservation Fix', detail: 'Require SMS confirmation for all bookings. Template: "Hi {Name}, your table at {Restaurant} is set for {Time}. To help our kitchen prepare, please confirm with YES or reply CANCEL to free the table. Thanks!"', priority: 'CRITICAL', quick: true, impact: '+$1,200/mo' },
+        { week: '3-4', action: 'Fee Analysis', detail: 'Analyze net profit per delivery platform and promote direct ordering. Flyer Template: "Skip the delivery app fees! Order directly through our site at {URL} and get 10% off your pickup order using code DIRECT10."', priority: 'HIGH', quick: true, impact: '+$600/mo' },
+        { week: '5-8', action: 'Menu Optimization', detail: 'Track food waste for 14 days and engineer menus. Checklist: (1) Log prep waste weights daily, (2) Target high-margin, low-waste ingredients, (3) Cross-utilize premium proteins across multiple menu items.', priority: 'MEDIUM', quick: false, impact: '+$1,000/mo' }
       ]
     },
     general: {
@@ -95,9 +95,9 @@ function getNicheCalculationRules(niche) {
       estimatePct: 0.12,
       breakdown: ['Lead Follow-Up Gap', 'Administrative Time Waste'],
       plan90: [
-        { week: '1-2', action: 'Process Audit', detail: 'Map your end-to-end sales cycle and identify the single biggest manual bottleneck preventing faster closing cycles.', priority: 'CRITICAL', quick: true, impact: '+$500/mo' },
-        { week: '3-4', action: 'Standardize Outreach', detail: 'Build a multi-channel lead follow-up sequence with at least 5 touches across Phone, Email, and LinkedIn.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
-        { week: '5-8', action: 'Margin Optimization', detail: 'Audit service delivery costs vs current pricing. Ensure all overhead is properly allocated to maintain target margins.', priority: 'MEDIUM', quick: false, impact: '+$800/mo' }
+        { week: '1-2', action: 'Process Audit', detail: 'Map your end-to-end sales cycle and identify manual bottlenecks. Checklist: (1) List client touchpoints, (2) Log time spent copy-pasting customer details, (3) Eliminate redundant sheet transfers.', priority: 'CRITICAL', quick: true, impact: '+$500/mo' },
+        { week: '3-4', action: 'Standardize Outreach', detail: 'Build a multi-channel lead follow-up sequence. Text Template: "Hi {Name}, I saw you requested our operational leakage guide. Let’s do a quick 10-minute audit of your pipeline—do you have time tomorrow at 2 PM?"', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
+        { week: '5-8', action: 'Margin Optimization', detail: 'Audit service delivery costs vs current pricing. Checklist: (1) Calculate fully-burdened hourly cost per employee, (2) List recurring vendor subscription overhead, (3) Adjust client billing rates to maintain target 65%+ gross margins.', priority: 'MEDIUM', quick: false, impact: '+$800/mo' }
       ]
     } 
   };
