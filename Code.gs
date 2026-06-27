@@ -34,7 +34,8 @@ const DEFAULT_TRACKER_HEADERS = ['Tracker ID', 'Data'];
 const SETTINGS = {
   REPORT_PRICE: 47,
   ADMIN_EMAIL: "jamescluster35@gmail.com",
-  ADMIN_DASHBOARD_URL: "https://audit.dataconnectmail.com/admin_portal_bdl.html"
+  ADMIN_DASHBOARD_URL: "https://audit.dataconnectmail.com/admin_portal_bdl.html",
+  WALKTHROUGH_LINK: "mailto:hello@bluedatalabs.com?subject=Walkthrough%20Request%20%E2%80%94%20BDL%20Revenue%20Diagnostic"
 };
  
 /**
@@ -130,7 +131,7 @@ function handleRequest(e) {
     'getAll', 'moveLead', 'deleteLead', 'archiveLead', 'promoteClient', 'restoreLead',
     'getCalculatorLeads', 'updateCalculatorLead', 'markPaymentPaid', 'deleteCalculatorLead', 
     'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'saveLeadPdfToDrive', 'dailyBackupToDrive',
-    'setupRemindersTrigger', 'sendFollowUpReminders',
+    'setupRemindersTrigger', 'sendFollowUpReminders', 'runCalculatorEmailDripCampaign',
     'getSenders', 'saveSenders', 'getGmailInboxFeed', 'processGmailThread', 'syncOutreachLogsFromGmail', 'setupGmailTriggers',
     'getIngestionSettings', 'saveIngestionSettings',
     'getConnectedAccounts', 'generateAuthUrl', 'deleteConnectedAccount', 'saveOAuthCredentials', 'getOAuthCredentials',
@@ -205,6 +206,7 @@ function handleRequest(e) {
     'inspectSpreadsheet': inspectSpreadsheet,
     'setupRemindersTrigger': setupRemindersTrigger,
     'sendFollowUpReminders': (data) => sendFollowUpReminders(),
+    'runCalculatorEmailDripCampaign': (data) => runCalculatorEmailDripCampaign(),
     'getRawSheetData': getRawSheetData,
   };
 
@@ -876,6 +878,13 @@ function sendFollowUpReminders() {
     // Send Chat webhook notification
     sendWebhookNotification(chatMsg);
 
+    // Run automated email drip campaigns for public calculator leads
+    try {
+      runCalculatorEmailDripCampaign();
+    } catch (dripErr) {
+      Logger.log("Error in daily drip campaign execution: " + dripErr.toString());
+    }
+
     return { success: true, message: `Follow-up reminders sent for ${overdueLeads.length} leads` };
   } catch (e) {
     Logger.log("Error in sendFollowUpReminders: " + e.toString());
@@ -1230,5 +1239,171 @@ function handleOAuthCallback(e) {
       </body>
     </html>
   `);
+}
+
+/**
+ * Runs the automated follow-up email drip campaign daily.
+ * Scans all leads in 'Calculator Leads' and sends follow-up emails on Day 2 and Day 5.
+ */
+function runCalculatorEmailDripCampaign() {
+  try {
+    const leads = getTabData(SHEETS.CALC_LEADS);
+    if (!leads || leads.length === 0) {
+      Logger.log("No calculator leads found.");
+      return { success: true, message: "No calculator leads found" };
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let processedCount = 0;
+
+    leads.forEach(lead => {
+      if (!lead.timestamp || !lead.email) return;
+      
+      const email = String(lead.email).trim();
+      const notes = String(lead.notes || '');
+
+      const ts = new Date(lead.timestamp);
+      if (isNaN(ts.getTime())) return;
+      ts.setHours(0, 0, 0, 0);
+
+      // Skip paid or delivered leads
+      const paidStatus = String(lead.paidReport || '').toLowerCase();
+      if (paidStatus === 'paid' || paidStatus === 'delivered') return;
+
+      const daysElapsed = Math.floor((today.getTime() - ts.getTime()) / (1000 * 60 * 60 * 24));
+      
+      // Day 2 Drip
+      if (daysElapsed === 2 && !notes.includes('[Day 2 Follow-up Sent]')) {
+        const mailSent = sendDripEmail(lead, 2);
+        if (mailSent) {
+          const updatedNotes = notes ? notes + ' \n[Day 2 Follow-up Sent]' : '[Day 2 Follow-up Sent]';
+          updateLead(lead.id, { notes: updatedNotes }, SHEETS.CALC_LEADS);
+          processedCount++;
+          Logger.log(`Day 2 follow-up sent to ${email} (Lead ID: ${lead.id})`);
+        }
+      }
+      // Day 5 Drip
+      else if (daysElapsed === 5 && !notes.includes('[Day 5 Follow-up Sent]')) {
+        const mailSent = sendDripEmail(lead, 5);
+        if (mailSent) {
+          const updatedNotes = notes ? notes + ' \n[Day 5 Follow-up Sent]' : '[Day 5 Follow-up Sent]';
+          updateLead(lead.id, { notes: updatedNotes }, SHEETS.CALC_LEADS);
+          processedCount++;
+          Logger.log(`Day 5 follow-up sent to ${email} (Lead ID: ${lead.id})`);
+        }
+      }
+    });
+
+    return { success: true, processed: processedCount };
+  } catch (err) {
+    Logger.log("Error in runCalculatorEmailDripCampaign: " + err.toString());
+    return { error: err.message };
+  }
+}
+
+/**
+ * Sends a drip email to the lead based on the day number.
+ */
+function sendDripEmail(lead, dayNum) {
+  try {
+    const bizName = esc(lead.business || 'Your Business');
+    const firstName = esc(String(lead.name || 'there').split(' ')[0]);
+    const niche = (lead.niche || 'General').toLowerCase();
+    
+    const totalLeakage = parseFloat(String(lead.totalLeakage || 0).replace(/[$,]/g, '')) || 0;
+    const dailyLoss = Math.round(totalLeakage / 30);
+    const recoverable = Math.round(totalLeakage * 0.7);
+
+    let subject = '';
+    let bodyHtml = '';
+
+    if (dayNum === 2) {
+      subject = `Don't let $${dailyLoss.toLocaleString()}/day slip away`;
+      bodyHtml = `
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #08090C; font-family: Arial, sans-serif; color: #E8EAF0;">
+        <tr>
+          <td align="center" style="padding: 20px 10px;">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto;">
+              <tr>
+                <td style="background-color: #141720; padding: 30px; border-radius: 12px; border: 1px solid #1E2230;">
+                  <h2 style="color: #F97316; font-size: 20px; margin: 0 0 15px;">Hi ${firstName},</h2>
+                  <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 20px;">
+                    Every single day your operations run without these adjustments, your business is losing approximately <strong>$${dailyLoss.toLocaleString()} per day</strong>. 
+                  </p>
+                  <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 20px;">
+                    That's money directly leaving your bottom line. Over the next quarter, this adds up to <strong>$${(dailyLoss * 90).toLocaleString()}</strong> in unrecovered leakage.
+                  </p>
+                  <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 25px;">
+                    We want to help you plug these gaps. Book your 15-minute walkthrough call now, and we will show you exactly how to recover up to <strong>$${recoverable.toLocaleString()} per month</strong>.
+                  </p>
+                  
+                  <div style="text-align: center; margin-bottom: 25px;">
+                    <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;">Book Walkthrough Call</a>
+                  </div>
+
+                  <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 0;">
+                    Best regards,<br>
+                    <strong>BDL Revenue Intelligence Team</strong><br>
+                    <a href="mailto:hello@bluedatalabs.com" style="color: #F97316; text-decoration: none;">hello@bluedatalabs.com</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`;
+    } else if (dayNum === 5) {
+      subject = `How other ${niche}s recovered $50K+/mo`;
+      bodyHtml = `
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #08090C; font-family: Arial, sans-serif; color: #E8EAF0;">
+        <tr>
+          <td align="center" style="padding: 20px 10px;">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" style="width: 100%; max-width: 600px; margin: 0 auto;">
+              <tr>
+                <td style="background-color: #141720; padding: 30px; border-radius: 12px; border: 1px solid #1E2230;">
+                  <h2 style="color: #F97316; font-size: 20px; margin: 0 0 15px;">Hi ${firstName},</h2>
+                  <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 20px;">
+                    Most business owners in the <strong>${esc(niche.charAt(0).toUpperCase() + niche.slice(1))}</strong> sector are skeptical when they first see their leakage numbers. 
+                  </p>
+                  <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 20px;">
+                    But the numbers don't lie. Within 90 days of implementing their revenue recovery plan, similar businesses have plugged their operational leaks and recovered between $10,000 and $50,000+ per month.
+                  </p>
+                  <p style="font-size: 14px; line-height: 1.6; color: #E8EAF0; margin-bottom: 25px;">
+                    Whether it's scheduling optimization, claim rejection audits, or automated follow-up drips, we make recovery simple. Let's walk through your report together.
+                  </p>
+                  
+                  <div style="text-align: center; margin-bottom: 25px;">
+                    <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background-color: #F97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; font-size: 14px; text-transform: uppercase;">Schedule My Recovery Session</a>
+                  </div>
+
+                  <p style="color: #9CA3AF; font-size: 12px; line-height: 1.6; margin: 0;">
+                    Best regards,<br>
+                    <strong>BDL Revenue Intelligence Team</strong><br>
+                    <a href="mailto:hello@bluedatalabs.com" style="color: #F97316; text-decoration: none;">hello@bluedatalabs.com</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>`;
+    }
+
+    if (subject && bodyHtml) {
+      MailApp.sendEmail({
+        to: lead.email,
+        subject: subject,
+        htmlBody: bodyHtml,
+        name: 'BDL Revenue Intelligence'
+      });
+      return true;
+    }
+    return false;
+  } catch (e) {
+    Logger.log(`Failed to send drip email to ${lead.email}: ${e.toString()}`);
+    return false;
+  }
 }
 

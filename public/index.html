@@ -2140,6 +2140,11 @@
               { id: 'srate', l: 'Average hourly pay? ($)', p: '20', type: 'num', h: 'Average clinical/admin hourly wage.' },
               { id: 'tspend', l: 'Monthly software spend? ($)', p: '400', type: 'num', h: 'PMS subscriptions, imaging, patient marketing systems, etc.' },
             ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use patient scheduling, reminder, or PMS tools (e.g., NexHealth, Solutionreach)?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
+            ]
           }
         ], estimatePct: 0.11
       },
@@ -2160,6 +2165,11 @@
               { id: 'agents', l: 'Number of agents?', p: '10', type: 'num', h: 'Licensed agents working in your office or team.' },
               { id: 'ahrs_v', l: 'Hours per week agents spend on admin instead of selling?', type: 'choice', opts: ['Under 2 hrs', '2-4 hrs', 'Half their day', 'Most of day'], vals: [8, 16, 24, 32], h: 'Time spent by agents on non-revenue generating administrative tasks.' },
               { id: 'arate', l: 'Average hourly value of agent time? ($)', p: '75', type: 'num', h: 'Estimated worth of an active agent\'s sales hour.' },
+            ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use a CRM or transaction management tool (e.g., Follow Up Boss, kvCORE, Dotloop)?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
             ]
           }
         ], estimatePct: 0.08
@@ -2184,6 +2194,11 @@
               { id: 'staff', l: 'Number of staff?', p: '6', type: 'num', h: 'Front desk staff, medical assistants, and billing coordinators.' },
               { id: 'srate', l: 'Average hourly pay? ($)', p: '25', type: 'num', h: 'Average clinical/admin staff hourly wage.' },
             ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use patient scheduling, reminder, or billing software (e.g., NexHealth, Solutionreach, Kareo)?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
+            ]
           }
         ], estimatePct: 0.15
       },
@@ -2199,6 +2214,11 @@
               { id: 'cconv_v', l: 'Out of 10 consultations, how many become clients?', type: 'choice', opts: ['7-10', '4-6', '2-3', 'Less than 2'], vals: [80, 50, 25, 10], h: 'Consultation-to-retained-client conversion rate.' },
               { id: 'casev', l: 'Average case value? ($)', p: '5000', type: 'num', h: 'Average fee value of a retained client/case.' },
             ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use a CRM or practice management tool (e.g., Clio, Lawmatics)?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
+            ]
           }
         ], estimatePct: 0.18
       },
@@ -2213,6 +2233,11 @@
               { id: 'dval', l: 'Average deal value? ($)', p: '99', type: 'num', h: 'Average contract value or subscription MRR per customer.' },
               { id: 'staff', l: 'Number of team members?', p: '8', type: 'num', h: 'Total number of full-time team members.' },
               { id: 'srate', l: 'Average hourly cost per person? ($)', p: '40', type: 'num', h: 'Average hourly operational cost per employee.' },
+            ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use subscription billing or usage-tracking software (e.g., Stripe, Chargebee, Zuora)?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
             ]
           }
         ], estimatePct: 0.10
@@ -2230,6 +2255,11 @@
               { id: 'total_staff', l: 'Total staff?', p: '12', type: 'num', h: 'Total kitchen, service, and administrative staff.' },
               { id: 'srate', l: 'Average hourly wage? ($)', p: '15', type: 'num', h: 'Average hourly wages across front/back of house.' },
             ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use a reservation system, POS, or inventory tool (e.g., OpenTable, Toast, Resy, 7shifts)?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
+            ]
           }
         ], estimatePct: 0.16
       },
@@ -2243,6 +2273,11 @@
               { id: 'staff', l: 'Number of employees?', p: '5', type: 'num', h: 'Total number of employees.' },
               { id: 'srate', l: 'Average hourly cost per employee? ($)', p: '25', type: 'num', h: 'Average employee hourly wage.' },
               { id: 'admin_v', l: 'Hours per week spent on manual admin tasks?', type: 'choice', opts: ['0-5 hrs', '5-15 hrs', '15-30 hrs', '30+ hrs'], vals: [3, 10, 22, 40], h: 'Time spent on invoicing, scheduling, and data entry.' },
+            ]
+          },
+          {
+            t: '🛠️ Systems & Software', f: [
+              { id: 'has_tool', l: 'Do you currently use a CRM, scheduling, or POS tool?', type: 'choice', opts: ['Yes, we use one', 'No, none'], vals: ['yes', 'no'], defIdx: 1, h: 'This helps us identify feature optimization vs new software recommendations.' }
             ]
           }
         ], estimatePct: 0.12
@@ -2448,7 +2483,8 @@
             if (defIdx >= f.vals.length) defIdx = 0;
             S['_cv_' + f.id] = f.vals[defIdx]; // Pre-set state so _v() returns a value immediately
             f.opts.forEach(function (o, i) {
-              html += '<div class="choice' + (i === defIdx ? ' on' : '') + '" onclick="setFieldChoice(\'' + f.id + '\',' + f.vals[i] + ',this)">' + o + '</div>';
+              var valExpr = typeof f.vals[i] === 'string' ? '\'' + f.vals[i] + '\'' : f.vals[i];
+              html += '<div class="choice' + (i === defIdx ? ' on' : '') + '" onclick="setFieldChoice(\'' + f.id + '\',' + valExpr + ',this)">' + o + '</div>';
             });
             html += '</div>';
             html += '</div>';

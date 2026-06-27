@@ -33,7 +33,7 @@ function getNicheCalculationRules(niche) {
     dental: {
       // Benchmark estimate: ~11% of monthly revenue. Source: ADA/ADAA no-show and recall studies.
       estimatePct: 0.11,
-      breakdown: ['Appointment no-shows', 'Uncollected copays/fees', 'Unused inventory and supplies'],
+      breakdown: ['Appointment No-Show Loss', 'Unscheduled Recall Patients', 'New Patient Follow-Up Gap', 'Staff Idle Time'],
       plan90: [
         { week: '1-2', action: 'Audit scheduling', detail: 'Implement automated SMS/Email reminders at 48h and 2h. Target a no-show rate of <8% to recapture lost chair time.', priority: 'CRITICAL', quick: true, impact: '+$800/mo' },
         { week: '3-4', action: 'Reactivation Campaign', detail: 'Assign a coordinator to call 10 overdue patients daily using multi-channel reactivation scripts to book hygiene visits.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
@@ -43,7 +43,7 @@ function getNicheCalculationRules(niche) {
     realestate: {
       // Benchmark estimate: ~8% of monthly revenue. Source: NAR annual report, portal ROI benchmarks.
       estimatePct: 0.08,
-      breakdown: ['Missed lead follow-up', 'Low portal ROI', 'Inefficient offer conversion'],
+      breakdown: ['Lead Follow-Up Gap', 'Portal Spend vs Returns', 'Agent Admin Time'],
       plan90: [
         { week: '1-2', action: '5-Touch Sequence', detail: 'Deploy a 7-touch follow-up system (Call/Text/Email). Industry data shows 80% of deals close between contact 5 and 12.', priority: 'CRITICAL', quick: true, impact: '+$2,500/mo' },
         { week: '3-4', action: 'Portal ROI Review', detail: 'Audit Portal GCI vs monthly spend. Reallocate budget from underperforming zip codes to high-intent lead sources.', priority: 'HIGH', quick: false, impact: '+$1,000/mo' },
@@ -53,7 +53,7 @@ function getNicheCalculationRules(niche) {
     healthcare: {
       // Benchmark estimate: ~15% of monthly revenue. Source: MGMA claim denial studies, JAMA no-show data.
       estimatePct: 0.15,
-      breakdown: ['Denied insurance claims', 'Patient no-shows', 'Underbilled services'],
+      breakdown: ['Appointment No-Show Loss', 'Insurance Claim Rejections', 'Referral No-Conversion'],
       plan90: [
         { week: '1-2', action: 'Reminders & Claims', detail: 'Deploy 2-way SMS reminders and audit top 3 claim rejection codes for immediate resubmission and process change.', priority: 'CRITICAL', quick: true, impact: '+$1,100/mo' },
         { week: '3-4', action: 'Referral Sequence', detail: 'Contact all incoming referrals within 24 hours using warm scripts. Prompt callbacks increase booking rates by 40%.', priority: 'HIGH', quick: false, impact: '+$900/mo' },
@@ -63,7 +63,7 @@ function getNicheCalculationRules(niche) {
     legal: {
       // Benchmark estimate: ~15% of monthly revenue. Source: Clio Legal Trends Report, ILTA billable hour data.
       estimatePct: 0.15,
-      breakdown: ['Untracked billable hours', 'Low realization rates', 'Administrative delays'],
+      breakdown: ['Unbilled Attorney Hours', 'Consultation No-Convert', 'Attorney Admin Time'],
       plan90: [
         { week: '1-2', action: 'Time Capture', detail: 'Adopt daily contemporaneous time entry. Capturing just 15 more billable minutes a day adds $3k-$5k/mo per attorney.', priority: 'CRITICAL', quick: true, impact: '+$3,000/mo' },
         { week: '3-4', action: 'Task Delegation', detail: 'Move non-billable administrative and intake tasks to paralegals or VAs to maximize attorney realization rates.', priority: 'HIGH', quick: false, impact: '+$1,500/mo' },
@@ -73,7 +73,7 @@ function getNicheCalculationRules(niche) {
     saas: {
       // Benchmark estimate: ~10% of monthly revenue. Source: OpenView SaaS benchmarks, ChurnZero churn studies.
       estimatePct: 0.10,
-      breakdown: ['Churn and downgrades', 'Failed payments', 'Weak onboarding flow'],
+      breakdown: ['Monthly Churn Loss', 'Trial No-Convert Loss', 'Failed Payments'],
       plan90: [
         { week: '1-2', action: 'Churn Guard', detail: 'Segment users by last login. Trigger personal reach-out for "at-risk" accounts inactive for more than 14 days.', priority: 'CRITICAL', quick: false, impact: '+$1,500/mo' },
         { week: '3-4', action: 'Dunning Setup', detail: 'Automate failed payment recovery with a 3-step retry sequence (Day 0, 3, 7) before subscription suspension.', priority: 'HIGH', quick: true, impact: '+$800/mo' },
@@ -83,7 +83,7 @@ function getNicheCalculationRules(niche) {
     restaurant: {
       // Benchmark estimate: ~16% of monthly revenue. Source: USDA food waste estimates, Toast/National Restaurant Association data.
       estimatePct: 0.16,
-      breakdown: ['No-shows and cancellations', 'Food and labour waste', 'High delivery fees'],
+      breakdown: ['Food Waste', 'No-Show & Cancellation Loss', 'Delivery Fees'],
       plan90: [
         { week: '1-2', action: 'Reservation Fix', detail: 'Require SMS confirmation for all bookings. Implement a standard 24h cancellation policy to reduce empty table loss.', priority: 'CRITICAL', quick: true, impact: '+$1,200/mo' },
         { week: '3-4', action: 'Fee Analysis', detail: 'Analyze net profit per platform. Promote direct ordering via QR codes to recapture 25-30% delivery commissions.', priority: 'HIGH', quick: true, impact: '+$600/mo' },
@@ -93,7 +93,7 @@ function getNicheCalculationRules(niche) {
     general: {
       // Benchmark estimate: ~12% of monthly revenue. Source: McKinsey & HBR SMB operational efficiency research.
       estimatePct: 0.12,
-      breakdown: ['Missed lead follow-up', 'Operational bottlenecks', 'Unoptimized service margins'],
+      breakdown: ['Lead Follow-Up Gap', 'Administrative Time Waste'],
       plan90: [
         { week: '1-2', action: 'Process Audit', detail: 'Map your end-to-end sales cycle and identify the single biggest manual bottleneck preventing faster closing cycles.', priority: 'CRITICAL', quick: true, impact: '+$500/mo' },
         { week: '3-4', action: 'Standardize Outreach', detail: 'Build a multi-channel lead follow-up sequence with at least 5 touches across Phone, Email, and LinkedIn.', priority: 'HIGH', quick: false, impact: '+$1,200/mo' },
@@ -146,5 +146,19 @@ function calculateLeadLeakage(lead) {
   score = Math.max(15, Math.min(95, Math.round(score)));
   const grade = score < 50 ? 'Critical' : score < 75 ? 'Needs Attention' : 'Healthy'; 
 
-  return { revenue, monthlyLeak, annualLeak, breakdown, score, grade, rules, ratio };
+  // Parse has_tool and assign toolTag
+  let hasTool = false;
+  if (lead.calculationInputs) {
+    try {
+      const inputs = JSON.parse(lead.calculationInputs);
+      if (inputs.has_tool === 'yes' || inputs.has_tool === 1 || inputs.has_tool === '1') {
+        hasTool = true;
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+  const toolTag = hasTool ? 'existing_tool_underused' : 'no_tool_gap';
+
+  return { revenue, monthlyLeak, annualLeak, breakdown, score, grade, rules, ratio, toolTag };
 }

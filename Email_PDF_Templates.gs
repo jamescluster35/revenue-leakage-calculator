@@ -3,6 +3,101 @@
  * HTML Templates & Report Generation
  */
 
+function getRecommendedFix(niche, toolTag) {
+  const k = String(niche || '').trim().toLowerCase();
+  const hasTool = toolTag === 'existing_tool_underused';
+  
+  const recommendations = {
+    restaurant: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your restaurant already utilizes reservation, POS, or management software but suffers from an <strong>Optimization Gap</strong>. We recommend auditing and enabling underused features in your existing tools.",
+        action: "Activate credit card holds and automated SMS confirmations in OpenTable/Resy to eliminate no-show losses, and enable prep waste logs in your POS system."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your restaurant has a <strong>Technology Gap</strong>. To stop leakage, we recommend adopting industry-standard systems.",
+        action: "Deploy a reservation tool like Tock/Resy (which supports card holds to eliminate no-shows) and set up Toast POS with integrated waste tracking."
+      }
+    },
+    dental: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your practice has scheduling software but is suffering from an <strong>Optimization Gap</strong>. We recommend configuring advanced features you are already paying for.",
+        action: "Set up multi-channel patient recall rules in NexHealth/Solutionreach and run a 10-patient/day reactivation coordinator routine."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your practice has a <strong>Technology Gap</strong>. To scale bookings and reduce empty chairs, we recommend implementing dedicated scheduling software.",
+        action: "Adopt patient engagement software (like NexHealth or Solutionreach) to automate 48h/2h patient text reminders and hygiene recall."
+      }
+    },
+    realestate: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your agency has a CRM but suffers from an <strong>Optimization Gap</strong>. We recommend configuring workflows within your current stack.",
+        action: "Configure automated 7-touch drip campaigns (Call/Text/Email) in kvCORE/Follow Up Boss so new portal leads don't decay."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your agency has a <strong>Technology Gap</strong>. To prevent lost commission, we recommend setting up a CRM.",
+        action: "Adopt kvCORE or Follow Up Boss to centralize portal leads and auto-assign them to agents for immediate outreach."
+      }
+    },
+    healthcare: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your clinic has billing and scheduling software but suffers from an <strong>Optimization Gap</strong>. We recommend auditing your current workflow rules.",
+        action: "Audit top 3 rejection reasons in your billing software and configure pre-submission claim checks, and set up automated patient reminders."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your clinic has a <strong>Technology Gap</strong>. To reduce denials and no-shows, we recommend dedicated software.",
+        action: "Implement a billing audit tool and automated patient reminder platform (like Solutionreach/NexHealth)."
+      }
+    },
+    legal: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your firm has a practice management tool but suffers from an <strong>Optimization Gap</strong>. We recommend optimizing your configuration.",
+        action: "Enable automatic contemporaneous time-tracking rules in Clio/Lawmatics and configure automated Day 3/Day 7 client follow-ups."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your firm has a <strong>Technology Gap</strong>. To capture billable hours, we recommend a practice management platform.",
+        action: "Deploy Clio and Clio Grow to track billable work in real-time and automate consult-to-retained agreements."
+      }
+    },
+    saas: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your SaaS has billing software but suffers from an <strong>Optimization Gap</strong>. We recommend configuring existing billing workflows.",
+        action: "Enable Stripe/Chargebee automated dunning sequences at Day 0, 3, and 7, and set up inactive user alerts."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your SaaS has a <strong>Technology Gap</strong>. To avoid churn, we recommend integrating automated dunning and tracking.",
+        action: "Integrate Stripe/Chargebee dunning modules and set up user analytics (Mixpanel/Amplitude) to identify churn risks."
+      }
+    },
+    general: {
+      has: {
+        title: "🛠️ Recommended Fix: System Optimization",
+        desc: "Your business has process tools but suffers from an <strong>Optimization Gap</strong>. We recommend optimizing features within your current CRM/POS.",
+        action: "Configure automated multi-channel follow-ups (at least 5 touches) and clean up manual bottlenecks."
+      },
+      no: {
+        title: "🚀 Recommended Fix: Starter Platform Setup",
+        desc: "Your business has a <strong>Technology Gap</strong>. We recommend deploying a starter system to track leads.",
+        action: "Deploy a modern CRM and scheduling tool to automate pipeline tracking, appointment bookings, and intake."
+      }
+    }
+  };
+  
+  const nicheRec = recommendations[k] || recommendations.general;
+  return hasTool ? nicheRec.has : nicheRec.no;
+}
+
 function generateAndSendReport(lead, toEmail, note, subject, htmlBodyOverride) {
   try {
     const bizName = esc(lead.business || 'Your Business');
@@ -126,7 +221,8 @@ function buildFullPdfReportHtml(lead, note) {
   }).join('');
 
   const leakHtml = calc.breakdown.map((item, i) => {
-    let pct = i === 0 ? '75%' : i === 1 ? '50%' : '35%';
+    const pcts = calc.breakdown.length === 3 ? [50, 30, 20] : calc.breakdown.length === 2 ? [60, 40] : [100];
+    const pctVal = pcts[i] || 0;
     let color = i === 0 ? '#F43F5E' : i === 1 ? '#F59E0B' : '#3B82F6';
     return `
     <div style="background: #FFFFFF; border: 1px solid #E2E8F0; padding: 16px; margin-bottom: 12px; border-radius: 8px;">
@@ -136,7 +232,7 @@ function buildFullPdfReportHtml(lead, note) {
             <div style="font-size: 14px; font-weight: 700; color: #1E293B; margin-bottom: 6px;">${esc(item)}</div>
             <div style="font-size: 11px; color: #64748B; margin-bottom: 12px;">${esc(detailMap[item] || detailMap.General)}</div>
             <div style="background: #F1F5F9; height: 6px; width: 100%; border-radius: 4px; overflow: hidden;">
-              <div style="background: ${color}; height: 6px; width: ${pct}; border-radius: 4px;"></div>
+              <div style="background: ${color}; height: 6px; width: ${pctVal}%; border-radius: 4px;"></div>
             </div>
           </td>
         </tr>
@@ -311,6 +407,22 @@ function buildFullPdfReportHtml(lead, note) {
     </div>
   ` : '';
 
+  const rec = getRecommendedFix(niche, calc.toolTag);
+  const recommendedFixHtml = `
+        <!-- RECOMMENDED OPERATIONAL FIX -->
+        <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; margin-bottom: 12px; letter-spacing: 1px;">Recommended Operational Fix</h2>
+        <table width="100%" cellpadding="16" cellspacing="0" border="0" style="background: #FAFAFA; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 24px;">
+          <tr>
+            <td>
+              <div style="font-size: 14px; font-weight: 800; color: #1E293B; margin-bottom: 6px;">${esc(rec.title)}</div>
+              <div style="font-size: 13px; color: #475569; line-height: 1.5; margin-bottom: 12px;">${rec.desc}</div>
+              <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #1E293B; line-height: 1.6;">
+                <strong>Immediate Action:</strong> ${esc(rec.action)}
+              </div>
+            </td>
+          </tr>
+        </table>`;
+
   return `<!DOCTYPE html><html>
     <head><meta charset="UTF-8"><style>body{font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;color:#1E293B;line-height:1.6;background:#FFFFFF;} .page-break{page-break-before:always;}</style></head>
     <body>
@@ -338,7 +450,10 @@ function buildFullPdfReportHtml(lead, note) {
       <div style="padding: 32px 24px;">
         ${note ? `<div style="background:#F8FAFC; border-left:4px solid #3B82F6; padding:16px; margin-bottom:24px; font-size: 13px; color: #475569; font-style:italic;">${esc(note)}</div>` : ''}
         
-        <p style="font-size: 14px; margin-bottom: 30px; color: #334155;">Hi ${esc(firstName)}, we have successfully analyzed your operational data against Top 10% industry benchmarks. The variance between your current operations and maximum capture potential is detailed below.</p>
+        <p style="font-size: 14px; margin-bottom: 20px; color: #334155;">Hi ${esc(firstName)}, we have successfully analyzed your operational data against Top 10% industry benchmarks.</p>
+        <p style="font-size: 13.5px; margin-bottom: 30px; color: #334155; line-height: 1.6; background: #F8FAFC; padding: 16px; border-radius: 8px; border-left: 4px solid #F97316;">
+          Based on your self-reported monthly revenue of <strong>$${calc.revenue.toLocaleString()}</strong>, your estimated annual revenue leakage is <strong>$${calc.annualLeak.toLocaleString()}</strong> (representing <strong>${leakagePct}% of operations</strong>). Furthermore, with a Google Rating of <strong>${grRating.toFixed(1)}</strong> and <strong>${grCount}</strong> reviews, your reputation metrics indicate key conversion opportunities at the top of your funnel.
+        </p>
         
         <!-- EXECUTIVE SUMMARY METRICS -->
         <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">Executive Financial Summary</h2>
@@ -365,6 +480,35 @@ function buildFullPdfReportHtml(lead, note) {
           </tr>
         </table>
 
+        <!-- OWNER SNAPSHOT -->
+        <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 20px; margin-top: 24px; margin-bottom: 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td>
+                <h3 style="color: #B45309; font-size: 15px; font-weight: 800; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">⚠️ Owner Snapshot</h3>
+                <p style="font-size: 13px; color: #78350F; margin: 0 0 14px; line-height: 1.5;">
+                  You are currently losing <strong>$${calc.monthlyLeak.toLocaleString()} per month</strong> mainly due to operational gaps in <strong>${esc(calc.breakdown[0] || 'your process flow')}</strong>.
+                </p>
+              </td>
+            </tr>
+          </table>
+          <div style="background: #FFFFFF; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 13px; color: #1E293B;">
+              <tr>
+                <td style="padding-bottom: 6px;"><strong>Estimated Monthly Leakage:</strong></td>
+                <td align="right" style="font-size: 15px; font-weight: 800; color: #F43F5E; padding-bottom: 6px;">$${calc.monthlyLeak.toLocaleString()}/mo</td>
+              </tr>
+              <tr style="border-top: 1px solid #E2E8F0;">
+                <td style="padding-top: 6px;"><strong>Immediate Recovery Target:</strong></td>
+                <td align="right" style="font-size: 15px; font-weight: 800; color: #10B981; padding-top: 6px;">+$${recoverable.toLocaleString()}/mo (within 90 days)</td>
+              </tr>
+            </table>
+          </div>
+          <div style="text-align: center;">
+            <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background: #F97316; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 10px 20px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Fix This Now → Book a Call</a>
+          </div>
+        </div>
+
         <!-- LEAKAGE BREAKDOWN -->
         <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:30px; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">Primary Leakage Vectors</h2>
         ${leakHtml}
@@ -377,6 +521,8 @@ function buildFullPdfReportHtml(lead, note) {
         
         <!-- REPUTATION -->
         ${reputationHtml}
+
+        ${recommendedFixHtml}
         
         <!-- DECISION SUMMARY -->
         <h2 style="color:#0F172A; text-transform:uppercase; font-size:13px; border-bottom:2px solid #E2E8F0; margin-top:40px; padding-bottom:8px; margin-bottom: 16px; letter-spacing: 1px;">The Cost of Inaction</h2>
@@ -522,6 +668,15 @@ function buildFullPdfReportHtml(lead, note) {
           <strong>Ready to stop losing money?</strong><br>
           <span style="color: #475569;">Reply directly to the email containing this report to schedule your Custom App Discovery Call.</span>
         </p>
+
+        <!-- CONFUSION SAFETY NET -->
+        <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px;">
+          <h3 style="margin-top: 0; color: #1E293B; font-size: 14px; font-weight: bold; margin-bottom: 6px;">❓ Need Help Reviewing This Report?</h3>
+          <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
+            Not sure how to act on these findings? Book a free 15-minute walkthrough call. We will guide you step-by-step through your leakage breakdown and recovery plan.
+          </p>
+          <a href="${SETTINGS.WALKTHROUGH_LINK || 'mailto:hello@bluedatalabs.com?subject=Walkthrough Request'}" style="display: inline-block; background: #64748B; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 8px 16px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Schedule My Walkthrough</a>
+        </div>
       </div>
 
       <!-- LEGAL DISCLAIMER PAGE -->
