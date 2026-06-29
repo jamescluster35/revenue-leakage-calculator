@@ -20,18 +20,18 @@ function getAll() {
 
 function ensureRequiredHeaders() {
   const ss = getSpreadsheet();
-  const tabs = [SHEETS.LEADS, SHEETS.ARCHIVED, SHEETS.DELETED, SHEETS.CLIENTS];
-  const required = ['aiPersonalization', 'pdfLink'];
+  const tabs = [SHEETS.LEADS, SHEETS.ARCHIVED, SHEETS.DELETED, SHEETS.CLIENTS, SHEETS.CALC_LEADS];
+  const required = ['aiPersonalization', 'pdfLink', 'checklistState', 'firebaseUid'];
   
   tabs.forEach(tabName => {
     const sheet = ss.getSheetByName(tabName);
     if (!sheet) return;
     let lastCol = sheet.getLastColumn();
     if (lastCol === 0) return;
-    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h).trim().toLowerCase());
     
     required.forEach(header => {
-      if (headers.indexOf(header) === -1) {
+      if (headers.indexOf(header.toLowerCase()) === -1) {
         lastCol++;
         sheet.getRange(1, lastCol).setValue(header);
         Logger.log("Added " + header + " column header to tab: " + tabName);
@@ -443,3 +443,104 @@ function deleteTemplate(id) {
   }
   return { error: 'Template not found: ' + id };
 }
+
+function getLeadById(idOrEmail) {
+  if (!idOrEmail) return { success: false, error: 'No lead ID or email provided.' };
+  
+  try {
+    ensureRequiredHeaders();
+  } catch (e) {
+    Logger.log("Failed to ensure headers inside getLeadById: " + e.toString());
+  }
+  
+  const idOrEmailLower = String(idOrEmail).trim().toLowerCase();
+  
+  // Try to find lead in LEADS sheet first
+  const leads = getTabData(SHEETS.LEADS);
+  let targetLead = leads.find(l => String(l.id).toLowerCase() === idOrEmailLower || String(l.email).toLowerCase() === idOrEmailLower);
+  
+  // If not found in active leads, try ARCHIVED
+  if (!targetLead) {
+    const archived = getTabData(SHEETS.ARCHIVED);
+    targetLead = archived.find(l => String(l.id).toLowerCase() === idOrEmailLower || String(l.email).toLowerCase() === idOrEmailLower);
+  }
+  
+  // If still not found, try CALC_LEADS (Calculator Leads)
+  if (!targetLead) {
+    const calcLeads = getTabData(SHEETS.CALC_LEADS);
+    targetLead = calcLeads.find(l => String(l.id).toLowerCase() === idOrEmailLower || String(l.email).toLowerCase() === idOrEmailLower);
+  }
+  
+  if (!targetLead) {
+    return { success: false, error: 'Lead not found.' };
+  }
+  
+  // Also fetch audit history (all calculation runs with the same email)
+  const email = String(targetLead.email).trim().toLowerCase();
+  let history = [];
+  if (email && email !== '') {
+    // Find all calculator leads matching the same email
+    const allCalc = getTabData(SHEETS.CALC_LEADS);
+    history = allCalc.filter(l => String(l.email).toLowerCase() === email).map(l => {
+      return {
+        id: l.id,
+        date: l.date || l.timestamp,
+        timestamp: l.timestamp,
+        niche: l.niche,
+        totalLeakage: l.totalLeakage,
+        monthlyRevenue: l.monthlyRevenue,
+        pdfLink: l.pdfLink
+      };
+    });
+  }
+  
+  return {
+    success: true,
+    lead: targetLead,
+    history: history
+  };
+}
+
+function updateLeadChecklist(id, checkedTasks) {
+  if (!id) return { success: false, error: 'No lead ID provided.' };
+  
+  // Find which tab the lead resides in
+  const ss = getSpreadsheet();
+  let tabName = SHEETS.LEADS;
+  let found = false;
+  
+  // Check active Leads
+  const sheet = ss.getSheetByName(SHEETS.LEADS);
+  if (sheet) {
+    const data = sheet.getDataRange().getValues();
+    const idCol = data[0].indexOf('id');
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]).toLowerCase() === String(id).toLowerCase()) {
+        tabName = SHEETS.LEADS;
+        found = true;
+        break;
+      }
+    }
+  }
+  
+  // If not found, check Calculator Leads
+  if (!found) {
+    const calcSheet = ss.getSheetByName(SHEETS.CALC_LEADS);
+    if (calcSheet) {
+      const data = calcSheet.getDataRange().getValues();
+      const idCol = data[0].indexOf('id');
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idCol]).toLowerCase() === String(id).toLowerCase()) {
+          tabName = SHEETS.CALC_LEADS;
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+  
+  // Save as JSON string
+  const val = JSON.stringify(checkedTasks || []);
+  const res = updateLead(id, { checklistState: val }, tabName);
+  return res;
+}

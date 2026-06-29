@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "revenue-leakage-calculator",
   "compatibility_date": "2026-06-22",
+  "main": "src/index.js",
   "workers_dev": true,
   "preview_urls": true,
   "observability": {

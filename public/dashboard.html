@@ -611,194 +611,109 @@
 
   </div>
 
-  <!-- Firebase Gated Auth Overlay Modal -->
-  <div class="auth-overlay" id="dashboard-auth-overlay">
+  <!-- Passwordless Secure Access Overlay Modal -->
+  <div class="auth-overlay" id="dashboard-auth-overlay" style="display: flex;">
     <div class="auth-overlay-card">
-      <h2 id="overlay-title">Client Login</h2>
-      <p id="overlay-desc">Enter your credentials to access your saved audit reports.</p>
+      <h2 id="overlay-title">Access Your Dashboard</h2>
+      <p id="overlay-desc">Enter the email address you used for your diagnostic calculator to load your metrics and 90-day recovery checklist.</p>
+      
+      <div id="overlay-error-msg" style="color:var(--brand-error); font-size:13px; font-weight:600; margin-bottom:15px; display:none; text-align:center;"></div>
 
-      <div class="auth-input-group">
-        <label for="overlay-email">Email Address</label>
-        <input type="email" id="overlay-email" placeholder="name@company.com">
-      </div>
       <div class="auth-input-group" style="margin-bottom:24px;">
-        <label for="overlay-password">Password</label>
-        <input type="password" id="overlay-password" placeholder="••••••••">
+        <label for="overlay-email">Email Address</label>
+        <input type="email" id="overlay-email" placeholder="name@company.com" onkeydown="if(event.key==='Enter') submitOverlayAuth()">
       </div>
 
-      <button class="btn-auth-submit" onclick="submitOverlayAuth()" id="overlay-submit-btn">Log In</button>
-
-      <div class="auth-switch-view" id="overlay-switch-container">
-        Don't have an account? <a href="#" onclick="toggleOverlayView('signup')">Create Account</a>
+      <button class="btn-auth-submit" onclick="submitOverlayAuth()" id="overlay-submit-btn">Access Dashboard</button>
+      
+      <div style="margin-top:20px; text-align:center; font-size:12px; color:var(--text-muted);">
+        Don't have an audit? <a href="index.html" style="color:var(--brand-primary); text-decoration:none; font-weight:600;">Run Calculator Now</a>
       </div>
     </div>
   </div>
 
-  <!-- Firebase Import -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
   <script>
-    // ── Config Template ──────────────────────────────────────
-    var firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    var firebaseEnabled = false;
-    var db = null;
-    var auth = null;
-
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-      try {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        auth = firebase.auth();
-        firebaseEnabled = true;
-        console.log("Firebase initialized on dashboard.");
-      } catch (e) {
-        console.error("Firebase init failed:", e);
-      }
-    }
-
-    var currentView = 'login';
-    var mockEnabled = !firebaseEnabled;
-
-    function toggleOverlayView(view) {
-      currentView = view;
-      var title = document.getElementById('overlay-title');
-      var desc = document.getElementById('overlay-desc');
-      var btn = document.getElementById('overlay-submit-btn');
-      var switchLink = document.getElementById('overlay-switch-container');
-
-      if (view === 'signup') {
-        title.textContent = 'Create Account';
-        desc.textContent = 'Register to track audits and checklists.';
-        btn.textContent = 'Register';
-        switchLink.innerHTML = 'Already have an account? <a href="#" onclick="toggleOverlayView(\'login\')">Log In</a>';
-      } else {
-        title.textContent = 'Client Login';
-        desc.textContent = 'Enter your credentials to access your saved audit reports.';
-        btn.textContent = 'Log In';
-        switchLink.innerHTML = 'Don\'t have an account? <a href="#" onclick="toggleOverlayView(\'signup\')">Create Account</a>';
-      }
-    }
-
-    async function submitOverlayAuth() {
-      var email = document.getElementById('overlay-email').value.trim();
-      var pass = document.getElementById('overlay-password').value.trim();
-      if (!email || !pass) { alert('Please enter both email and password.'); return; }
-
-      var btn = document.getElementById('overlay-submit-btn');
-      btn.disabled = true;
-      btn.textContent = currentView === 'signup' ? 'Registering...' : 'Logging In...';
-
-      if (mockEnabled) {
-        console.log("Running in Mock Mode");
-        setTimeout(function() {
-          btn.disabled = false;
-          btn.textContent = 'Success!';
-          document.getElementById('dashboard-auth-overlay').style.display = 'none';
-          document.getElementById('nav-user-panel').style.display = 'flex';
-          document.getElementById('user-email-display').textContent = email;
-          loadMockDashboardData();
-        }, 1000);
-        return;
-      }
-
-      try {
-        if (currentView === 'signup') {
-          await auth.createUserWithEmailAndPassword(email, pass);
-          var user = auth.currentUser;
-          await db.collection('users').doc(user.uid).set({
-            email: email,
-            role: 'client',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        } else {
-          await auth.signInWithEmailAndPassword(email, pass);
-        }
-        document.getElementById('dashboard-auth-overlay').style.display = 'none';
-        document.getElementById('nav-user-panel').style.display = 'flex';
-      } catch (err) {
-        alert("Authentication Error: " + err.message);
-        btn.disabled = false;
-        btn.textContent = currentView === 'signup' ? 'Register' : 'Log In';
-      }
-    }
-
-    if (firebaseEnabled) {
-      auth.onAuthStateChanged(function(user) {
-        if (user) {
-          document.getElementById('dashboard-auth-overlay').style.display = 'none';
-          document.getElementById('nav-user-panel').style.display = 'flex';
-          document.getElementById('user-email-display').textContent = user.email;
-          loadClientDashboardData(user.uid);
-        } else {
-          document.getElementById('dashboard-auth-overlay').style.display = 'flex';
-          document.getElementById('nav-user-panel').style.display = 'none';
-        }
-      });
-    }
-
-    function logoutUser() {
-      if (mockEnabled) {
-        window.location.reload();
-        return;
-      }
-      auth.signOut().then(function() {
-        window.location.reload();
-      });
-    }
+    var scriptUrl = "/api";
+    var currentLeadId = null;
 
     // ── Dashboard Data Populators ────────────────────────────
     var NICHE_CHECKLISTS = {
       dental: [
-        { title: "Implement Automated Text Reminders", desc: "Set up SMS confirmation sequences to reduce appointment no-shows.", phase: "phase1" },
-        { title: "Run Unscheduled Recall Campaign", desc: "Export hygiene lists and target overdue recall patients with email/SMS scripts.", phase: "phase1" },
-        { title: "Implement Immediate Lead Call-Backs", desc: "Ensure new patient phone inquiries are called back within 15 minutes.", phase: "phase2" },
-        { title: "Audit Reception Desk Gaps", desc: "Analyze staff scheduling during peak hours to resolve idle administrative wages.", phase: "phase2" },
-        { title: "Configure Patient Software Reminders", desc: "Integrate reminder templates directly into Solutionreach or NexHealth.", phase: "phase3" }
+        { title: "Implement Automated Text Reminders", desc: "Configure 48h and 2h SMS reminders in NexHealth/Solutionreach to prevent no-shows.", phase: "phase1" },
+        { title: "Run Unscheduled Recall Campaign", desc: "Extract hygiene patient lists and text/email overdue recall patients with reactivation templates.", phase: "phase1" },
+        { title: "Optimize Front Desk Schedules", desc: "Audit and align receptionist shift coverage during peak call-in hours (8 AM - 10 AM, 3 PM - 5 PM).", phase: "phase1" },
+        { title: "Immediate Web Lead Call-Back Protocol", desc: "Set up notifications to call back new online dental inquiries within 15 minutes.", phase: "phase2" },
+        { title: "Embed Self-Scheduling Widget", desc: "Integrate a real-time booking button on your homepage and Google Maps listing.", phase: "phase2" },
+        { title: "Gate High-Value Bookings", desc: "Implement deposit captures or credit card holds for major dental restoration appointments.", phase: "phase2" },
+        { title: "Weekly Chair Hour Audit", desc: "Establish a weekly log tracking empty chair hours and immediately fill gaps using standby lists.", phase: "phase3" },
+        { title: "Automate Insurance Check", desc: "Implement pre-appointment digital insurance verification to eliminate billing administrative time.", phase: "phase3" },
+        { title: "Lapsed Patient Drip Campaign", desc: "Launch automated email follow-up drip sequences to patients inactive for 12+ months.", phase: "phase3" }
       ],
       realestate: [
-        { title: "Optimize Portal Spend", desc: "Analyze Zillow/Realtor.com spending vs actual conversions; adjust allocations.", phase: "phase1" },
-        { title: "Set Up 5-Touch Lead Follow-Up", desc: "Configure automated emails and SMS touches for all new incoming leads.", phase: "phase1" },
-        { title: "Automate Showing Inquiries", desc: "Implement auto-responses for showing requests to capture leads faster.", phase: "phase2" },
-        { title: "Outsource Contract Admin Tasks", desc: "Hire transaction coordinators to free up agent selling hours.", phase: "phase3" }
+        { title: "Set Up 5-Touch Lead Follow-Up", desc: "Configure automated email and SMS touch flows for all new portal listings leads.", phase: "phase1" },
+        { title: "Optimize Portal Ad Spend", desc: "Audit Zillow/Realtor.com spending against actual lead-to-client conversion metrics.", phase: "phase1" },
+        { title: "Implement Auto-Reply for Showing Inquiries", desc: "Deploy instant auto-responders to capture showing inquiries outside office hours.", phase: "phase1" },
+        { title: "Agent Lead Routing Automation", desc: "Set up instant round-robin lead routing rules in your CRM to reduce response time.", phase: "phase2" },
+        { title: "Outsource Admin & File Management", desc: "Hire transaction coordinators to handle closing files, freeing agents for selling hours.", phase: "phase2" },
+        { title: "Weekly CRM Pipeline Audit", desc: "Run a weekly audit to push cold/dormant prospects into structured follow-up sequences.", phase: "phase2" },
+        { title: "Past Client Referral Outreach", desc: "Automate a quarterly touch campaign to past clients requesting agent referrals and reviews.", phase: "phase3" },
+        { title: "Local Market Report Newsletter", desc: "Set up monthly automated real-estate market updates sent to your entire buyer/seller database.", phase: "phase3" },
+        { title: "Optimize Lead Generation Ads", desc: "Enable CAPI (Conversions API) to pass actual closed transactions back to Meta/Google Ads.", phase: "phase3" }
       ],
       healthcare: [
-        { title: "Automate Insurance Check", desc: "Implement automated front-office insurance eligibility checks to stop reject losses.", phase: "phase1" },
-        { title: "Establish No-Show Fill List", desc: "Maintain a standby short-notice list to immediately fill cancelled slots.", phase: "phase1" },
-        { title: "Referral Conversion Sequence", desc: "Send automated follow-up sequences to referred patients who haven't booked.", phase: "phase2" },
-        { title: "Optimize Billing System Codes", desc: "Revamp medical coding templates to minimize claims rejection rates.", phase: "phase3" }
+        { title: "Automate Insurance Eligibility Check", desc: "Run automated eligibility checks 48 hours prior to visits to prevent billing rejections.", phase: "phase1" },
+        { title: "Establish Standby No-Show Fill List", desc: "Create a standby short-notice patient list to quickly fill last-minute appointment slots.", phase: "phase1" },
+        { title: "Deploy Patient Reminders Flow", desc: "Enable automated email, text, and voice call confirmation rules for all bookings.", phase: "phase1" },
+        { title: "Billing Claim Rejection Audit", desc: "Analyze the top 3 claims rejection reasons and update billing templates accordingly.", phase: "phase2" },
+        { title: "Referral Conversion Drip", desc: "Send automated follow-up texts/emails to referred patients who have not scheduled an appointment.", phase: "phase2" },
+        { title: "Optimize Billing Code Capture", desc: "Digitize point-of-care billing code checklists for clinicians to prevent manual entry leaks.", phase: "phase2" },
+        { title: "Patient Feedback & Review Push", desc: "Send post-visit automated texts asking patient feedback and driving reviews to Google Maps.", phase: "phase3" },
+        { title: "Lapsed Patient Reactivation Campaign", desc: "Reach out to patients with chronic conditions who have not scheduled a check-up in 6+ months.", phase: "phase3" },
+        { title: "Reduce Patient Intake Time", desc: "Implement digital pre-visit intake forms to cut patient check-in wait times by 50%.", phase: "phase3" }
       ],
       legal: [
-        { title: "Implement Billable Hour Auditing", desc: "Audit weekly logged time sheets against client billing templates to stop leaks.", phase: "phase1" },
-        { title: "Automate Consult Bookings", desc: "Embed self-scheduling client calendar links in all follow-up emails.", phase: "phase1" },
-        { title: "Streamline Client Onboarding", desc: "Digitize intake questionnaires to cut lawyer admin time in half.", phase: "phase2" },
-        { title: "Optimize Retainer Reminders", desc: "Configure alerts when retainer balances drop below billable thresholds.", phase: "phase3" }
+        { title: "Audit Billable Hour Leakage", desc: "Set up daily tracking checks comparing calendar events against billed Clio records.", phase: "phase1" },
+        { title: "Embed Self-Scheduling Consult Links", desc: "Add self-scheduling booking links in all initial follow-up emails for prospective clients.", phase: "phase1" },
+        { title: "Automate Client Intake Forms", desc: "Digitize initial case questionnaires to eliminate manual data entry by paralegals.", phase: "phase1" },
+        { title: "Client Agreement Follow-Up Flow", desc: "Set up automated Day 3 and Day 7 reminders for sent retainer agreements.", phase: "phase2" },
+        { title: "Low Retainer Alert Setup", desc: "Configure billing notifications when client retainer balances drop below billable thresholds.", phase: "phase2" },
+        { title: "Optimize Document Production", desc: "Implement Clio document assembly templates to reduce admin time drafting routine contracts.", phase: "phase2" },
+        { title: "Case Resolution Review Push", desc: "Trigger automated email outreach asking resolved clients for case reviews and referrals.", phase: "phase3" },
+        { title: "Weekly Case File Hygiene Audit", desc: "Run audits to close completed cases, archive files, and return unused retainer balances.", phase: "phase3" },
+        { title: "Track Consult-to-Retained Rate", desc: "Audit marketing channels by tracking actual retained clients rather than initial consult count.", phase: "phase3" }
       ],
       saas: [
-        { title: "Implement Exit Intention Surveys", desc: "Trigger personalized surveys and discounts when users hit cancel pages.", phase: "phase1" },
-        { title: "Build Trial-to-Paid Email Flows", desc: "Optimize feature onboarding emails based on product usage benchmarks.", phase: "phase1" },
-        { title: "Set Up Dunning Retry Schedules", desc: "Automate credit card retry attempts with Stripe billing settings.", phase: "phase2" },
-        { title: "Track User Inactivity Alerts", desc: "Flag accounts that have not logged in for 14 days and trigger outreach.", phase: "phase3" }
+        { title: "Implement Exit-Intent Surveys", desc: "Deploy personalized surveys and discount offers when users navigate to churn pages.", phase: "phase1" },
+        { title: "Trial-to-Paid Email Sequences", desc: "Audit and optimize trial onboarding email triggers based on core product usage metrics.", phase: "phase1" },
+        { title: "Configure Dunning Email Rules", desc: "Set up smart retries and automated payment updates in Stripe to stop involuntary churn.", phase: "phase1" },
+        { title: "User Inactivity Alert Setup", desc: "Flag accounts that have not logged in for 10 days and trigger automated check-ins.", phase: "phase2" },
+        { title: "Optimize Upgrades UI", desc: "Embed plan comparison cards and upgrade prompts directly inside the dashboard workspace.", phase: "phase2" },
+        { title: "Weekly Churn Attribution Audit", desc: "Categorize weekly cancellations by reason to optimize product or pricing roadmap.", phase: "phase2" },
+        { title: "Annual Plan Promotion Flow", desc: "Target high-usage monthly subscribers with automated emails offering 2 months free on annual plans.", phase: "phase3" },
+        { title: "Customer Success VIP Outreach", desc: "Set up slack alerts for accounts hitting expansion milestones to pitch enterprise tiers.", phase: "phase3" },
+        { title: "Affiliate Referral Setup", desc: "Launch an in-app customer referral program rewarding users with credits for successful signups.", phase: "phase3" }
       ],
       restaurant: [
-        { title: "Implement Inventory Food Auditing", desc: "Set up daily tracking checks for high-cost raw ingredient wastage.", phase: "phase1" },
-        { title: "Gate Large Bookings", desc: "Require deposit captures or card authorizations for bookings over 6 covers.", phase: "phase1" },
-        { title: "Automate Delivery Commissions", desc: "Deploy direct-to-consumer online ordering to bypass portal fees.", phase: "phase2" },
-        { title: "Audit POS Staff Shifts", desc: "Optimize staff schedules against peak order intake periods.", phase: "phase3" }
+        { title: "Gate Large Bookings (6+ covers)", desc: "Require credit card authorization or deposit capture on Resy to stop no-show losses.", phase: "phase1" },
+        { title: "Daily Food Waste Audits", desc: "Establish waste tracking logs at prep stations to monitor and reduce raw ingredient spoilage.", phase: "phase1" },
+        { title: "Deploy Automated Diner SMS Reminders", desc: "Text diners automatically on booking creation, and 24 hours prior to booking time.", phase: "phase1" },
+        { title: "Standby/Waitlist SMS Alerts", desc: "Set up waitlist text notifications to instantly fill last-minute dining cancellations.", phase: "phase2" },
+        { title: "Launch Direct Ordering Widget", desc: "Add online ordering to website to bypass third-party portal delivery commission fees.", phase: "phase2" },
+        { title: "Optimize POS Labor Shifts", desc: "Align staff shift schedules against peak sales hours captured by POS records.", phase: "phase2" },
+        { title: "First-Time Guest Welcome Email", desc: "Automatically send a personal welcome email and invite diners back within 10 days.", phase: "phase3" },
+        { title: "Audit Supplier Cost Variance", desc: "Compare weekly ingredient invoices against master contracts to prevent billing overcharges.", phase: "phase3" },
+        { title: "Google Review Text Blast", desc: "Push post-meal diner feedback texts driving diners to leave review ratings on Google Maps.", phase: "phase3" }
       ],
       general: [
-        { title: "Configure Lead Intake Touchpoints", desc: "Establish auto-reply protocols for all general inquiries.", phase: "phase1" },
-        { title: "Standardize Administrative Flows", desc: "Digitize spreadsheet tracking tasks to eliminate manual staff hours.", phase: "phase2" },
-        { title: "Audit Tool Cost Gaps", desc: "Remove redundant subscriptions and consolidate features.", phase: "phase3" }
+        { title: "Configure Lead Intake Touchpoints", desc: "Establish instant auto-reply protocols for all general inquiries.", phase: "phase1" },
+        { title: "Audit Tool Cost Gaps", desc: "Remove redundant subscriptions and consolidate software features.", phase: "phase1" },
+        { title: "Standardize Administrative Flows", desc: "Digitize spreadsheet tracking tasks to eliminate manual staff hours.", phase: "phase1" },
+        { title: "Auto-Save Lead Submissions", desc: "Integrate all web forms with Google Sheets using Webhooks to stop lead leakage.", phase: "phase2" },
+        { title: "Configure Client Success Tasks", desc: "Establish standard operational timelines for client onboarding touches.", phase: "phase2" },
+        { title: "Weekly Operations Audit", desc: "Perform a weekly check comparing hours logged against actual project outcomes.", phase: "phase2" },
+        { title: "Client Referral Campaign", desc: "Launch a structured referral campaign offering discounts for verified introductions.", phase: "phase3" },
+        { title: "Database Cleanup & Drips", desc: "Export inactive contact records and launch seasonal reactivation email campaigns.", phase: "phase3" },
+        { title: "Establish System Backups", desc: "Enable daily automated cloud backups for all core sheets, databases, and assets.", phase: "phase3" }
       ]
     };
 
@@ -853,68 +768,55 @@
     }
 
     function saveProgressState() {
-      if (!firebaseEnabled || !auth.currentUser) return;
-      var uid = auth.currentUser.uid;
+      if (!currentLeadId) return;
       var checked = [];
       document.querySelectorAll('.checklist-item').forEach(function(item, index) {
         var input = item.querySelector('input');
         if (input && input.checked) checked.push(index);
       });
 
-      db.collection('users').doc(uid).collection('progress').doc('checklist').set({
-        checkedTasks: checked,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'updateChecklist',
+          id: currentLeadId,
+          checkedTasks: checked
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        console.log("Checklist synchronized:", res);
+      })
+      .catch(err => {
+        console.error("Failed to sync checklist progress:", err);
       });
-    }
-
-    async function loadClientDashboardData(uid) {
-      try {
-        var auditsSnapshot = await db.collection('users').doc(uid).collection('audits')
-          .orderBy('timestamp', 'desc').limit(10).get();
-
-        if (auditsSnapshot.empty) {
-          loadMockDashboardData();
-          return;
-        }
-
-        var audits = [];
-        auditsSnapshot.forEach(doc => audits.push(doc.data()));
-        var latest = audits[0];
-
-        document.getElementById('metric-leakage').textContent = '$' + Math.round(latest.totalLeakage).toLocaleString() + '/mo';
-        document.getElementById('metric-recovery').textContent = '$' + Math.round(latest.totalLeakage * 0.7).toLocaleString() + '/mo';
-        document.getElementById('metric-score').textContent = latest.monthlyRevenue > 0 ? Math.round(95 - (latest.totalLeakage / latest.monthlyRevenue) * 100) : 80;
-        document.getElementById('current-niche-display').textContent = 'Niche: ' + latest.niche.toUpperCase();
-
-        var progressDoc = await db.collection('users').doc(uid).collection('progress').doc('checklist').get();
-        var completed = [];
-        if (progressDoc.exists) {
-          completed = progressDoc.data().checkedTasks || [];
-        }
-
-        populateChecklist(latest.niche, completed);
-        populateHistoryList(audits);
-
-      } catch (err) {
-        console.error("Error loading dashboard data:", err);
-      }
     }
 
     function populateHistoryList(audits) {
       var container = document.getElementById('history-container');
       container.innerHTML = '';
 
+      if (!audits || audits.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">No calculation history found.</div>';
+        return;
+      }
+
       audits.forEach(function(audit) {
-        var dateStr = new Date(audit.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        var dateVal = audit.date || audit.timestamp;
+        var dateStr = dateVal ? new Date(dateVal).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+        var pdfLink = audit.pdfLink || '#';
+        var pdfTarget = audit.pdfLink ? 'target="_blank"' : 'onclick="alert(\'PDF is currently being compiled or sent to your inbox.\'); return false;"';
+        
         var html = `
           <div class="history-item">
             <div class="history-left">
               <span class="history-date">${dateStr}</span>
-              <span class="history-niche">${audit.niche} Diagnostic</span>
+              <span class="history-niche">${(audit.niche || 'General').toUpperCase()} Diagnostic</span>
             </div>
             <div class="history-right">
-              <div class="history-leak">$${Math.round(audit.totalLeakage).toLocaleString()}/mo</div>
-              <a href="#" class="btn-pdf" onclick="alert('PDF loading is under construction in Phase 2!')">View PDF</a>
+              <div class="history-leak">$${Math.round(audit.totalLeakage || 0).toLocaleString()}/mo</div>
+              <a href="${pdfLink}" ${pdfTarget} class="btn-pdf">View PDF</a>
             </div>
           </div>
         `;
@@ -922,20 +824,109 @@
       });
     }
 
-    function loadMockDashboardData() {
-      document.getElementById('metric-leakage').textContent = '$12,450/mo';
-      document.getElementById('metric-recovery').textContent = '$8,715/mo';
-      document.getElementById('metric-score').textContent = '72';
-      document.getElementById('current-niche-display').textContent = 'Niche: DENTAL (MOCK)';
+    function loadDashboardData(leadIdOrEmail) {
+      if (!leadIdOrEmail) return;
 
-      populateChecklist('dental', [0, 2]);
+      var overlay = document.getElementById('dashboard-auth-overlay');
+      var errorMsg = document.getElementById('overlay-error-msg');
+      var btn = document.getElementById('overlay-submit-btn');
 
-      var mockAudits = [
-        { timestamp: new Date().toISOString(), niche: 'dental', totalLeakage: 12450 },
-        { timestamp: new Date(Date.now() - 86400000 * 5).toISOString(), niche: 'dental', totalLeakage: 15100 }
-      ];
-      populateHistoryList(mockAudits);
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+
+      fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'getLead',
+          id: leadIdOrEmail
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false;
+        btn.textContent = 'Access Dashboard';
+
+        if (res.success && res.lead) {
+          var lead = res.lead;
+          currentLeadId = lead.id;
+          
+          // Save active ID to localStorage
+          localStorage.setItem('savedLeadId', lead.id);
+
+          // Update metrics UI
+          document.getElementById('metric-leakage').textContent = '$' + Math.round(lead.totalLeakage || 0).toLocaleString() + '/mo';
+          document.getElementById('metric-recovery').textContent = '$' + Math.round((lead.totalLeakage || 0) * 0.7).toLocaleString() + '/mo';
+          
+          var revenue = parseFloat(lead.monthlyRevenue || 0);
+          var score = 80;
+          if (revenue > 0) {
+            score = Math.round(95 - ((lead.totalLeakage || 0) / revenue) * 100);
+            if (score < 30) score = 30;
+          }
+          document.getElementById('metric-score').textContent = score;
+          document.getElementById('current-niche-display').textContent = 'Niche: ' + String(lead.niche || 'general').toUpperCase();
+
+          // Navbar User Info
+          document.getElementById('nav-user-panel').style.display = 'flex';
+          document.getElementById('user-email-display').textContent = lead.email;
+
+          // Checklist state
+          var completed = [];
+          if (lead.checklistState) {
+            try { completed = JSON.parse(lead.checklistState); } catch(e) {}
+          }
+          populateChecklist(lead.niche, completed);
+
+          // History list
+          populateHistoryList(res.history || []);
+
+          // Hide overlay
+          overlay.style.display = 'none';
+        } else {
+          errorMsg.textContent = res.error || 'No matching lead found. Please check spelling or run a new audit.';
+          errorMsg.style.display = 'block';
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        btn.disabled = false;
+        btn.textContent = 'Access Dashboard';
+        errorMsg.textContent = 'Connection error. Please try again.';
+        errorMsg.style.display = 'block';
+      });
     }
+
+    function submitOverlayAuth() {
+      var email = document.getElementById('overlay-email').value.trim();
+      if (!email) {
+        var errorMsg = document.getElementById('overlay-error-msg');
+        errorMsg.textContent = 'Please enter your email address.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+      loadDashboardData(email);
+    }
+
+    function logoutUser() {
+      localStorage.removeItem('savedLeadId');
+      currentLeadId = null;
+      window.location.search = ''; // Clear search parameters
+      window.location.reload();
+    }
+
+    // ── Initial Boot Logic ───────────────────────────────────
+    window.addEventListener('DOMContentLoaded', function() {
+      var urlParams = new URLSearchParams(window.location.search);
+      var leadId = urlParams.get('id') || urlParams.get('leadId') || localStorage.getItem('savedLeadId');
+      
+      if (leadId) {
+        loadDashboardData(leadId);
+      } else {
+        document.getElementById('dashboard-auth-overlay').style.display = 'flex';
+        document.getElementById('nav-user-panel').style.display = 'none';
+      }
+    });
   </script>
 </body>
 

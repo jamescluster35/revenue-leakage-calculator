@@ -2704,7 +2704,7 @@
 
     // ── Save to Google Sheets ─────────────────────────────────
     var _saveInProgress = false;
-    var SHEET_URL = 'https://script.google.com/macros/s/AKfycby9uH6uVHE6090gmKyqBfvEvc2Q0PD2J2J9nWxl0qqoA6yZFX9_aObsfeePVuf8Snzgow/exec';
+    var SHEET_URL = '/api';
     function _saveLead(status, name, email, phone, website, jobTitle, lastStep) {
       var tops = (S.res && S.res.items) ? S.res.items.slice(0, 3).map(function (i) { return i.l; }).join(' | ') : '';
       var pCode = status === 'Requested' ? document.getElementById('lead_phone_code').value : document.getElementById('biz_phone_code').value;

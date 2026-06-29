@@ -17,7 +17,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your restaurant has a <strong>Technology Gap</strong>. To stop leakage, we recommend adopting industry-standard systems.",
-        action: "Deploy a reservation tool like Tock/Resy (which supports card holds to eliminate no-shows) and set up Toast POS with integrated waste tracking."
+        action: "Option 1: Deploy a reservation tool like Tock/Resy (which supports card holds to eliminate no-shows) and set up Toast POS. Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We can assess your operational needs, connect you with verified custom development partners, or recommend alternative lightweight notification solutions."
       }
     },
     dental: {
@@ -29,7 +29,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your practice has a <strong>Technology Gap</strong>. To scale bookings and reduce empty chairs, we recommend implementing dedicated scheduling software.",
-        action: "Adopt patient engagement software (like NexHealth or Solutionreach) to automate 48h/2h patient text reminders and hygiene recall."
+        action: "Option 1: Adopt patient engagement software (like NexHealth or Solutionreach) to automate 48h/2h text reminders. Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We will assess your practice, recommend cost-effective patient reminder platforms, or connect you with verified integration partners for custom messaging builds."
       }
     },
     realestate: {
@@ -41,7 +41,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your agency has a <strong>Technology Gap</strong>. To prevent lost commission, we recommend setting up a CRM.",
-        action: "Adopt kvCORE or Follow Up Boss to centralize portal leads and auto-assign them to agents for immediate outreach."
+        action: "Option 1: Adopt kvCORE or Follow Up Boss to automate portal lead routing and agent SMS follow-up alerts. Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We will analyze your lead flow and match you with specialized CRM implementation vendors or verified developers for custom integrations."
       }
     },
     healthcare: {
@@ -53,7 +53,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your clinic has a <strong>Technology Gap</strong>. To reduce denials and no-shows, we recommend dedicated software.",
-        action: "Implement a billing audit tool and automated patient reminder platform (like Solutionreach/NexHealth)."
+        action: "Option 1: Implement a billing audit tool and patient reminder platform (NexHealth/Solutionreach). Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We can consult on your patient communications workflow and connect you with qualified software vendors to deploy custom billing or alert setups."
       }
     },
     legal: {
@@ -65,7 +65,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your firm has a <strong>Technology Gap</strong>. To capture billable hours, we recommend a practice management platform.",
-        action: "Deploy Clio and Clio Grow to track billable work in real-time and automate consult-to-retained agreements."
+        action: "Option 1: Deploy Clio and Clio Grow to track billable work and automate client intake. Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We can consult on legal operations automation and connect your firm with verified developers or consultants for custom Clio API integrations."
       }
     },
     saas: {
@@ -77,7 +77,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your SaaS has a <strong>Technology Gap</strong>. To avoid churn, we recommend integrating automated dunning and tracking.",
-        action: "Integrate Stripe/Chargebee dunning modules and set up user analytics (Mixpanel/Amplitude) to identify churn risks."
+        action: "Option 1: Integrate Stripe/Chargebee dunning modules and set up user analytics (Mixpanel/Amplitude). Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We will analyze your SaaS transaction flows and connect you with verified dunning optimization specialists or custom backend engineers."
       }
     },
     general: {
@@ -89,7 +89,7 @@ function getRecommendedFix(niche, toolTag) {
       no: {
         title: "🚀 Recommended Fix: Starter Platform Setup",
         desc: "Your business has a <strong>Technology Gap</strong>. We recommend deploying a starter system to track leads.",
-        action: "Deploy a modern CRM and scheduling tool to automate pipeline tracking, appointment bookings, and intake."
+        action: "Option 1: Deploy a modern CRM and scheduling tool to automate pipeline tracking, bookings, and intake. Option 2 (Custom solutions): Contact us at jamescluster35@gmail.com. We can assess your operations and link you with specialized vendor partners or developers to customize your workflow setups."
       }
     }
   };
@@ -552,7 +552,7 @@ function buildFullPdfReportHtml(lead, note) {
             </table>
           </div>
           <div style="text-align: center;">
-            <a href="${SETTINGS.WALKTHROUGH_LINK || 'https://bluedatalabs.com/video-walkthrough'}" style="display: inline-block; background: #F97316; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 10px 20px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Watch 5-Min Walkthrough Video</a>
+            <a href="https://bdl.dataconnectmail.com/dashboard.html?id=${reportId}" style="display: inline-block; background: #10B981; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 10px 20px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Open Interactive Portal</a>
           </div>
         </div>
 
@@ -718,11 +718,11 @@ function buildFullPdfReportHtml(lead, note) {
 
         <!-- CONFUSION SAFETY NET -->
         <div style="background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px;">
-          <h3 style="margin-top: 0; color: #1E293B; font-size: 14px; font-weight: bold; margin-bottom: 6px;">❓ Need Help Reviewing This Report?</h3>
+          <h3 style="margin-top: 0; color: #1E293B; font-size: 14px; font-weight: bold; margin-bottom: 6px;">🎯 Track Your Recovery Progress Online</h3>
           <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px;">
-            Not sure how to act on these findings? Watch our free 5-minute video walkthrough explaining how to use these copy-paste templates to start recovering your leakage immediately.
+            We have generated a secure online dashboard for your business. Check off tasks as you complete them, monitor recovery steps, and review audit history in your interactive portal. No password required.
           </p>
-          <a href="${SETTINGS.WALKTHROUGH_LINK || 'https://bluedatalabs.com/video-walkthrough'}" style="display: inline-block; background: #64748B; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 8px 16px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Watch 5-Min Walkthrough Video</a>
+          <a href="https://bdl.dataconnectmail.com/dashboard.html?id=${reportId}" style="display: inline-block; background: #10B981; color: #FFFFFF; font-size: 12px; font-weight: bold; text-decoration: none; padding: 8px 16px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Open Interactive Portal</a>
         </div>
       </div>
 
@@ -789,6 +789,9 @@ function sendPaymentReceiptEmail(lead) {
             <td align="right"><span style="color: #10B981; font-weight: bold;">PAID</span></td>
           </tr>
         </table>
+      </div>
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="https://bdl.dataconnectmail.com/dashboard.html?id=${lead.id}" target="_blank" style="background-color: #F97316; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-family: Arial, sans-serif;">🎯 Access Your Recovery Dashboard</a>
       </div>
       <p>Your full, unredacted executive report and 90-day action plan is being generated right now and will be sent in a separate email shortly.</p>
       <p>Thank you for choosing BDL Revenue Intelligence.</p>
@@ -887,6 +890,14 @@ function buildFullReportEmailHtml(lead, note, template) {
               <td align="center" style="padding: 30px; background-color: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 2px dashed #10B981;">
                 <p style="color: #10B981; font-size: 16px; margin: 0 0 10px; font-weight: bold;">📄 Full Diagnostic Report Attached</p>
                 <p style="color: #6B7280; font-size: 12px; margin: 0; line-height: 1.5;">Your executive diagnostic PDF, including the 90-day roadmap and priority matrix, is attached to this email.</p>
+              </td>
+            </tr>
+            <tr><td style="height: 15px; font-size: 0; line-height: 0;">&nbsp;</td></tr>
+            <tr>
+              <td align="center" style="padding: 25px; background-color: #0F1117; border-radius: 12px; border: 1px solid #1E2230;">
+                <h4 style="color: #F97316; font-size: 15px; margin: 0 0 8px; font-weight: bold;">🎯 Track Your 90-Day Recovery Online</h4>
+                <p style="color: #94A3B8; font-size: 12px; margin: 0 0 16px; line-height: 1.5;">Check off tasks, monitor recovery steps, and review audit history in your interactive client portal. No password required.</p>
+                <a href="https://bdl.dataconnectmail.com/dashboard.html?id=${reportId}" target="_blank" style="background-color: #10B981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 13px;">Open Your Interactive Dashboard</a>
               </td>
             </tr>
             
