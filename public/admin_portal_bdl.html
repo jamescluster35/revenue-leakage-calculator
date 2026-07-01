@@ -1597,7 +1597,7 @@ function copyTrackerLink() {
     return;
   }
   var baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-  var trackerUrl = baseUrl + 'tracker.html?id=' + encodeURIComponent(AdminApp.state.current.id);
+  var trackerUrl = baseUrl + 'dashboard.html?id=' + encodeURIComponent(AdminApp.state.current.id);
   navigator.clipboard.writeText(trackerUrl).then(function() {
     showToast('✅ Tracker link copied to clipboard');
   });

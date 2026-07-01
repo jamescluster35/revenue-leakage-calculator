@@ -265,9 +265,16 @@
       border-radius: 12px;
       padding: 18px 24px;
       display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+      transition: all 0.2s;
+    }
+
+    .checklist-item-row {
+      display: flex;
       align-items: flex-start;
       gap: 16px;
-      transition: all 0.2s;
     }
 
     .checklist-item:hover {
@@ -570,13 +577,17 @@
           <div class="label">Total Leakage</div>
           <div class="val" id="metric-leakage">$0/mo</div>
         </div>
-        <div class="stat-card green">
-          <div class="label">90-Day Recovery Target</div>
-          <div class="val" id="metric-recovery">$0/mo</div>
-        </div>
         <div class="stat-card info">
           <div class="label">Diagnostics Score</div>
           <div class="val" id="metric-score">0</div>
+        </div>
+        <div class="stat-card green">
+          <div class="label">Current Savings</div>
+          <div class="val" id="metric-savings">$0/mo</div>
+        </div>
+        <div class="stat-card green" style="border-color: var(--brand-success);">
+          <div class="label">Projected Annual</div>
+          <div class="val" id="metric-annual-savings">$0/yr</div>
         </div>
       </div>
 
@@ -717,49 +728,114 @@
       ]
     };
 
-    function populateChecklist(niche, completedItems) {
+    var dashboardState = { checked: [], results: {}, savings: {} };
+
+    function esc(s){
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function populateChecklist(niche, state) {
       var tasks = NICHE_CHECKLISTS[niche] || NICHE_CHECKLISTS.general;
       var container = document.getElementById('checklist-container');
       container.innerHTML = '';
       
-      completedItems = completedItems || [];
+      state = state || { checked: [], results: {}, savings: {} };
+      var checkedItems = state.checked || [];
+      var results = state.results || {};
+      var savings = state.savings || {};
 
       tasks.forEach(function(task, index) {
-        var isChecked = completedItems.includes(index);
+        var isChecked = checkedItems.includes(index);
         var completedClass = isChecked ? 'completed' : '';
         var checkedAttr = isChecked ? 'checked' : '';
+        
+        var resultText = results[index] || '';
+        var savingsVal = savings[index] || '';
+        var showDrawerStyle = isChecked ? 'display:flex;' : 'display:none;';
 
         var html = `
           <div class="checklist-item ${completedClass}" id="task-card-${index}">
-            <label class="checkbox-container">
-              <input type="checkbox" ${checkedAttr} onclick="toggleTask(${index})">
-              <span class="checkmark"></span>
-            </label>
-            <div class="checklist-content">
-              <div class="checklist-title">${task.title}</div>
-              <div class="checklist-desc">${task.desc}</div>
+            <div class="checklist-item-row">
+              <label class="checkbox-container">
+                <input type="checkbox" ${checkedAttr} onclick="toggleTask(${index})">
+                <span class="checkmark"></span>
+              </label>
+              <div class="checklist-content">
+                <div class="checklist-title">${task.title}</div>
+                <div class="checklist-desc">${task.desc}</div>
+              </div>
+              <span class="checklist-badge ${task.phase}">${task.phase.replace('phase', 'Phase ')}</span>
             </div>
-            <span class="checklist-badge ${task.phase}">${task.phase.replace('phase', 'Phase ')}</span>
+            
+            <!-- Collapsible implementation tracking drawer -->
+            <div class="drawer" id="drawer-${index}" style="${showDrawerStyle} margin-left:36px; padding:16px; background:rgba(0,0,0,0.25); border:1px solid var(--border-subtle); border-radius:8px; flex-direction:column; gap:12px;">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">What results did you see?</label>
+                <input type="text" placeholder="e.g. 5% fewer no-shows, $500 recovered" id="result-input-${index}" value="${esc(resultText)}" onchange="updateResult(${index})" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:6px; padding:8px 12px; color:var(--text-main); font-size:13px; outline:none; font-family:inherit;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Estimated Monthly Savings ($)</label>
+                <input type="number" placeholder="e.g. 300" id="savings-input-${index}" value="${esc(savingsVal)}" onchange="updateSavings(${index})" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:6px; padding:8px 12px; color:var(--text-main); font-size:13px; outline:none; font-family:inherit;">
+              </div>
+            </div>
           </div>
         `;
         container.insertAdjacentHTML('beforeend', html);
       });
 
       updateProgressBar();
+      updateSavingsDisplay();
     }
 
     function toggleTask(index) {
       var card = document.getElementById('task-card-' + index);
-      if (card) {
-        card.classList.toggle('completed');
+      var drawer = document.getElementById('drawer-' + index);
+      
+      var isChecked = dashboardState.checked.includes(index);
+      if (isChecked) {
+        dashboardState.checked = dashboardState.checked.filter(i => i !== index);
+        if (card) card.classList.remove('completed');
+        if (drawer) drawer.style.display = 'none';
+      } else {
+        dashboardState.checked.push(index);
+        if (card) card.classList.add('completed');
+        if (drawer) drawer.style.display = 'flex';
       }
+      
       updateProgressBar();
+      updateSavingsDisplay();
       saveProgressState();
+    }
+
+    function updateResult(index) {
+      var val = document.getElementById('result-input-' + index).value;
+      dashboardState.results[index] = val;
+      saveProgressState();
+    }
+
+    function updateSavings(index) {
+      var val = document.getElementById('savings-input-' + index).value;
+      dashboardState.savings[index] = val;
+      updateSavingsDisplay();
+      saveProgressState();
+    }
+
+    function updateSavingsDisplay() {
+      var totalSavings = 0;
+      Object.keys(dashboardState.savings).forEach(function(key) {
+        if (dashboardState.checked.includes(parseInt(key))) {
+          var val = parseFloat(dashboardState.savings[key]) || 0;
+          totalSavings += val;
+        }
+      });
+      
+      document.getElementById('metric-savings').textContent = '$' + Math.round(totalSavings).toLocaleString() + '/mo';
+      document.getElementById('metric-annual-savings').textContent = '$' + Math.round(totalSavings * 12).toLocaleString() + '/yr';
     }
 
     function updateProgressBar() {
       var total = document.querySelectorAll('.checklist-item').length;
-      var checked = document.querySelectorAll('.checklist-item input:checked').length;
+      var checked = dashboardState.checked.length;
       if (total === 0) return;
 
       var percent = Math.round((checked / total) * 100);
@@ -769,11 +845,6 @@
 
     function saveProgressState() {
       if (!currentLeadId) return;
-      var checked = [];
-      document.querySelectorAll('.checklist-item').forEach(function(item, index) {
-        var input = item.querySelector('input');
-        if (input && input.checked) checked.push(index);
-      });
 
       fetch(scriptUrl, {
         method: 'POST',
@@ -781,7 +852,7 @@
         body: JSON.stringify({
           action: 'updateChecklist',
           id: currentLeadId,
-          checkedTasks: checked
+          checkedTasks: dashboardState
         })
       })
       .then(res => res.json())
@@ -856,7 +927,6 @@
 
           // Update metrics UI
           document.getElementById('metric-leakage').textContent = '$' + Math.round(lead.totalLeakage || 0).toLocaleString() + '/mo';
-          document.getElementById('metric-recovery').textContent = '$' + Math.round((lead.totalLeakage || 0) * 0.7).toLocaleString() + '/mo';
           
           var revenue = parseFloat(lead.monthlyRevenue || 0);
           var score = 80;
@@ -872,11 +942,22 @@
           document.getElementById('user-email-display').textContent = lead.email;
 
           // Checklist state
-          var completed = [];
+          dashboardState = { checked: [], results: {}, savings: {} };
           if (lead.checklistState) {
-            try { completed = JSON.parse(lead.checklistState); } catch(e) {}
+            try {
+              var parsed = JSON.parse(lead.checklistState);
+              if (Array.isArray(parsed)) {
+                dashboardState.checked = parsed;
+              } else if (parsed && typeof parsed === 'object') {
+                dashboardState.checked = parsed.checked || [];
+                dashboardState.results = parsed.results || {};
+                dashboardState.savings = parsed.savings || {};
+              }
+            } catch(e) {
+              console.error("Error parsing checklistState:", e);
+            }
           }
-          populateChecklist(lead.niche, completed);
+          populateChecklist(lead.niche, dashboardState);
 
           // History list
           populateHistoryList(res.history || []);
