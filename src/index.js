@@ -35,7 +35,7 @@ export default {
         headers.delete("Referer");
 
         // Forward request to Google Apps Script Web App
-        const googleResponse = await fetch(GOOGLE_SCRIPT_URL, {
+        const googleResponse = await fetch(GOOGLE_SCRIPT_URL + url.search, {
           method: request.method,
           headers: headers,
           body: request.method === "POST" ? await request.text() : undefined,
