@@ -135,7 +135,7 @@ function handleRequest(e) {
     'getSenders', 'saveSenders', 'getGmailInboxFeed', 'processGmailThread', 'syncOutreachLogsFromGmail', 'setupGmailTriggers',
     'getIngestionSettings', 'saveIngestionSettings',
     'getConnectedAccounts', 'generateAuthUrl', 'deleteConnectedAccount', 'saveOAuthCredentials', 'getOAuthCredentials',
-    'sendTestReceipt', 'sendCalculatorLink'
+    'sendTestReceipt', 'sendCalculatorLink', 'sendColdOutreach'
   ];
 
   if (protectedActions.includes(action) && authKey !== getAdminPassword()) {
@@ -211,6 +211,9 @@ function handleRequest(e) {
     'sendFollowUpReminders': (data) => sendFollowUpReminders(),
     'runCalculatorEmailDripCampaign': (data) => runCalculatorEmailDripCampaign(),
     'getRawSheetData': getRawSheetData,
+
+    // Campaign Manager — Cold Outreach
+    'sendColdOutreach': (data) => sendColdOutreachEmail(data),
   };
 
   try {
@@ -1410,3 +1413,55 @@ function sendDripEmail(lead, dayNum) {
   }
 }
 
+/**
+ * Campaign Manager — Cold Outreach Sender
+ * Called by the bdl-leads-pro CampaignPage via POST action: 'sendColdOutreach'
+ *
+ * Expects data: { to, name, city, niche, subject, body }
+ * Sends a plain-text cold outreach email and logs it to the 'Campaign Log' sheet.
+ */
+function sendColdOutreachEmail(data) {
+  try {
+    var to      = String(data.to      || '').trim().toLowerCase();
+    var name    = String(data.name    || 'there').trim();
+    var city    = String(data.city    || 'your area').trim();
+    var niche   = String(data.niche   || 'general').trim();
+    var subject = String(data.subject || '').trim();
+    var body    = String(data.body    || '').trim();
+
+    if (!to || !to.includes('@')) {
+      return { success: false, error: 'Invalid recipient email' };
+    }
+    if (!subject || !body) {
+      return { success: false, error: 'Missing email subject or body' };
+    }
+
+    // Plain-text email — more likely to land in inbox than HTML
+    MailApp.sendEmail({
+      to:      to,
+      subject: subject,
+      body:    body,
+      name:    'James — Blue Data Labs'
+    });
+
+    // Log to 'Campaign Log' sheet for tracking
+    try {
+      var logSheet = getOrCreateSheet('Campaign Log', [
+        'Timestamp', 'Email', 'Name', 'City', 'Niche', 'Subject', 'Status'
+      ]);
+      logSheet.appendRow([
+        new Date().toISOString(),
+        to, name, city, niche, subject, 'Sent'
+      ]);
+    } catch (logErr) {
+      Logger.log('Campaign Log write failed: ' + logErr.toString());
+    }
+
+    Logger.log('Cold outreach sent to: ' + to);
+    return { success: true };
+
+  } catch (err) {
+    Logger.log('sendColdOutreachEmail error: ' + err.toString());
+    return { success: false, error: err.message };
+  }
+}
