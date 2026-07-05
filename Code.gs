@@ -129,6 +129,7 @@ function handleRequest(e) {
 
   const protectedActions = [
     'getAll', 'moveLead', 'deleteLead', 'archiveLead', 'promoteClient', 'restoreLead',
+    'deleteLeadsBatch', 'moveLeadsBatch', 'addLeadsBatch', 'updateLeadsBatch',
     'getCalculatorLeads', 'updateCalculatorLead', 'markPaymentPaid', 'deleteCalculatorLead', 
     'generateAndSendReport', 'sendFollowUpEmails', 'sendPaymentRequestEmail', 'getLeadPdf', 'saveLeadPdfToDrive', 'dailyBackupToDrive',
     'setupRemindersTrigger', 'sendFollowUpReminders', 'runCalculatorEmailDripCampaign',
@@ -147,11 +148,15 @@ function handleRequest(e) {
     // CRM Actions
     'getAll': getAll,
     'addLead': (data) => addLead(data.lead),
+    'addLeadsBatch': (data) => addLeadsBatch(data.leads),
     'updateLead': (data) => updateLead(data.id, data.changes, data.tab || SHEETS.LEADS),
+    'updateLeadsBatch': (data) => updateLeadsBatch(data.updates),
     'getLead': (data) => getLeadById(data.id || data.email),
     'updateChecklist': (data) => updateLeadChecklist(data.id, data.checkedTasks),
     'moveLead': (data) => moveLead(data.id, data.fromTab, data.toTab, data.changes || {}),
     'deleteLead': (data) => moveLead(data.id, data.fromTab, SHEETS.DELETED, {}),
+    'deleteLeadsBatch': (data) => moveLeadsBatch(data.ids, data.fromTab, SHEETS.DELETED, {}),
+    'moveLeadsBatch': (data) => moveLeadsBatch(data.ids, data.fromTab, data.toTab, data.changes || {}),
     'archiveLead': (data) => moveLead(data.id, SHEETS.LEADS, SHEETS.ARCHIVED, {}),
     'promoteClient': (data) => moveLead(data.id, SHEETS.LEADS, SHEETS.CLIENTS, {}),
     'restoreLead': (data) => moveLead(data.id, data.fromTab, SHEETS.LEADS, { status: 'New' }),

@@ -129,6 +129,74 @@ function addLead(lead) {
   return { success: true }
 }
 
+function addLeadsBatch(leads) {
+  if (!leads || !leads.length) return { success: true, count: 0 };
+  const sheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  let lastRow = sheet.getLastRow();
+  
+  const newRows = leads.map((lead, idx) => {
+    if (lead) {
+      if (lead.contact && !lead.name) {
+        lead.name = lead.contact;
+      }
+      if (lead.company && !lead.business) {
+        lead.business = lead.company;
+      }
+      if (!lead.id || String(lead.id).trim() === '') {
+        lead.id = 'BDL-' + Math.random().toString(36).substr(2, 6).toUpperCase() + '-' + idx;
+      }
+      if (!lead.num || String(lead.num).trim() === '') {
+        lead.num = lastRow + 1 + idx;
+      }
+    } else {
+      lead = {};
+    }
+    
+    return headers.map(h => {
+      if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || []);
+      if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE';
+      return lead[h] !== undefined ? lead[h] : '';
+    });
+  });
+  
+  sheet.getRange(lastRow + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
+  return { success: true, count: newRows.length };
+}
+
+function updateLeadsBatch(updates) {
+  if (!updates || !updates.length) return { success: true, count: 0 };
+  const sheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idCol = headers.indexOf('id');
+  if (idCol === -1) return { error: 'ID column not found' };
+  
+  const updatesMap = {};
+  updates.forEach(u => {
+    updatesMap[String(u.id).trim()] = u.changes;
+  });
+  
+  let updatedCount = 0;
+  for (let i = 1; i < data.length; i++) {
+    const rowId = String(data[i][idCol]).trim();
+    if (updatesMap[rowId]) {
+      const changes = updatesMap[rowId];
+      Object.keys(changes).forEach(key => {
+        const col = headers.indexOf(key);
+        if (col !== -1) {
+          let val = changes[key];
+          if (key === 'outreachLog' || key === 'contacts') val = JSON.stringify(val);
+          if (key === 'pitchSent') val = val ? 'TRUE' : 'FALSE';
+          sheet.getRange(i + 1, col + 1).setValue(val);
+        }
+      });
+      updatedCount++;
+    }
+  }
+  return { success: true, count: updatedCount };
+}
+
 function updateLead(id, changes, tabName) {
   const sheet = getSpreadsheet().getSheetByName(tabName)
   if (!sheet) return { error: 'Tab not found: ' + tabName }
@@ -182,6 +250,60 @@ function moveLead(id, fromTab, toTab, changes) {
     }
   }
   return { error: 'Lead not found in ' + fromTab }
+}
+
+function moveLeadsBatch(ids, fromTab, toTab, changes) {
+  if (!ids || !ids.length) return { success: true, count: 0 };
+  const ss = getSpreadsheet();
+  const fromSheet = ss.getSheetByName(fromTab);
+  const toSheet = ss.getSheetByName(toTab);
+  if (!fromSheet || !toSheet) return { error: 'Tab mapping error' };
+  
+  const fromData = fromSheet.getDataRange().getValues();
+  const fromHeaders = fromData[0];
+  const toHeaders = toSheet.getRange(1, 1, 1, toSheet.getLastColumn()).getValues()[0];
+  const idCol = fromHeaders.indexOf('id');
+  if (idCol === -1) return { error: 'ID column not found' };
+
+  const idsSet = new Set(ids.map(id => String(id).trim()));
+  const rowsToMove = [];
+
+  // Identify matching rows going backwards
+  for (let i = fromData.length - 1; i >= 1; i--) {
+    const rowId = String(fromData[i][idCol]).trim();
+    if (idsSet.has(rowId)) {
+      const lead = {};
+      fromHeaders.forEach((h, j) => {
+        if (h === 'outreachLog' || h === 'contacts') {
+          try { lead[h] = JSON.parse(fromData[i][j] || '[]') }
+          catch { lead[h] = [] }
+        } else { lead[h] = fromData[i][j] }
+      });
+      Object.assign(lead, changes);
+      const newRow = toHeaders.map(h => {
+        if (h === 'outreachLog' || h === 'contacts') return JSON.stringify(lead[h] || []);
+        if (h === 'pitchSent') return lead[h] ? 'TRUE' : 'FALSE';
+        return lead[h] !== undefined ? lead[h] : '';
+      });
+      rowsToMove.push({ newRow, originalIndex: i + 1 });
+    }
+  }
+
+  if (rowsToMove.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  // Batch insert new rows
+  const newRowsData = rowsToMove.map(r => r.newRow);
+  toSheet.getRange(toSheet.getLastRow() + 1, 1, newRowsData.length, newRowsData[0].length).setValues(newRowsData);
+
+  // Batch delete source rows from bottom to top to avoid shifting indices
+  rowsToMove.sort((a, b) => b.originalIndex - a.originalIndex);
+  rowsToMove.forEach(r => {
+    fromSheet.deleteRow(r.originalIndex);
+  });
+
+  return { success: true, count: rowsToMove.length };
 }
 
 function saveCalculatorLead(lead) {
