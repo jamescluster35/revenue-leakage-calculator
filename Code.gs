@@ -148,7 +148,7 @@ function handleRequest(e) {
     // CRM Actions
     'getAll': getAll,
     'addLead': (data) => addLead(data.lead),
-    'addLeadsBatch': (data) => addLeadsBatch(data.leads),
+    'addLeadsBatch': (data) => addLeadsBatch(data.leads, data.tab || SHEETS.LEADS),
     'updateLead': (data) => updateLead(data.id, data.changes, data.tab || SHEETS.LEADS),
     'updateLeadsBatch': (data) => updateLeadsBatch(data.updates),
     'getLead': (data) => getLeadById(data.id || data.email),

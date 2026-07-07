@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9uH6uVHE6090gmKyqBfvEvc2Q0PD2J2J9nWxl0qqoA6yZFX9_aObsfeePVuf8Snzgow/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxa6ASp74XZXoQHnbO66N6lKlsPm8mZBW184QkXeeY_nbTlHoa3XaySnEwWz5cPZ8pP3Q/exec";
 
 const ALLOW_ORIGINS = [
   "https://bdl.dataconnectmail.com",

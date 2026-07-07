@@ -21,7 +21,7 @@ function getAll() {
 function ensureRequiredHeaders() {
   const ss = getSpreadsheet();
   const tabs = [SHEETS.LEADS, SHEETS.ARCHIVED, SHEETS.DELETED, SHEETS.CLIENTS, SHEETS.CALC_LEADS];
-  const required = ['aiPersonalization', 'pdfLink', 'checklistState', 'firebaseUid'];
+  const required = ['aiPersonalization', 'pdfLink', 'checklistState', 'firebaseUid', 'lastContacted', 'lastSender'];
   
   tabs.forEach(tabName => {
     const sheet = ss.getSheetByName(tabName);
@@ -129,10 +129,22 @@ function addLead(lead) {
   return { success: true }
 }
 
-function addLeadsBatch(leads) {
+function addLeadsBatch(leads, tabName) {
   if (!leads || !leads.length) return { success: true, count: 0 };
-  const sheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const targetTab = tabName || SHEETS.LEADS;
+  const sheet = getSpreadsheet().getSheetByName(targetTab);
+  if (!sheet) return { error: 'Tab not found: ' + targetTab };
+  
+  const lastCol = sheet.getLastColumn();
+  let headers = [];
+  if (lastCol > 0) {
+    headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  } else {
+    // If target sheet has no columns/headers, default to LEADS headers
+    const leadsSheet = getSpreadsheet().getSheetByName(SHEETS.LEADS);
+    headers = leadsSheet.getRange(1, 1, 1, leadsSheet.getLastColumn()).getValues()[0];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
   let lastRow = sheet.getLastRow();
   
   const newRows = leads.map((lead, idx) => {
@@ -227,7 +239,15 @@ function moveLead(id, fromTab, toTab, changes) {
   if (!fromSheet || !toSheet) return { error: 'Tab mapping error' }
   const fromData = fromSheet.getDataRange().getValues()
   const fromHeaders = fromData[0]
-  const toHeaders = toSheet.getRange(1, 1, 1, toSheet.getLastColumn()).getValues()[0]
+  
+  const toLastCol = toSheet.getLastColumn();
+  let toHeaders = [];
+  if (toLastCol > 0) {
+    toHeaders = toSheet.getRange(1, 1, 1, toLastCol).getValues()[0];
+  } else {
+    toHeaders = fromHeaders;
+    toSheet.getRange(1, 1, 1, toHeaders.length).setValues([toHeaders]);
+  }
   const idCol = fromHeaders.indexOf('id')
   for (let i = 1; i < fromData.length; i++) {
     if (String(fromData[i][idCol]) === String(id)) {
@@ -261,7 +281,15 @@ function moveLeadsBatch(ids, fromTab, toTab, changes) {
   
   const fromData = fromSheet.getDataRange().getValues();
   const fromHeaders = fromData[0];
-  const toHeaders = toSheet.getRange(1, 1, 1, toSheet.getLastColumn()).getValues()[0];
+  
+  const toLastCol = toSheet.getLastColumn();
+  let toHeaders = [];
+  if (toLastCol > 0) {
+    toHeaders = toSheet.getRange(1, 1, 1, toLastCol).getValues()[0];
+  } else {
+    toHeaders = fromHeaders;
+    toSheet.getRange(1, 1, 1, toHeaders.length).setValues([toHeaders]);
+  }
   const idCol = fromHeaders.indexOf('id');
   if (idCol === -1) return { error: 'ID column not found' };
 
