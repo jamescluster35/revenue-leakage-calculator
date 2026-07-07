@@ -2120,6 +2120,25 @@
       var ft = document.getElementById('footer-txt');
       if (ft) ft.innerHTML = '© 2026 BDL · Revenue Audit Service · <a href="mailto:' + _em + '" style="color:var(--or);">' + _em + '</a>';
       setCountry('USA');
+
+      // Auto-select niche if passed in URL query parameters (e.g. ?niche=dental or ?n=dental)
+      var params = new URLSearchParams(window.location.search);
+      var nicheParam = params.get('niche') || params.get('n');
+      if (nicheParam) {
+        var cleanNiche = nicheParam.trim().toLowerCase();
+        // Map common aliases to match supported niches
+        if (cleanNiche === 'chiropractor' || cleanNiche === 'chiropractic' || cleanNiche === 'doctor' || cleanNiche === 'clinic' || cleanNiche === 'physio' || cleanNiche === 'wellness') {
+          cleanNiche = 'healthcare';
+        } else if (cleanNiche === 'law' || cleanNiche === 'lawyer' || cleanNiche === 'lawfirm' || cleanNiche === 'attorney') {
+          cleanNiche = 'legal';
+        } else if (cleanNiche === 'hotel' || cleanNiche === 'inn' || cleanNiche === 'motel' || cleanNiche === 'resort') {
+          cleanNiche = 'lodging';
+        }
+        var card = document.querySelector('.nc[data-n="' + cleanNiche + '"]');
+        if (card) {
+          pickNiche(card);
+        }
+      }
     });
 
     var pageLoadTime = Date.now(); // Record page load time
