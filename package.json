@@ -1,5 +1,9 @@
 {
-  "devDependencies": {
-    "wrangler": "^4.104.0"
+  "name": "bdl-calculator",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "push:dev": "copy /Y .clasp.dev.json .clasp.json && clasp push",
+    "push:prod": "copy /Y .clasp.prod.json .clasp.json && clasp push"
   }
 }
